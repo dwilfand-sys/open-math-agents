@@ -35,3 +35,15 @@ Thus all candidates beyond this finite threshold have at most four prime factors
 Independently, the published general-modulus bound gives $L=5$ with an effectively computable $C$, and notes that a fixed exponent strictly below 5 also works. The latter qualitative statement yields the same reduction to four factors outside a finite interval.
 
 [Triantafyllos Xylouris, *Linniks Konstante ist kleiner als 5*, Theorem 1 and the paragraph following it](https://doi.org/10.22405/2226-8383-2018-19-3-80-94)
+
+## An explicit bound for a specified least factor
+
+Put $Q=3q$, $B=0.06\sqrt Q(\log Q)^3$, and $x=e^B$. Corollary 6.17 of Bennett, Martin, O'Bryant and Rechnitzer, with $A=2$, gives
+
+$$
+\left|\theta(x;Q,a)-\frac{x}{\varphi(Q)}\right|\le\frac{x}{160B^2}
+$$
+
+for every reduced class $a$ modulo $Q$. The hypothesis $Q\ge10^5$ holds throughout this problem. In fact $160B^2=0.576\,Q(\log Q)^6>Q>\varphi(Q)$. It follows that $\theta(x;Q,a)>0$, so there is a prime $r\le x$ in the required class. Therefore $\log N>B$ always implies a timely witness. In particular a candidate with $\Omega(N)>B/\log q$ is covered, since $N\ge q^{\Omega(N)}$. This bound contains only the given prime $q$ and explicit numerical constants.
+
+[Michael A. Bennett, Greg Martin, Kevin O'Bryant and Andrew Rechnitzer, *Explicit bounds for primes in arithmetic progressions*, Corollary 6.17](https://personal.math.ubc.ca/~gerg/papers/downloads/EBPAP.pdf)
