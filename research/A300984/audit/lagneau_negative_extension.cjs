@@ -2,13 +2,13 @@
 
 const fs = require('node:fs');
 const {pairMultiplier} = require('./lagneau_linear_tail.cjs');
-const lower = 1_000_000_000;
+const lower = Number(process.argv[6] || 1_000_000_000);
 // Arguments 2 and 3 select the base divisor and small prime cutoffs read
 // by the shared sieve module. Their production values are 20000000 and 73.
 const upper = Number(process.argv[4] || 10_000_000_000);
 const path = process.argv[5];
 const block = 1_048_576;
-const slopes = [5, 11, 17, 23, 29, 41, 47, 53, 59, 71];
+const slopes = [5, 11, 17, 23, 29, 41, 47, 53, 59, 71].slice(0,Number(process.argv[7] || 10));
 if (!path || !Number.isSafeInteger(upper) || upper <= lower) throw Error('Expected upper bound and checkpoint path');
 const records = fs.existsSync(path) ? fs.readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse) : [];
 for (let i = 0; i < records.length; i++) {

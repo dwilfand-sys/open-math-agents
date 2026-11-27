@@ -37,6 +37,20 @@ def test():
             next_hit = events[j+1][0] if j+1<len(events) else 0
             loss += (hit-next_hit)*max(0,prior-none)
         assert exact <= prior-loss <= prior
+        # In a gated application, old acceptance may depend on the high
+        # coordinates when the gate fails. On the gate it only depends on
+        # the low coordinates, and all our new tests are made on the gate.
+        gate=F(rng.randrange(1,6),7)
+        other=sum(v for flags,v in configurations(high) if rng.randrange(2))
+        old_total=gate*prior+(1-gate)*other
+        new_total=gate*exact+(1-gate)*other
+        none, loss=F(1),F(0)
+        for j,(hit,i) in enumerate(events):
+            none*=1-low[i]
+            next_hit=events[j+1][0] if j+1<len(events) else 0
+            no_test=1-gate*(1-none)
+            loss+=(hit-next_hit)*max(0,old_total-no_test)
+        assert new_total <= old_total-loss <= old_total
     print("100 exact product-space examples passed.")
 
 

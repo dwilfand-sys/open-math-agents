@@ -4,12 +4,15 @@
 const fs=require('node:fs');
 const source=process.argv[2], positive=process.argv[3]==='positive';
 const slopes=positive?[13,43,61,67,73]:[5,11,17,23,29,41,47,53,59,71];
-const residue=positive?1:5, lower=14_000_000, upper=1_000_000_000, block=262144;
+const residue=positive?1:5, lower=Number(process.argv[4]||14_000_000), upper=Number(process.argv[5]||1_000_000_000), block=262144;
+const multiplier=Number(process.argv[6]||1);
 const first=Math.floor((lower-residue)/6)+1, end=Math.floor((upper-residue)/6)+1;
 const size=end-first, rejected=1<<slopes.length, scale=10n**15n;
-const rows=fs.readFileSync(source,'utf8').trim().split('\n').map(line=>line.trim().split(/\s+/));
+const bytes=fs.readFileSync(source);
+const content=source.endsWith('.gz')?require('node:zlib').gunzipSync(bytes):bytes;
+const rows=content.toString('utf8').trim().split('\n').map(line=>line.trim().split(/\s+/));
 const centers=[...new Set(rows.map(row=>Number(row[0])))];
-const limit=Math.ceil(Math.sqrt(2*Math.max(...centers)*upper));
+const limit=Math.ceil(Math.sqrt(2*Math.max(...centers)*multiplier*upper));
 const markedBase=new Uint8Array(limit+1), primes=[];
 for(let q=2;q<=limit;q++) if(!markedBase[q]) {
   primes.push(q);
@@ -72,7 +75,7 @@ for(let start=0;start<size;start+=block) {
 }
 const expected=new Map(rows.map(([t,s,n,f])=>[t+','+s,[Number(n),BigInt(f)]]));
 for(const t of centers) {
-  const form=progression(12*t,2*t*residue-1);
+  const form=progression(12*t*multiplier,2*t*residue*multiplier-1);
   const keys=positive?Array.from({length:rejected},(_,i)=>i):[0,...slopes];
   const counts=keys.map(()=>0), factors=keys.map(()=>scale);
   for(let start=0;start<size;start+=block) {
