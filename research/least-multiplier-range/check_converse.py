@@ -44,6 +44,23 @@ def divisor_sigma_table(limit):
     return sigma
 
 
+def check_prime_arguments(primes, sigma, bound):
+    almost = [k for k in range(1, bound + 1) if sigma[k] + 1 == 2 * k]
+    checked = 0
+    for p in primes:
+        if p <= 2:
+            continue
+        if p > bound:
+            break
+        # All k tested satisfy k < p. Multiplication of sigma is exact for these coprime factors.
+        actual = next(k for k in range(1, p)
+                      if sigma[k] < 2 * k and sigma[k] * (p + 1) >= 2 * k * p)
+        formula = next(k for k in almost if p + 1 <= 2 * k)
+        assert actual == formula
+        checked += 1
+    return checked
+
+
 if __name__ == "__main__":
     bound = 500
     primes = primes_below(600_000)
@@ -60,3 +77,5 @@ if __name__ == "__main__":
           f" multipliers, including every known almost-perfect input up to {bound}.")
     print(f"By direct exhaustive enumeration, the distinct values a(2), ..., a({bound})"
           f" are {sorted(image)}.")
+    count = check_prime_arguments(primes, sigma, 10_000)
+    print(f"The exact prime-argument formula matched all {count} odd primes through 10,000.")

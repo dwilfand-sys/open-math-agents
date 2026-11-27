@@ -375,3 +375,223 @@ theorem conjecture_iff_only_powers :
     · exact Or.inr (Or.inr (h _ halmost))
 
 end OMA.AlmostPerfectConverse
+
+namespace OMA.AlmostPerfectConverse
+
+open Nat ArithmeticFunction OeisA215926
+open scoped ArithmeticFunction.sigma
+
+private theorem prime_argument_qualifies {k p : ℕ} (hp : p.Prime) (hk : k<p) :
+    (k.Deficient ∧ ((k*p).Perfect ∨ (k*p).Abundant)) ↔
+    (1+σ 1 k = 2*k ∧ p+1 ≤ 2*k) := by
+  by_cases hzero : k=0
+  · subst k
+    simp [Nat.Deficient]
+  have hk0 := Nat.pos_of_ne_zero hzero
+  have hc : k.Coprime p := (Nat.coprime_of_lt_prime hzero hk hp).symm
+  have nondef : (k*p).Perfect ∨ (k*p).Abundant ↔ 2*(k*p) ≤ σ 1 k*(p+1) := by
+    rw [nondeficient_test (Nat.mul_pos hk0 hp.pos), isMultiplicative_sigma.map_mul_of_coprime hc,
+      sigma_prime hp, Nat.add_comm 1 p]
+  have hdef : k.Deficient ↔ σ 1 k < 2*k := by
+    rw [sigma_one_apply, Nat.sum_divisors_eq_sum_properDivisors_add_self]
+    unfold Nat.Deficient
+    omega
+  rw [hdef,nondef]
+  constructor
+  · rintro ⟨hd,hwork⟩
+    have hit : 1+σ 1 k = 2*k := by
+      by_contra! he
+      have hd2 : σ 1 k+2 ≤ 2*k := by omega
+      nlinarith only [Nat.mul_le_mul_right (p+1) hd2, hwork, hk]
+    exact ⟨hit, by nlinarith only [hwork, congrArg (fun y : ℕ => y*(p+1)) hit]⟩
+  · rintro ⟨hit,hp2⟩
+    exact ⟨by omega, by nlinarith only [hp2, congrArg (fun y : ℕ => y*(p+1)) hit]⟩
+
+/-- At an odd prime, the sequence returns the least almost-perfect number
+at least half the successor of the prime. -/
+theorem odd_prime_formula {p : ℕ} (hp : p.Prime) (hodd : 2<p) :
+    IsLeast {k : ℕ | 1+σ 1 k=2*k ∧ p+1≤2*k} (a p) := by
+  let j := Nat.log 2 p
+  let x := 2^j
+  have hxle : x≤p := Nat.pow_log_le_self 2 hp.ne_zero
+  have hx : x<p := lt_of_le_of_ne hxle (by
+    intro he
+    have hd : p ∣ 2^j := he.symm ▸ dvd_rfl
+    have he2 := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow hd)
+    omega)
+  have hpx : p<2*x := by
+    have h := Nat.lt_pow_succ_log_self Nat.one_lt_two p
+    simpa [x, j, pow_succ, Nat.mul_comm] using h
+  let S := {k : ℕ | k.Deficient ∧ ((k*p).Perfect ∨ (k*p).Abundant)}
+  have hw : x ∈ S := (prime_argument_qualifies hp hx).mpr
+    ⟨by simpa only [Nat.add_comm] using sigma_two_pow j, by omega⟩
+  have hnonempty : S.Nonempty := ⟨x,hw⟩
+  have hmin : sInf S<p := (Nat.sInf_le hw).trans_lt hx
+  change IsLeast {k : ℕ | 1+σ 1 k=2*k ∧ p+1≤2*k} (sInf S)
+  constructor
+  · exact (prime_argument_qualifies hp hmin).mp (Nat.sInf_mem hnonempty)
+  · intro k hk
+    by_cases hkp : k<p
+    · exact Nat.sInf_le (s := S) ((prime_argument_qualifies hp hkp).mpr hk)
+    · omega
+
+end OMA.AlmostPerfectConverse
+
+-- Naitik Gupta's accepted first-occurrence reduction, open-math-agents #906.
+
+namespace OMA.R_OeisA215926_conjecture_2_R1
+
+open OeisA215926
+
+-- Exclude almost perfect numbers only in the interval that can interfere.
+def H1 : Prop :=
+  ∀ m k : ℕ, 1 ≤ m → k < 2 ^ m → nextPrimeTwoPow m + 1 ≤ 2 * k →
+    (∑ d ∈ k.divisors, d) + 1 ≠ 2 * k
+
+-- A power of two supplies a multiplier for odd primes in this range.
+def H2 : Prop :=
+  ∀ j q : ℕ, q.Prime → 2 < q → q < 2 * 2 ^ j →
+    (2 ^ j * q).Perfect ∨ (2 ^ j * q).Abundant
+
+private theorem nond {n : ℕ} (hn : 0 < n) :
+    n.Perfect ∨ n.Abundant ↔ 2 * n ≤ ∑ d ∈ n.divisors, d := by
+  rw [Nat.perfect_iff_sum_divisors_eq_two_mul hn, Nat.abundant_iff_sum_divisors]
+  omega
+
+private theorem liftNondef {u v : ℕ} (hu : 0 < u) (hv : 0 < v) (hd : u ∣ v)
+    (h : u.Perfect ∨ u.Abundant) : v.Perfect ∨ v.Abundant := by
+  have hi : ∀ t : ℕ, 0 < t → (2 ≤ t.abundancyIndex ↔ t.Perfect ∨ t.Abundant) := by
+    intro t ht
+    rw [nond ht, Nat.abundancyIndex, le_div_iff₀ (by positivity)]
+    norm_cast
+  exact (hi v hv).mp (((hi u hu).mpr h).trans (Nat.abundancyIndex_le_of_dvd hv.ne' hd))
+
+private theorem obstruction {k p : ℕ} (hp : p.Prime) (hlt : k < p)
+    (hd : k.Deficient) (hprod : (k*p).Perfect ∨ (k*p).Abundant) :
+    (∑ d ∈ k.divisors, d) + 1 = 2*k ∧ p+1 ≤ 2*k := by
+  have hk := hd.pos
+  have h := (nond (Nat.mul_pos hk hp.pos)).mp hprod
+  rw [(Nat.coprime_of_lt_prime hk.ne' hlt hp).symm.sum_divisors_mul, hp.divisors] at h
+  simp [Ne.symm hp.ne_one] at h
+  have hlt' : (∑ d ∈ k.divisors, d) < 2*k := by
+    rw [Nat.sum_divisors_eq_sum_properDivisors_add_self]
+    unfold Nat.Deficient at hd
+    omega
+  have he : (∑ d ∈ k.divisors, d) + 1 = 2*k := by
+    by_contra hn
+    have hh : (∑ d ∈ k.divisors, d) + 2 ≤ 2*k := by omega
+    nlinarith [Nat.mul_le_mul_right (1+p) hh]
+  exact ⟨he, by nlinarith [congrArg (· * p) he]⟩
+
+theorem main : H1 → H2 → type_of% @OeisA215926.conjecture_2 := by
+  intro hgap hprime m hm
+  obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : m ≠ 0)
+  let x := 2 ^ (j+1)
+  let p := nextPrimeTwoPow (j+1)
+  have hx : 2 ≤ x := by dsimp [x]; rw [pow_succ]; have := Nat.two_pow_pos j; omega
+  obtain ⟨r, hr, hrx, hru⟩ := Nat.exists_prime_lt_and_le_two_mul x (by omega)
+  let S := {r : ℕ | x < r ∧ r.Prime}
+  have hs : S.Nonempty := ⟨r, hrx, hr⟩
+  have hp : x < p ∧ p.Prime := Nat.sInf_mem hs
+  have hmin : ∀ q ∈ S, p ≤ q := fun q hq => Nat.sInf_le hq
+  have hpr := hmin r ⟨hrx, hr⟩
+  have hpo := hp.2.odd_of_ne_two (by omega)
+  obtain ⟨t, ht⟩ := hpo
+  have hpu : p < 2*x := by omega
+  change IsLeast {n : ℕ | 2 ≤ n ∧ a n = x} p
+  constructor
+  · refine ⟨hp.2.two_le, IsLeast.csInf_eq ?_⟩
+    refine ⟨⟨Nat.prime_two.deficient_pow, hprime _ p hp.2 (by omega) hpu⟩, ?_⟩
+    intro k ⟨hk, hkp⟩
+    by_contra! hsmall
+    have H := obstruction hp.2 (by omega : k < p) hk hkp
+    exact hgap _ _ hm hsmall H.2 H.1
+  · intro n ⟨hn, ha⟩
+    change a n = x at ha
+    change p ≤ n
+    by_contra! hnlt
+    let q := n.minFac
+    have hq : q.Prime := Nat.minFac_prime (by omega)
+    have hd : q ∣ n := Nat.minFac_dvd n
+    have hql : q ≤ n := Nat.le_of_dvd (by omega) hd
+    have hqx : q ≤ x := by
+      by_contra! h
+      exact (by omega : ¬p ≤ q) (hmin q ⟨h, hq⟩)
+    have bound (k : ℕ) (hk : k.Deficient) (hw : (k*n).Perfect ∨ (k*n).Abundant) : x ≤ k :=
+      ha ▸ (Nat.sInf_le (s := {b : ℕ | b.Deficient ∧ ((b*n).Perfect ∨ (b*n).Abundant)}) (m := k) ⟨hk,hw⟩ : a n ≤ k)
+    by_cases htwo : q = 2
+    · have hw := liftNondef (u := 6) (v := 3*n) (by decide) (by omega)
+          (show 3*2 ∣ 3*n from Nat.mul_dvd_mul_left 3 (htwo ▸ hd)) (Or.inl (by decide))
+      have hb := bound 3 Nat.deficient_three hw
+      have hx2 : x = 2 := by
+        have hh := Nat.two_pow_pos j
+        dsimp [x] at hb ⊢
+        rw [pow_succ] at hb ⊢
+        omega
+      have hp3 := hmin 3 ⟨by omega, by decide⟩
+      have hn2 : n = 2 := by omega
+      subst n
+      rw [a_2] at ha
+      omega
+    · have hodd := hq.odd_of_ne_two htwo
+      obtain ⟨s, hs⟩ := hodd
+      have hxj : x = 2^j * 2 := pow_succ ..
+      have hw := hprime j q hq (by have := hq.two_le; omega) (by omega)
+      have hnpos : 0 < n := by omega
+      have hqpos := hq.pos
+      have hb := bound (2^j) Nat.prime_two.deficient_pow
+        (liftNondef (by positivity) (by positivity) (Nat.mul_dvd_mul_left _ hd) hw)
+      have := Nat.two_pow_pos j
+      omega
+
+end OMA.R_OeisA215926_conjecture_2_R1
+
+namespace OMA.AlmostPerfectConverse
+
+open Nat ArithmeticFunction OeisA215926
+open scoped ArithmeticFunction.sigma
+
+/-- Naitik Gupta's obstruction interval is also necessary for the predicted
+first occurrence. The only open part is whether any of the intervals contains
+an almost-perfect number. -/
+theorem first_occurrence_iff_no_interference :
+    (type_of% @OeisA215926.conjecture_2) ↔ OMA.R_OeisA215926_conjecture_2_R1.H1 := by
+  constructor
+  · intro law m k hm hsmall hl hit
+    let p := nextPrimeTwoPow m
+    obtain ⟨r,hr,hpr⟩ := Nat.exists_infinite_primes (2^m+1)
+    have hp : 2^m<p ∧ p.Prime :=
+      Nat.sInf_mem (show {q : ℕ | 2^m<q ∧ q.Prime}.Nonempty from ⟨r, by omega, hpr⟩)
+    have hx : 2 ≤ 2^m := by
+      simpa only [pow_one] using Nat.pow_le_pow_right (by decide : 0<2) hm
+    have found : a p=2^m := (law m hm).1.2
+    have hAP : 1+σ 1 k=2*k := by
+      rw [sigma_one_apply]
+      omega
+    have hmin : a p≤k := (odd_prime_formula hp.2 (by omega)).2 ⟨hAP,hl⟩
+    omega
+  · intro h
+    apply OMA.R_OeisA215926_conjecture_2_R1.main h
+    intro j q hq hlarge hbound
+    exact pow_mul_prime_nondeficient hq (by omega) hbound
+
+/-- The range conjecture of A215926 implies its conjecture about first occurrences. -/
+theorem first_occurrence_of_range_conjecture (hlaw : type_of% @OeisA215926.conjecture_1) :
+    type_of% @OeisA215926.conjecture_2 := by
+  apply first_occurrence_iff_no_interference.mpr
+  intro m k _ hsmall hl hit
+  have hAP : 1+σ 1 k=2*k := by rw [sigma_one_apply]; omega
+  obtain ⟨j,hj⟩ := conjecture_iff_only_powers.mp hlaw k hAP
+  have hjm : j<m := by
+    by_contra! h
+    have hpow := Nat.pow_le_pow_right (by decide : 0<2) h
+    omega
+  have h2 : 2*k≤2^m := by
+    rw [hj, Nat.mul_comm, ← pow_succ]
+    exact Nat.pow_le_pow_right (by decide : 0<2) (show j+1≤m by omega)
+  obtain ⟨r,hr,hpr⟩ := Nat.exists_infinite_primes (2^m+1)
+  have hp : 2^m<nextPrimeTwoPow m ∧ (nextPrimeTwoPow m).Prime :=
+    Nat.sInf_mem (show {q : ℕ | 2^m<q ∧ q.Prime}.Nonempty from ⟨r, by omega, hpr⟩)
+  omega
+
+end OMA.AlmostPerfectConverse

@@ -13,6 +13,14 @@ $$
 
 To construct it, multiply factors `1 + 1/p` with primes `p > k(2k − 3)` until the lower endpoint is reached. The sum of reciprocals of a sufficiently long finite set of these primes is at least one half, and their product of `1 + 1/p` is at least one plus that sum. At the first crossing the prime cutoff guarantees the strict upper bound. The lower bound makes `kn` non-deficient. For each deficient `m < k`, its abundancy is at most `2 − 1/(k − 1)`. Since every such `m` is coprime to `n`, the upper bound makes `mn` deficient. Thus the least qualifying multiplier is exactly `k`. The values 1 and 3 occur at 6 and 2 respectively. [Mathlib's finite prime-reciprocal bound](https://leanprover-community.github.io/mathlib4_docs/Mathlib/NumberTheory/SumPrimeReciprocals.html)
 
+## Prime arguments and first occurrences
+
+For an odd prime `p`, the theorem `odd_prime_formula` identifies `a(p)` as the smallest almost-perfect integer `k` with `2k ≥ p + 1`. This follows by testing the exact inequality `2kp ≤ σ(k)(p + 1)` for deficient `k < p`. A qualifying `k` must have deficiency one. The largest power of two below `p` supplies a qualifying multiplier below `p`.
+
+The formula also makes Naitik Gupta's interference interval necessary for the claimed first occurrence of `2^m`. If `p` is the first prime above `2^m`, the conjectured first occurrences hold for every `m ≥ 1` if and only if no almost-perfect `k < 2^m` has `2k ≥ p+1`. Consequently the range conjecture implies the first-occurrence conjecture. The given Lean source includes the accepted sufficiency proof with attribution. [Upstream PR #906](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/906)
+
 ## Verification
 
 Run `python audit_range.py` with SymPy to verify the interval width, the explicit prime cutoff, the one-prime overshoot inequality, and the bound for a smaller multiplier written in terms of its integer deficiency. Run `python check_converse.py` for a separate direct calculation with exact integer arithmetic. It constructs witnesses to each of the 499 intervals for `2 ≤ k ≤ 500`, checks every smaller deficient multiplier, and directly computes the sequence for arguments through 500 by summing divisors over multiples. The observed range on that finite interval is 1, 2, 3, 4, 8, 16, 32, 64, 128, and 256. Compilation with the project's pinned Lean kernel remains pending.
+
+The same executable independently checks the prime-argument theorem by testing each smaller candidate multiplier for all 1,228 odd primes through 10,000.
