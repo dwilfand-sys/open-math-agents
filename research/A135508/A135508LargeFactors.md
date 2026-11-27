@@ -69,3 +69,25 @@ q<s<4q\log^2(3q),\qquad p=qs+2\text{ prime}.
 $$
 
 The finite sieve above also gives $q>10^7$ in this residual family. The existence of a timely witness for every pair in this range is open.
+
+## Counting exceptions with composite $p-2$
+
+Write $E_{\mathrm{comp}}(X)$ for the number of primes $p\le X$ with $p-2$ composite and $a(p-1)\ne p$. The restricted semiprime range implies
+
+$$
+E_{\mathrm{comp}}(X)\ll \frac{X\log\log X}{(\log X)^3}.
+$$
+
+To see this, take $Y<N=p-2\le2Y$. The potential least factors $q$ range between $c\sqrt Y/\log Y$ and $\sqrt{2Y}$ for an absolute $c>0$, since $Y<qs<4q^2\log^2(3q)$. Put $M=2Y/q$. For fixed $q$ we require both $s\le M$ and $qs+2$ to be prime, with $s>q$. Sieve the polynomial $m(qm+2)$ for $m\le M$ at $z=M^{1/10}$. We have $q>z$ uniformly for sufficiently large $Y$.
+
+Modulo each odd prime $\ell\le z$, the two distinct roots are $0$ and $-2q^{-1}$. There is one root modulo 2. By the Chinese remainder theorem, for every squarefree sieve divisor $d$ the number of residue classes $\nu(d)$ and the bound $O(\nu(d))$ for the error in counting $m\le M$ are identical to those for $m(m+2)$. The usual upper-bound Selberg sieve therefore gives the uniform bound $O(M/(\log z)^2+(z\log z)^2)=O(M/(\log Y)^2)$ for the possible $s$. Indeed both primes $s$ and $qs+2$ exceed $z$.
+
+There are $O(\log\log Y)$ dyadic intervals $[T,2T]$ covering the displayed range of $q$. Throughout it $\log T$ is comparable to $\log Y$. On each interval the sum of $1/q$ over primes is at most $\pi(2T)/T=O(1/\log Y)$ by Chebyshev's estimate. Summing the uniform bound over $q$ gives $O(Y\log\log Y/(\log Y)^3)$ in $(Y,2Y]$. Summing dyadic intervals as in the [density note](A135508PrimeDensity.md) proves the claim. It follows as well that the exceptional primes with composite $p-2$ satisfy
+
+$$
+\sum_p\frac{\log p}{p}<\infty ,
+$$
+
+because their contribution on $(2^j,2^{j+1}]$ is $O(\log j/j^2)$.
+
+[Rudnick, *Selberg's sieve — twin primes*, upper-bound calculation with local root counts](https://www.math.tau.ac.il/~rudnick/courses/sieves2015/selberg%20sieve%20twin%20primes.pdf)
