@@ -63,6 +63,28 @@ For $1\le h\le L$, the difference of the three floors for $m$, $p^L-1$, and $m-p
 
 Since $v_p(\operatorname{lcm}(1,\ldots,m))=L$, the lower bound gives divisibility by $G_m$ for every pair. Conversely, a common divisor has at each prime valuation at most that of the constructed witness, which is $v_p(G_m)$. This establishes the exact gcd without assuming that a single pair must work simultaneously for every prime.
 
+## The entire valuation row at a prime-power total
+
+Fix $P=p^K$ with $K\ge0$. For $1\le n\le P$, put $s=P-n$ and $t=\lfloor(mn-1)/P\rfloor$. Then
+
+$$
+v_p(R_m(n,P-n))=v_p(m!)-v_p\binom{m-1}{t}.
+$$
+
+Indeed, the factorials give
+
+$$
+R_m(n,P-n)=\frac{(mP)!}{(P!)^m}\frac{\binom P n}{\binom{mP}{mn}}.
+$$
+
+Legendre's formula gives the first fraction valuation $v_p(m!)$. In the second fraction, applying $\binom ab=(a/b)\binom{a-1}{b-1}$ above and below cancels the common factor $P/n$. The remaining numerator $\binom{P-1}{n-1}$ has valuation zero, since subtracting $n-1$ from $P-1$ requires no base-$p$ borrows. Similarly, $mP-1=(m-1)P+(P-1)$ has all its lowest $K$ digits equal to $p-1$. Subtracting $mn-1=tP+r$, where $0\le r<P$, causes no borrow at these positions or into the higher block. The remaining borrows are exactly those of subtracting $t$ from $m-1$. Kummer's theorem gives the displayed identity. For $K=0$, the empty lower block gives the same identity. The excluded endpoint $n=0$ has the same value as $n=P$ by symmetry.
+
+If $P>m$, every $0\le t<m$ is attained with $1\le n<P$. Indeed, the integers with this $t$ are those satisfying $tP/m<n\le(t+1)P/m$. Every such interval has length greater than 1. In the last interval one may use $P-1$. Consequently one fixed positive row already attains the sharp $p$-valuation. By Farhi's identity, its minimum is
+
+$$
+v_p(m!)-v_p\!\left(\operatorname{lcm}_{0\le t<m}\binom{m-1}{t}\right)=v_p(G_m).
+$$
+
 ## Relation to existing results
 
 - The unnormalized integrality is an exact specialization of Xin Chen and Jane Wang's 2012 research manuscript. In §6.1.1, equation (10) and the condition before Remark 6.5, take two variables and $m+1$ linear forms: $n$, $s$, and $m-1$ copies of $n+s$. Each column sums to $m$ and $2m-(m+1)=m-1<m$. Landau's multivariable floor criterion gives a general earlier framework. [Chen and Wang, pp. 11–12](https://www-users.cse.umn.edu/~reiner/REU/ChenWang2012.pdf) · [Landau, 1900](https://www.numdam.org/item/NAM_1900_3_19__344_1/)
@@ -76,4 +98,6 @@ The statements above specify how the references apply. No priority claim is made
 
 Running `python research/verify_factorial_common_gcd.py` with its default parameters checks the lower bound directly on 12,960 unordered input pairs of positive total degree across arities 1 through 40. Direct factorial division and the finite-grid gcd are computed separately. The grid attains the claimed gcd for 27 of these 40 arities. The same script checks 86,704 additional exact lower bounds by Legendre's formula, together with invariance under simultaneous scaling by the prime. A separate check evaluates the constructive upper-bound witnesses for 5,419 prime/arity pairs through arity 200. It compares their valuations with the prime order of the independently computed integer $m\,m!/\mathrm{lcm}(1,\ldots,m)$.
 
-The accompanying standalone Lean draft states the full lower bound as `factorial_lower`, including both axes, and the final factorial valuation identity in the upper bound as `witness_factorial_gap`. The construction of the witnesses and the concluding gcd equality are proved in the manuscript above. The Lean draft has no local kernel verdict.
+The prime-power row check compares 97,680 individual valuations with the binomial identity. On 728 complete rows whose total exceeds the arity, it also verifies that strictly positive inputs cover every binomial index and attain the predicted minimum.
+
+The accompanying standalone Lean draft states the full lower bound as `factorial_lower`, including both axes, and the final factorial valuation identity in the upper bound as `witness_factorial_gap`. The construction of the witnesses, prime-power row identity and concluding gcd equality are proved in the manuscript above. The Lean draft has no local kernel verdict.
