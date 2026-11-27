@@ -83,11 +83,11 @@ Every integral polynomial G with G(0)=1 satisfies the uniform aligned lower boun
 
 Now suppose G is nonconstant and its reciprocal roots are all roots of unity of orders prime to p. Let M be the least common multiple of their orders and let d=deg G. At the fixed coefficient j=M, the rational polynomial D_M(u) of the preceding section has zero constant and linear coefficients. Its quadratic coefficient is
 
-$
+$$
 \frac{p^2}{2}[x^{pM}]L^2
 =\frac{p^2}{2}\sum_{\substack{1\le i<pM\\p\nmid i}}
  \frac{S_i^2}{i(pM-i)}>0.
-$
+$$
 
 Indeed, expand G(xᵖ)ᵘ(exp(puL)−1) as a power series in u and take the coefficient at x^{pM}. The mixed term log G(xᵖ)·L contributes zero by its support. At p∤i the coefficient of L is −Sᵢ/i. As the multiset of roots is closed under complex conjugation and every root has order dividing M, one has S_{pM−i}=S_{−i}=Sᵢ, a real number. Every summand is nonnegative. The term i=M occurs and S_M=d, so the sum is strictly positive.
 
