@@ -52,3 +52,7 @@ For n>3,202²=10,252,804, the candidate count J is at least 1,600. It remains to
 A separately implemented scalar check marked multiples of every integer square d² for d≥2. It tried k individually for each n through 10,252,804 and stopped upon finding 101 representations. It reproduced the frequency and last-occurrence arrays. Among n>200,000 the largest root ever needed to find the 101st representation was 503, attained at n=5,336,100. The intermediate intervals and large-range constants were also re-evaluated independently with integer or rational arithmetic.
 
 Run `python count_squarefree_representations.py` with Python 3.10 or newer. The program uses only the standard library. The independent scalar implementation runs with `node check_squarefree_counts_independent.cjs`. The related OEIS sequence defining R(n) is [A085263](https://oeis.org/A085263).
+
+## Growth of the occurrence counts
+
+The cumulative frequency through level $K$ is asymptotic to $C K^2$, where $4.1292705404\le C\le4.1292717793$. The latest input at any level at most $K$ is asymptotic to $e^{2\gamma}K^2(\log\log K)^2$. Both arguments use the published singular-series asymptotic for squarefree representations. [Distribution and reciprocal moments](LevelDistribution.md) · [First- and last-occurrence envelopes](ExtremalEnvelopes.md)
