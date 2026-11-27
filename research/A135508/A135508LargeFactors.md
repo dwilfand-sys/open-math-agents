@@ -91,3 +91,12 @@ $$
 because their contribution on $(2^j,2^{j+1}]$ is $O(\log j/j^2)$.
 
 [Rudnick, *Selberg's sieve — twin primes*, upper-bound calculation with local root counts](https://www.math.tau.ac.il/~rudnick/courses/sieves2015/selberg%20sieve%20twin%20primes.pdf)
+
+There is also an exact comparison with the upper members of twin-prime pairs. Let $T(X)=\#\{p\le X:p,\ p-2\text{ both prime}\}$. If $p>7$ is such a prime, then $u=p-2>5$ is a prime congruent to 2 modulo 3. The accepted recurrence result gives $a(u-1)=u$. The equivalence $a(p-1)=p\iff a(p-3)\ne p-2$ now shows that $p$ is exceptional. Direct evaluation at $p=2,3,5,7$ gives an exception at 5 only. Consequently
+
+$$
+E(X)=T(X)-\mathbf{1}_{X\ge7}+E_{\mathrm{comp}}(X)
+     =T(X)+O\!\left(\frac{X\log\log X}{(\log X)^3}\right).
+$$
+
+This is an additive error estimate. It places no lower bound on the number of twin primes.
