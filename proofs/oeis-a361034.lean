@@ -6,6 +6,8 @@ import Mathlib.Tactic
 Peter Bala posed the conjecture. @LAPRAI formalized its statement.
 Shifted multinomial coefficients certify divisibility after doubling, and
 the binary factorial valuation both removes that factor and determines parity.
+An independent earlier Lean proof by ElonSG is at
+https://github.com/the-omega-institute/trureturing/pull/22639.
 Source: https://oeis.org/A361034
 Credit: @dwilfand-sys
 -/
