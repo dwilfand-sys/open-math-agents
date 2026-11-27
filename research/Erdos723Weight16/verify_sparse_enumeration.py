@@ -1,11 +1,11 @@
 """Re-enumerate a word's interiors using literal line-pair domains and two-colour branching."""
 import argparse
-import json
 from pathlib import Path
 
 from other_sparse_cases import seed_orbits
 from scales_block_consistency import members
 from sparse_block_domains import SparseBlockDomains
+from sparse_records import read_records
 from weight16_exact_cover import StartingCase, WORDS
 
 
@@ -33,9 +33,10 @@ if __name__ == '__main__':
     ap.add_argument('case', type=int, choices=range(6))
     ap.add_argument('records', type=Path)
     ap.add_argument('--row-cache', type=int, default=6000)
+    ap.add_argument('--compact', action='store_true', help='renumber each individual seed domain')
     args=ap.parse_args()
     case=StartingCase(WORDS[args.case])
-    records=json.loads(args.records.read_text(encoding='utf8'))
+    records=read_records(args.records)
     labels=[tuple(j) for j,_ in records['0']['seed']]
     seeds, raw=seed_orbits(case,labels)
     if set(records) != set(map(str,range(len(seeds)))):
@@ -47,7 +48,12 @@ if __name__ == '__main__':
         if tuple((tuple(j),tuple(m)) for j,m in record['seed'])!=seed or record['orbit_size']!=orbit_size:
             raise ValueError(f'wrong seed in record {k}')
         expected={tuple(tuple(x) for x in r['blocks']) for r in record['inside']}
-        actual=set(solutions(graph,seed))
+        if args.compact:
+            from compact_seed_domains import CompactSeed
+            compact=CompactSeed(graph,seed)
+            actual={compact.original(x) for x in solutions(compact,seed)}
+        else:
+            actual=set(solutions(graph,seed))
         if expected!=actual or len(expected)!=len(record['inside']):
             raise ValueError(f'interior discrepancy for seed {k}')
         counts.append(len(actual))
