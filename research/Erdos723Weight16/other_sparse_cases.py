@@ -65,6 +65,8 @@ if __name__ == '__main__':
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--case', type=int, choices=[0,1,2,3,5],default=1)
     ap.add_argument('--lazy', action='store_true', help='compute compatibility bitsets on demand')
+    ap.add_argument('--compact', action='store_true', help='renumber each seed domain to use smaller bitsets')
+    ap.add_argument('--executable',type=Path,help='use a compiled CompactClique solver on compressed domains')
     ap.add_argument('--row-cache', type=int, default=65000)
     ap.add_argument('--start',type=int,default=0)
     ap.add_argument('--stop',type=int)
@@ -75,7 +77,7 @@ if __name__ == '__main__':
               3:((2,4),(3,5),(4,7),(5,6)), 5:((0,1),(2,3),(4,5),(6,7))}[args.case]
     seeds, raw=seed_orbits(c,selected)
     print('word',hex(c.word),'compatible seeds',raw,'orbits',len(seeds),flush=True)
-    if args.lazy:
+    if args.lazy or args.compact or args.executable:
         from sparse_block_domains import SparseBlockDomains
         g=SparseBlockDomains(c, cache_rows=args.row_cache)
     else:
@@ -85,7 +87,16 @@ if __name__ == '__main__':
     for index,(seed,osize) in enumerate(seeds):
         if index<args.start or args.stop is not None and index>=args.stop:
             continue
-        vals,stats=solve(g,seed)
+        if args.compact or args.executable:
+            from compact_seed_domains import CompactSeed
+            compact=CompactSeed(g,seed)
+            if args.executable:
+                compact_vals,stats=compact.solve_compiled(args.executable)
+            else:
+                compact_vals,stats=solve(compact,seed)
+            vals=[compact.original(val) for val in compact_vals]
+        else:
+            vals,stats=solve(g,seed)
         results=[]
         for val in vals:
             n,miss=check.test(g,val)
