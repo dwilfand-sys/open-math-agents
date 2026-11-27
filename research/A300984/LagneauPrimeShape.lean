@@ -1,13 +1,29 @@
-import OMAStatements.S_oeis_a300984
+import Mathlib
 
 /-!
-The following argument settles the prime-support part of A300984.
+# The first prime-factor conjecture for OEIS A300984
+
+Michel Lagneau posed the conjecture in 2018. This file proves its factorization
+claim, both exponent bounds, the congruence modulo 12, and the minimum 676.
+The other conjecture in the same entry concerns a majority of represented primes.
+
+Proof developed by Codex for @dwilfand-sys. The squarefree-divisor product
+calculation follows the argument used by @anmolspace in open-math-agents #9203.
 Source: https://oeis.org/A300984
-Credit: @dwilfand-sys. The product formula for the squarefree-divisor
-sum is also used by @anmolspace in open-math-agents #9203.
+
+The five axiom reports at the end were checked in the Lean web editor using
+Lean 4.37.0-rc1 and Mathlib on 27 November 2026.
 -/
 
-open Finset OMA.S_oeis_a300984
+namespace Lagneau
+open Finset
+def squarefreeSum (n : ℕ) : ℕ := ∑ d ∈ n.divisors with Squarefree d, d
+
+def nonsquarefreeSum (n : ℕ) : ℕ := ∑ d ∈ n.divisors with ¬ Squarefree d, d
+
+def PrimeShape : Prop := ∀ n : ℕ, 0 < n → Squarefree (squarefreeSum n) →
+    Squarefree (nonsquarefreeSum n) →
+    ∃ p i j : ℕ, p.Prime ∧ n = 2^i * p^j
 
 private theorem sum_formula (n : ℕ) (hn : n ≠ 0) :
     squarefreeSum n = ∏ p ∈ n.primeFactors, (1+p) := by
@@ -32,7 +48,7 @@ private theorem unique_odd {n p q : ℕ} (hn : n ≠ 0) (hs : Squarefree (square
     ← Finset.mul_prod_erase _ (fun x : ℕ ↦ 1+x) hq', ← Nat.mul_assoc]
   exact dvd_mul_of_dvd_left (mul_dvd_mul dp dq) _
 
-theorem lagneau_support : OMA.S_oeis_a300984.PrimeShape := by
+theorem lagneau_support : PrimeShape := by
   intro n hn hs _
   have hn0 := Nat.ne_of_gt hn
   have support : ∃ p : ℕ, p.Prime ∧ p ≠ 2 ∧ n.primeFactors ⊆ {2,p} := by
@@ -57,8 +73,6 @@ theorem lagneau_support : OMA.S_oeis_a300984.PrimeShape := by
       have hz : n.factorization q = 0 := Finsupp.notMem_support_iff.mp hq
       simp [hz]
     _ = _ := by simp [Ne.symm hp2]
-
-
 private theorem another_prime_square {n q : ℕ} (hq : q.Prime)
     (ht : Squarefree (nonsquarefreeSum n)) :
     ∃ p : ℕ, p.Prime ∧ p ≠ q ∧ p*p ∣ n := by
@@ -109,4 +123,63 @@ theorem lagneau_prime_shape {n : ℕ} (hn : n ≠ 0)
     intro hd
     rcases (Nat.dvd_prime hp).mp hd with h | h <;> omega
   refine ⟨p,hp,?_,hq_sq,hp_sq,members⟩
-  omega
+  have hd := Nat.div_add_mod p 12
+  have hr := Nat.mod_lt p (by decide : 0 < 12)
+  generalize he : p % 12 = r at *
+  interval_cases r <;> omega
+
+theorem lagneau_exponents {n : ℕ} (hn : n ≠ 0)
+    (hs : Squarefree (squarefreeSum n)) (ht : Squarefree (nonsquarefreeSum n)) :
+    ∃ p i j : ℕ, p.Prime ∧ p % 12 = 1 ∧ 2 ≤ i ∧ 2 ≤ j ∧ n = 2^i * p^j := by
+  obtain ⟨p,hp,hr,h4,hp2,hf⟩ := lagneau_prime_shape hn hs ht
+  have hne : 2 ≠ p := by omega
+  refine ⟨p,n.factorization 2,n.factorization p,hp,hr,
+    (Nat.prime_two.pow_dvd_iff_le_factorization hn).mp h4,
+    (hp.pow_dvd_iff_le_factorization hn).mp (by simpa [pow_two] using hp2),?_⟩
+  calc
+    n = ∏ q ∈ n.primeFactors, q ^ n.factorization q := Nat.prod_primeFactors_pow_factorization hn
+    _ = _ := by rw [hf]; simp [hne]
+
+theorem lagneau_lower_bound {n : ℕ} (hn : n ≠ 0)
+    (hs : Squarefree (squarefreeSum n)) (ht : Squarefree (nonsquarefreeSum n)) : 676 ≤ n := by
+  obtain ⟨p,i,j,hp,hr,hi,hj,rfl⟩ := lagneau_exponents hn hs ht
+  have h13 : 13 ≤ p := by have := hp.two_le; omega
+  calc
+    676 = 2^2 * 13^2 := by decide
+    _ ≤ 2^i * p^j := Nat.mul_le_mul (Nat.pow_le_pow_right (by decide) hi)
+      ((Nat.pow_le_pow_left h13 2).trans (Nat.pow_le_pow_right hp.pos hj))
+
+theorem lagneau_first_member : Squarefree (squarefreeSum 676) ∧ Squarefree (nonsquarefreeSum 676) := by
+  have h0 : (676:ℕ) ≠ 0 := by decide
+  have hf : (676:ℕ).primeFactorsList = [2,2,13,13] := by
+    symm
+    apply List.Perm.eq_of_pairwise' (r := (· ≤ ·)) (by decide) (Nat.primeFactorsList_sorted 676).pairwise
+    apply Nat.primeFactorsList_unique (by decide)
+    norm_num [List.forall_mem_cons]
+  have hs : squarefreeSum 676 = 42 := by
+    rw [sum_formula 676 h0, ← Nat.toFinset_factors, hf]
+    decide
+  have ht : ∑ d ∈ (676:ℕ).divisors, d = 1281 := by
+    rw [Nat.sum_divisors h0]
+    simp only [← Nat.primeFactorsList_count_eq, ← Nat.toFinset_factors, hf]
+    decide
+  have split : squarefreeSum 676 + nonsquarefreeSum 676 = ∑ d ∈ (676:ℕ).divisors, d :=
+    Finset.sum_filter_add_sum_filter_not _ _ _
+  have hns : nonsquarefreeSum 676 = 1239 := by omega
+  rw [hs, hns]
+  constructor <;> rw [Nat.squarefree_iff_prime_squarefree] <;> intro p hp hd
+  all_goals have le := Nat.le_of_dvd (by decide) hd
+  all_goals have pbound : p ≤ 35 := by nlinarith
+  all_goals interval_cases p <;> norm_num at *
+
+theorem lagneau_minimum : IsLeast {n : ℕ | 0 < n ∧ Squarefree (squarefreeSum n) ∧ Squarefree (nonsquarefreeSum n)} 676 := by
+  refine ⟨⟨by decide, lagneau_first_member⟩,?_⟩
+  intro n hn
+  exact lagneau_lower_bound hn.1.ne' hn.2.1 hn.2.2
+
+#print axioms lagneau_minimum
+#print axioms lagneau_lower_bound
+#print axioms lagneau_exponents
+#print axioms lagneau_support
+#print axioms lagneau_prime_shape
+end Lagneau
