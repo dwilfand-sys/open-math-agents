@@ -77,6 +77,30 @@ theorem impossible_of_check (inside : List (List ℕ)) (b : ℕ)
     · exact anchor)
   rw [checked] at yes
   contradiction
+
+/-- If the listed visible pencils already occur at points different from `p`,
+the ordinary uniqueness of line intersections gives the Boolean test above. -/
+theorem compatible_of_incidence {Point : Type*} (inc : ℕ → Point → Prop)
+    (inside : List (List ℕ)) (p : Point)
+    (known : ∀ row ∈ supportPencils ++ inside,
+      ∃ q, q ≠ p ∧ ∀ l ∈ row, inc l q)
+    (unique : ∀ x y, x ≠ y → ∀ q r, inc x q → inc y q → inc x r → inc y r → q = r) :
+    ∀ x y, inc x p → inc y p → canShare inside x y = true := by
+  intro x y hx hy
+  by_cases hxy : x = y
+  · simp [canShare, hxy]
+  · have unused : (supportPencils ++ inside).any
+          (fun row => row.contains x && row.contains y) = false := by
+      cases check : (supportPencils ++ inside).any
+          (fun row => row.contains x && row.contains y) with
+      | false => rfl
+      | true =>
+        obtain ⟨row, member, hit⟩ := List.any_eq_true.mp check
+        obtain ⟨hitX, hitY⟩ := Bool.and_eq_true_iff.mp hit
+        obtain ⟨q, other, atQ⟩ := known row member
+        exact False.elim (other (unique x y hxy q p
+          (atQ x (List.contains_iff_mem.mp hitX)) (atQ y (List.contains_iff_mem.mp hitY)) hx hy))
+    simp [canShare, hxy, unused]
 '''
 source = head + rows(pencils) + body
 for i, record in enumerate(saved):
@@ -91,6 +115,13 @@ theorem no_hidden_meeting_{i} (Through : ℕ → Prop)
     (cover : ∀ pencil ∈ supportPencils, ∃ x ∈ pencil, Through x)
     (pair : ∀ x y, Through x → Through y → canShare inside{i} x y = true) :
     ¬ (Through {b} ∧ Through 35) := impossible_of_check _ _ check{i} Through cover pair
+
+theorem no_hidden_point_{i} {{Point : Type*}} (inc : ℕ → Point → Prop) (p : Point)
+    (known : ∀ row ∈ supportPencils ++ inside{i}, ∃ q, q ≠ p ∧ ∀ l ∈ row, inc l q)
+    (unique : ∀ x y, x ≠ y → ∀ q r, inc x q → inc y q → inc x r → inc y r → q = r)
+    (cover : ∀ pencil ∈ supportPencils, ∃ x ∈ pencil, inc x p) :
+    ¬ (inc {b} p ∧ inc 35 p) :=
+  no_hidden_meeting_{i} (fun x => inc x p) cover (compatible_of_incidence inc _ p known unique)
 '''
 source += '\nend CarterScalesTerminal\n'
 (base / 'ScalesTerminal.lean').write_bytes(source.encode('utf8'))
