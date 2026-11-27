@@ -1,6 +1,5 @@
 """Check every reported missing meeting directly in the 80-row incidence model."""
 import argparse
-import json
 from functools import cache
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from scales_block_consistency import members
 from scales_fixed_intersection import block_supports
 from verify_case4_relaxations import checked_cover_columns
 from weight16_exact_cover import StartingCase, WORDS
+from sparse_records import read_records
 
 
 def verify(case, records):
@@ -57,4 +57,4 @@ if __name__=='__main__':
     ap.add_argument('case',type=int,choices=range(6))
     ap.add_argument('input',type=Path)
     args=ap.parse_args()
-    verify(StartingCase(WORDS[args.case]), json.loads(args.input.read_text(encoding='utf8')))
+    verify(StartingCase(WORDS[args.case]), read_records(args.input))
