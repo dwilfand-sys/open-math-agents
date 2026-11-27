@@ -4,12 +4,13 @@ import Mathlib
 # Positive square plus squarefree representations
 
 For each of the 101 levels printed in OEIS A085264, a positive integer at
-most 10038 has exactly that many representations. The nine values
+most 10038 has exactly that many representations. The final theorem verifies
+that each witness in the table is the first positive integer at its level. The nine values
 listed in A085266 are exactly the single-representation integers through
 1024. These are finite certificates for the two conjectures.
 
 Source: https://oeis.org/A085264 and https://oeis.org/A085266.
-Proof and computation developed by Codex for @dwilfand-sys. The five
+Proof and computation developed by Codex for @dwilfand-sys. The six
 axiom reports were checked in Mathlib with Lean 4.37.0-rc1, 27 November 2026.
 -/
 
@@ -124,5 +125,65 @@ theorem least_for_listed_levels {j : ℕ} (hj : j ≤ 100) :
     Nat.find_spec existsLevel,fun _ hx => Nat.find_min' existsLevel hx⟩
 #print axioms realizes_levels_through_100
 #print axioms least_for_listed_levels
+
+
+/-- Bit r records whether r is squarefree. The kernel checks every positive entry against the prime sieve. -/
+def squarefreeBits : ℕ := 0x66e8eceeee6eaece66e6eaa4eeee4aaeceeae6eae4eeee68aecee8e6eae8eeee6e2eceee26eaecceee6eaeceeee6eaeccaee6cacceeae6eaec6e6e6e268eece6caeceaee6eaec6eee4eaecaeec6eacceeee2ea6cee6e2eaececec6aaec6eee66aecee2c6eaeceeee6eaeceee66e2ecaeee6e8ecaeee6eaece6ec6eaaceeee4eaeceeec6eaa4e6e42aaeceece2eaeceeee6e2cceeea6eaccceee6eaeceeee66aeceaee6eac8eeee6eaecee4a6eae8eeee6ca6ceeee66aec6eee6eaeceee86eaeceeee6e868eeee2eaece4ee6a8eceeec66aecee8e6eaaceeee66aecece66eaecaeee6e8ecaeee6eae4e6ee6eaaceeae4eaec6eee6cae4eeee6aaeceece6eaeceee26e2eceeea62a6cccee6eaecceee6e8eceaee6eacceeee6ea6cee2e6eae8eaee6caeceeee4eaec6eee6eaeceeec6eaecee6e6ca6ceeee2aaececee2eaaceeee66aeceeae2eaeceeee2e2ecece66eaecaeee6e8eceeec6eaece6e66eaaceeee4eaece6ee6eae4eeee2aae4eece6eaccaeee6e2eceeea6eaecceae66aeceeee6eaa8eaee6e8cceece6caccec6e6e2e8ceee6caec6eee6eaec6eea6eaeceee46e8eceeee6ea6ceee626aece4ee6eaece6ee66aaceeae6eaececee6eaeceee66eaecaeee6e8a4ceee6eaece6ae6aaaceeee4caeceeee6eae4eeee4aacceec66eaeceeee6e26ceeea6e8ecceee6eaeceeee6caeceaee6ea4ceeee6eaecea6e6eae8eeee4cae4eeee6e2ec6eee6eaecee6c66aeceeee6aa6caeee2aaececee6eaecee6e66aeceeae6e2eceaee6eaecaec66aaeca6ec6e8eceeee6e2ece6ee6eaace6ee4ea6ceeee2eae4eeee6aaccecce6eaeceeae6e2eceeea662ecceee6e2e8eeee6eaeceace6eacceeee6eaecae6a6eaa824ee6caeceeea6eaec6eec6e8eceeec6e8ecceee6ea6ceeee2eaececee6e8aceeee66aececae6eaece6ee6eacceee66eae4aeee6e8eceeae2eaece6ee6caaceeee4eaeceeee4eac4eee66aaeceece2eaeceaee6e2ecceea6ea6cceee6eaeceeee6ea6ceaee66acceaec6eaecee6e4eae8eeee6cae8e6ee6eaec6e6e6eaaceeec6aaeceece6ea64eeee2eaececee6eaecee6e662eceeae6eaecaeee6eaeceee46eacc2eee6e8c8eee62eaece6ee6eaaceeea0eae8eeee6eac4eeee68aeceece6e8eceeee462eceeea6eae8ceee6eaeceece6eaaceaee6eacceeee6eaec6e6e6eae8eeea6caec6eee6e8e42eee6eaaceeec6eaeceeee6ea6ceeee2eaacecee6eaececee66aeceeae6eaeceeee6eae0e6e46eaecaeae6e8ececee6cae4e6ee6eaaceaee4eaeceee66eae4eeae6a8eceece6eaecceee6e2eceeea6ca6c46ee6ea6ceeee6eaeceaee6eacceeee4eaecee6e2eae8eeee6caecee666eaec6eee6aaeceeec6eaccecee6ea6caeee2eaececee6e2eceeee66aec8eae6eaec6eec6eaeceee66eaecaeee6e8ace6ee6eaece6ee26a8ceeee4ea4cceee6eae4eeee6aaecaece66aeceaae0e2e8eeea6eaeccece6eaece6ee4eaeceaee6eacc6eee6eaecee6a6eae8ceee6c8eceeee6eaec6cee6eaecee6c6eaeceeee6ea2ceeee2eaececee6aaeceee666aeceeae6eae4eeee6eaece6a66eaacaeee6c8ecaeee6eaece6ee4eaaceee64eaeceeee6eae4e6ee6a0cccece6eaeceeee6e2eceeea6ea6c8aee6eaeceaee6eaeceaee4eacceeec6eaecea6e6eae8ee6e4caece6ee6aaec6eee6eaeceeec6eaeceeee6ea6ce4ee2e2acecee6eaecacee66aeceeac2eaeceeee6eaeceee64eaeca6ee6e8cceeee2eaece6ee6ea8ceeee4eaecee
+
+private def checkBlocks (f : ℕ → Bool) : Bool :=
+  (List.range 40).all fun block => (List.range 256).all fun col => f (256*block+col)
+
+private theorem of_checkBlocks {f : ℕ → Bool} (h : checkBlocks f = true)
+    {n : ℕ} (hn : n < 10240) : f n = true := by
+  have hb := List.all_eq_true.mp h (n/256) (List.mem_range.mpr (by omega))
+  have hc := List.all_eq_true.mp hb (n%256) (List.mem_range.mpr (by omega))
+  simpa only [Nat.div_add_mod] using hc
+
+private def entryOK (r : ℕ) : Bool :=
+  decide (0 < r → r ≤ 10038 → squarefreeBits.testBit r = primeCheck r)
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1600000 in
+private theorem allEntries : checkBlocks entryOK = true := by decide +kernel
+
+private theorem bit_iff {r : ℕ} (hpos : 0 < r) (hb : r ≤ 10038) :
+    squarefreeBits.testBit r = true ↔ Squarefree r := by
+  have h := of_checkBlocks allEntries (n:=r) (by omega)
+  have he : 0 < r → r ≤ 10038 → squarefreeBits.testBit r = primeCheck r := of_decide_eq_true h
+  rw [he hpos hb, primeCheck_iff hpos (by omega)]
+
+def maskCount (n : ℕ) : ℕ := ((Finset.range 101).filter fun k =>
+  0 < k ∧ k^2 < n ∧ squarefreeBits.testBit (n-k^2) = true).card
+
+theorem maskCount_eq {n : ℕ} (hb : n ≤ 10038) : maskCount n = representations n := by
+  rw [← primeCount_eq (n:=n) (by omega)]
+  unfold maskCount primeCount
+  congr 1
+  ext k
+  simp only [Finset.mem_range, Finset.mem_filter]
+  constructor <;> rintro ⟨hl,hk,hn,h⟩ <;> refine ⟨hl,hk,hn,?_⟩
+  · exact (primeCheck_iff (by omega) (by omega : n-k^2 < 101^2)).mpr ((bit_iff (by omega) (by omega)).mp h)
+  · exact (bit_iff (by omega) (by omega : n-k^2 ≤ 10038)).mpr ((primeCheck_iff (by omega) (by omega)).mp h)
+
+private def earliestOK (n : ℕ) : Bool :=
+  decide (0 < n → n ≤ 10038 → witness (maskCount n) ≤ n)
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 6000000 in
+private theorem allEarliest : checkBlocks earliestOK = true := by decide +kernel
+
+theorem exact_first_occurrences {j : ℕ} (hj : j ≤ 100) :
+    IsLeast {n : ℕ | 0 < n ∧ representations n = j} (witness j) := by
+  have h := List.all_eq_true.mp level_cert j (List.mem_range.mpr (by omega))
+  have hw : 0 < witness j ∧ witness j ≤ 10038 ∧ primeCount (witness j) = j := of_decide_eq_true h
+  refine ⟨⟨hw.1,(primeCount_eq (n:=witness j) (by omega)).symm.trans hw.2.2⟩,?_⟩
+  rintro n ⟨hn,hr⟩
+  by_cases hb : n ≤ 10038
+  · have hmin : 0 < n → n ≤ 10038 → witness (maskCount n) ≤ n :=
+      of_decide_eq_true (of_checkBlocks allEarliest (n:=n) (by omega))
+    simpa only [maskCount_eq hb, hr] using hmin hn hb
+  · omega
+
+#print axioms exact_first_occurrences
 
 end SquarefreeCounts
