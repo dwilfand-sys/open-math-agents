@@ -45,6 +45,10 @@ class BlockGraph:
             labels.append(dbl)
 
         self.compat = [[None] * 8 for _ in range(8)]
+        possible = [defaultdict(list) for _ in range(8)]
+        for a in range(8):
+            for (j, m), domain in labels[a].items():
+                possible[a][j].append((m, domain))
         for a, blocks in enumerate(self.blocks):
             for b in range(a + 1, 8):
                 shared = (a, b) if (a, b) in case.dd_col else None
@@ -52,6 +56,17 @@ class BlockGraph:
                     matrix = []
                     for r, (doubles, _) in enumerate(self.blocks[u]):
                         options = self.full[v] if shared is None else labels[v][shared, dict(doubles)[shared]]
+                        # Two distinct double points can share a third A row h.
+                        # Then their B sets must be disjoint even if h's block
+                        # has not yet been selected.
+                        for edge, matched in doubles:
+                            h = edge[1] if edge[0] == u else edge[0]
+                            if h == v:
+                                continue
+                            other = tuple(sorted((v, h)))
+                            for alternate, domain in possible[v][other]:
+                                if matched & alternate:
+                                    options &= ~domain
                         conflict = 0
                         for j, pairs in all_pairs[u][r]:
                             if shared is not None and j == shared:
