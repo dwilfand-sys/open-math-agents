@@ -1635,12 +1635,570 @@ private theorem covers_mem {k J : ℕ} {cs : List (ℕ × ℕ × ℤ)} (hk : k �
     · obtain ⟨row,hr,hl,hu⟩ := ih (by omega : c.2.1+1 ≤ J) ht
       exact ⟨row,by simp [hr],hl,hu⟩
 
-set_option maxRecDepth 2000000 in
+private def verifiedRow (c : ℕ × ℕ × ℤ) : Prop :=
+  300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
+    profileChecks c.1 c.2.1 c.2.2 ∧ costUpper c.2.1 ≤ c.2.2
+
+/- Check each interval separately so kernel reduction can release its arithmetic
+   intermediates before the next interval. -/
+set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
+private theorem moderateRow300 : verifiedRow (300, 307, 227) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow308 : verifiedRow (308, 314, 231) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow315 : verifiedRow (315, 323, 238) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow324 : verifiedRow (324, 332, 244) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow333 : verifiedRow (333, 341, 251) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow342 : verifiedRow (342, 355, 259) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow356 : verifiedRow (356, 368, 269) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow369 : verifiedRow (369, 385, 280) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow386 : verifiedRow (386, 409, 293) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow410 : verifiedRow (410, 430, 312) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow431 : verifiedRow (431, 454, 327) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow455 : verifiedRow (455, 484, 347) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow485 : verifiedRow (485, 517, 371) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow518 : verifiedRow (518, 550, 396) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow551 : verifiedRow (551, 592, 422) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow593 : verifiedRow (593, 643, 454) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow644 : verifiedRow (644, 710, 494) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow711 : verifiedRow (711, 782, 546) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow783 : verifiedRow (783, 865, 605) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow866 : verifiedRow (866, 964, 669) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow965 : verifiedRow (965, 1082, 747) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow1083 : verifiedRow (1083, 1228, 842) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow1229 : verifiedRow (1229, 1400, 957) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow1401 : verifiedRow (1401, 1624, 1093) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow1625 : verifiedRow (1625, 1885, 1268) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow1886 : verifiedRow (1886, 2213, 1477) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow2214 : verifiedRow (2214, 2501, 1658) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow2502 : verifiedRow (2502, 2810, 1852) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow2811 : verifiedRow (2811, 3175, 2085) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow3176 : verifiedRow (3176, 3613, 2359) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow3614 : verifiedRow (3614, 4153, 2693) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow4154 : verifiedRow (4154, 4805, 3100) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow4806 : verifiedRow (4806, 5602, 3595) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow5603 : verifiedRow (5603, 6574, 4198) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow6575 : verifiedRow (6575, 7745, 4933) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow7746 : verifiedRow (7746, 9163, 5819) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow9164 : verifiedRow (9164, 10868, 6888) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow10869 : verifiedRow (10869, 12905, 8173) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow12906 : verifiedRow (12906, 15340, 9709) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow15341 : verifiedRow (15341, 18230, 11541) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow18231 : verifiedRow (18231, 21628, 13710) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow21629 : verifiedRow (21629, 25645, 16264) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow25646 : verifiedRow (25646, 30356, 19280) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow30357 : verifiedRow (30357, 35902, 22818) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow35903 : verifiedRow (35903, 42385, 26976) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow42386 : verifiedRow (42386, 47546, 30284) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow47547 : verifiedRow (47547, 53065, 33821) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow53066 : verifiedRow (53066, 59170, 37742) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow59171 : verifiedRow (59171, 65906, 42074) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow65907 : verifiedRow (65907, 73363, 46859) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow73364 : verifiedRow (73364, 81562, 52146) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow81563 : verifiedRow (81563, 90625, 57967) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow90626 : verifiedRow (90626, 100606, 64397) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow100607 : verifiedRow (100607, 111608, 71479) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow111609 : verifiedRow (111609, 123731, 79287) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow123732 : verifiedRow (123732, 137092, 87888) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow137093 : verifiedRow (137093, 151816, 97368) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow151817 : verifiedRow (151817, 168016, 107812) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow168017 : verifiedRow (168017, 185867, 119305) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow185868 : verifiedRow (185868, 205514, 131967) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow205515 : verifiedRow (205515, 227137, 145904) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow227138 : verifiedRow (227138, 250933, 161241) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow250934 : verifiedRow (250934, 277159, 178125) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow277160 : verifiedRow (277160, 306017, 196728) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow306018 : verifiedRow (306018, 337817, 217203) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow337818 : verifiedRow (337818, 372854, 239765) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow372855 : verifiedRow (372855, 411418, 264618) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow411419 : verifiedRow (411419, 453940, 291986) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow453941 : verifiedRow (453941, 500809, 322156) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow500810 : verifiedRow (500810, 552482, 355415) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow552483 : verifiedRow (552483, 609460, 392084) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow609461 : verifiedRow (609461, 672335, 432525) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow672336 : verifiedRow (672336, 741674, 477145) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow741675 : verifiedRow (741675, 808306, 519980) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow808307 : verifiedRow (808307, 851143, 547552) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow851144 : verifiedRow (851144, 896314, 576584) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow896315 : verifiedRow (896315, 936791, 602620) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow936792 : verifiedRow (936792, 979100, 629835) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem moderateRow979101 : verifiedRow (979101, 1000000, 643264) := by
+  unfold verifiedRow profileChecks
+  decide +kernel
+
 private theorem checks : ∀ c ∈ rows, 300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
     profileChecks c.1 c.2.1 c.2.2 ∧ costUpper c.2.1 ≤ c.2.2 := by
-  unfold profileChecks
-  decide +kernel
+  change ∀ c ∈ rows, verifiedRow c
+  unfold rows
+  refine List.forall_mem_cons.mpr ⟨moderateRow300, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow308, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow315, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow324, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow333, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow342, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow356, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow369, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow386, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow410, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow431, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow455, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow485, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow518, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow551, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow593, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow644, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow711, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow783, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow866, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow965, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow1083, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow1229, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow1401, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow1625, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow1886, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow2214, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow2502, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow2811, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow3176, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow3614, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow4154, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow4806, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow5603, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow6575, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow7746, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow9164, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow10869, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow12906, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow15341, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow18231, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow21629, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow25646, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow30357, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow35903, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow42386, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow47547, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow53066, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow59171, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow65907, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow73364, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow81563, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow90626, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow100607, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow111609, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow123732, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow137093, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow151817, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow168017, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow185868, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow205515, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow227138, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow250934, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow277160, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow306018, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow337818, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow372855, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow411419, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow453941, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow500810, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow552483, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow609461, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow672336, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow741675, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow808307, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow851144, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow896315, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow936792, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨moderateRow979101, ?_⟩
+  simp
 
 private theorem rho_nonneg' {S : Finset ℕ} (h : ∀ p ∈ S, 2 < p) : 0 ≤ largeRho S := by
   apply Finset.prod_nonneg
