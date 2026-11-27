@@ -1,0 +1,14 @@
+{"limit": 1800000000, "square_count": 4435, "nonzero_harmonics": 4433, "zero_harmonic_primes": [], "prime_square_passes": [], "table_SHA256": "1ab061819ebe40ec106b6d92a11a13eef02639fd18d8cbb6bfd4c24820ef2733"}
+{"n": 12, "p": 2, "exponent": 4, "modulus": 16, "residue": 13, "method": "finite multinomial sum", "reduced_index": 12}
+{"n": 30, "p": 3, "exponent": 2, "modulus": 9, "residue": 4, "method": "finite multinomial sum", "reduced_index": 30}
+{"n": 902, "p": 2, "exponent": 2, "modulus": 4, "residue": 3, "method": "finite multinomial sum", "reduced_index": 902}
+{"n": 1360, "p": 2, "exponent": 8, "modulus": 256, "residue": 145, "method": "finite multinomial sum", "reduced_index": 1360}
+{"n": 2450, "p": 2, "exponent": 2, "modulus": 4, "residue": 3, "method": "finite Cartier expansion", "reduced_index": 2450}
+{"n": 3730, "p": 5, "exponent": 2, "modulus": 25, "residue": 21, "method": "finite multinomial sum", "reduced_index": 746}
+{"n": 21475, "p": 5, "exponent": 4, "modulus": 625, "residue": 476, "method": "finite Cartier expansion", "reduced_index": 4295}
+{"n": 74945, "p": 13, "exponent": 2, "modulus": 169, "residue": 53, "method": "finite Cartier expansion", "reduced_index": 5765}
+{"n": 82208, "p": 2, "exponent": 10, "modulus": 1024, "residue": 897, "method": "finite Cartier expansion", "reduced_index": 82208}
+{"n": 88282, "p": 2, "exponent": 2, "modulus": 4, "residue": 3, "method": "finite Cartier expansion", "reduced_index": 88282}
+{"n": 254677, "p": 17, "exponent": 2, "modulus": 289, "residue": 188, "method": "finite Cartier expansion", "reduced_index": 14981}
+{"n": 1316632279, "p": 31, "exponent": 2, "modulus": 961, "residue": 621, "method": "finite Cartier expansion", "reduced_index": 42472009}
+{"n": 1793930422, "p": 37, "exponent": 2, "modulus": 1369, "residue": 630, "method": "finite Cartier expansion", "reduced_index": 48484606}

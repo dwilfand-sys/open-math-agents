@@ -7,7 +7,7 @@ Let T(n) be the coefficient of xⁿ in (1+x+x²)ⁿ. In 2016 Zhi-Wei Sun asked w
 | 1,316,632,279 | 31 · 42,472,009 |
 | 1,793,930,422 | 2 · 37 · 24,242,303 |
 
-Both numbers exceed the largest listed member, 254,677, and are squarefree. Either one disproves the exhaustion conjecture. The [exhaustive census](census/README.md) has verified all terms through 200,000,000. Their positions in the increasing sequence have not yet been determined. Sun’s separate conjecture about congruence modulo n² is a different question.
+Both numbers exceed the largest listed member, 254,677, and are squarefree. Either one disproves the exhaustion conjecture. The [exhaustive census](census/README.md) has verified all terms through 650,000,000. Consequently 650,000,000 < a(12) ≤ 1,316,632,279. The exact twelfth term is undetermined. The same census verifies the separate square-modulus conjecture for every composite up to 650,000,000. Sun’s separate conjecture about congruence modulo n² is a different question.
 
 ## Proof
 
