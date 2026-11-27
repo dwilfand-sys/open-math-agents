@@ -51,7 +51,7 @@ private lemma prime_block (n : ℕ) (hn : 5 < n) :
 theorem primeCountWheel (J : ℕ) (hJ : 10 ≤ J) :
     15 * ((Finset.range (2*J+2)).filter (fun p => 2 < p ∧ Nat.Prime p)).card ≤ 8*J+34 := by
   induction J using Nat.strong_induction_on with
-  | ind J ih =>
+  | h J ih =>
     by_cases hs : J < 25
     · have base : ∀ j : Fin 25, 10 ≤ j.val →
           15 * ((Finset.range (2*j.val+2)).filter
