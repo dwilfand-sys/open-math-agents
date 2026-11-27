@@ -34,6 +34,8 @@ python lagneau_sample_audit.py holdout.json
 
 ## Analytic bounds
 
+A finite sieve through one billion, combined with tests on four ranges of represented primes, gives a **52.842235% upper bound** on the limit superior of the proportion of distinct represented primes in A082539. Two independent sieves reproduced all 3,203,190 extra prime-pair conditions. This bound leaves the strict majority open. [Calculation and reproduction commands](A300984LargeSingletons.md)
+
 The independently reviewed one-outer-prime sieve and the three-witness representation estimate give a **55.3131% upper bound** on the limiting upper proportion. Here “one outer prime” describes a fixed obstruction divisor with at most one prime factor greater than 61. This result and the finite sample address different quantities. [Derivation](Density.md)
 
 The numerical certificates run with Node.js and the Python standard library.
