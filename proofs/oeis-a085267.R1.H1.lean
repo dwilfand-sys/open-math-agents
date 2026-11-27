@@ -7,7 +7,8 @@ import Mathlib
 Source: https://oeis.org/A085267
 Credit: @dwilfand-sys
 The kernel certificate tests seventeen positive square roots through 365000.
-The initial segment through 61 uses the full representation count.
+The initial segment through 61 uses the full representation count. Each of the
+remaining inputs through 365000 has two witnesses among the first seventeen roots.
 -/
 
 namespace A085267Finite
