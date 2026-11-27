@@ -14,6 +14,12 @@ def read_records(path):
     return raw
 
 
+def same_terminal_data(left,right):
+    def normalized(row):
+        return (row['seed'],row['orbit_size'],sorted(row['inside'],key=lambda v:v['blocks']))
+    return normalized(left)==normalized(right)
+
+
 if __name__=='__main__':
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('output',type=Path)
@@ -23,9 +29,10 @@ if __name__=='__main__':
     merged={}
     for path in args.inputs:
         for i,row in read_records(path).items():
-            if i in merged and merged[i]!=row:
+            if i in merged and not same_terminal_data(merged[i],row):
                 raise ValueError(f'inconsistent searches at seed {i}')
-            merged[i]=row
+            if i not in merged or row.get('nodes_by_depth'):
+                merged[i]=row
     if set(merged)!=set(map(str,range(args.seeds))):
         raise ValueError('incomplete or extra seed range')
     raw=json.dumps({i:merged[str(i)] for i in range(args.seeds)},separators=(',',':')).encode('ascii')
