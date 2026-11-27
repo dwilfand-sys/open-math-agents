@@ -1,0 +1,74 @@
+{
+  "format": "sparse-seed-parts-v1",
+  "seeds": 131,
+  "parts": [
+    {
+      "file": "Case5SparseRecords.000-007.json",
+      "sha256": "da79ae93161f05d95c06f44200374673c4a446abb3a052cffeacf6e296797bbf"
+    },
+    {
+      "file": "Case5SparseRecords.008-015.json",
+      "sha256": "bc4dd9cddccab5452099a1c37e47ae69435b3441bb86b7a1e2d0c8e807a0d576"
+    },
+    {
+      "file": "Case5SparseRecords.016-023.json",
+      "sha256": "5d405634b366caa6a8379b1252163638d1160d925041e151514e58c3fbf58939"
+    },
+    {
+      "file": "Case5SparseRecords.024-031.json",
+      "sha256": "08300e40268c30201f9f0e72b88055f0b408009f5d8d9032e161d31576c0acf4"
+    },
+    {
+      "file": "Case5SparseRecords.032-039.json",
+      "sha256": "6bdc9cb53390e4b9322fa4384ce11100c184300cc0345dec0e0fbba1470236c7"
+    },
+    {
+      "file": "Case5SparseRecords.040-047.json",
+      "sha256": "c4d5bd6f4d2488c56d07710076ed4dcf7f48adf793365a5ec878b819751ab264"
+    },
+    {
+      "file": "Case5SparseRecords.048-055.json",
+      "sha256": "3c97b9e13dfe202b2fbd235d133a4078b503446997d87192123c0119c095f752"
+    },
+    {
+      "file": "Case5SparseRecords.056-063.json",
+      "sha256": "f1fd8a2100b15b8e464f3dcd426872031c08bf19c84abedf158d47803bb54d0d"
+    },
+    {
+      "file": "Case5SparseRecords.064-071.json",
+      "sha256": "85c51badabe861f3243142ec75e6fc89ecd6b36245ec67d1506c95707e69d5d1"
+    },
+    {
+      "file": "Case5SparseRecords.072-079.json",
+      "sha256": "5cdf817c68316b7ae5d98e83aa0930f51f8266ce2ac1797d7050765fafb79341"
+    },
+    {
+      "file": "Case5SparseRecords.080-087.json",
+      "sha256": "5a797cca3bd35b2c8a2a84322d28bd536942ab2ff0700839bcf95ca542e7f55d"
+    },
+    {
+      "file": "Case5SparseRecords.088-095.json",
+      "sha256": "3374c8570cf51aba1fceb636aafc4bd41f196e2b9c40a58131357112d36b25e2"
+    },
+    {
+      "file": "Case5SparseRecords.096-103.json",
+      "sha256": "3c5d92d93c2cda3e32c61faaf4cb024c942ed00ef4d46a2606539f0c8ebda3c4"
+    },
+    {
+      "file": "Case5SparseRecords.104-111.json",
+      "sha256": "df2e00b7e7a025cf9c82cce430f18782004d5ee1f5d1c613336ea6b2f4a07556"
+    },
+    {
+      "file": "Case5SparseRecords.112-119.json",
+      "sha256": "d02ee23bcb01644c2e676de7685fbb2f8305a69c191040c2c6411d6ef13448d9"
+    },
+    {
+      "file": "Case5SparseRecords.120-127.json",
+      "sha256": "c87b44eeebed54f2eb6a2cb3839c2f6239a07bc59952286bd251ef59704d6ded"
+    },
+    {
+      "file": "Case5SparseRecords.128-130.json",
+      "sha256": "efa34d6c1e4f57e2cb720a0d6487518f17ed2fc566edea23415ce1ffe3e3313c"
+    }
+  ]
+}
