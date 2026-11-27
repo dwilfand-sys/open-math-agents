@@ -44,7 +44,7 @@ function flagComposites(array,rows,low,length) {
     for(let n=begin+(residue-begin%q+q)%q-low;n<length;n+=q) array[n]=1;
   }
 }
-function build(D,B,upper,blockSize=65536) {
+function build(D,B,upper,blockSize=65536,fixedLower=null) {
   if(B<73 || !Number.isSafeInteger(D) || !Number.isSafeInteger(upper) ||
      upper<=D || upper>10**10 || D<10000 || blockSize<1 || !Number.isSafeInteger(blockSize)) {
     throw new Error('Require B >= 73, D >= 10000, and D < upper <= 10^10.');
@@ -59,7 +59,12 @@ function build(D,B,upper,blockSize=65536) {
   const flags=slopes.map(()=>new Uint8Array(blockSize));
   const factors=smallThresholds.map(()=>Array(masks).fill(scale));
   const counts=smallThresholds.map(()=>Array(masks).fill(0));
-  const boundaries=[...new Set(smallThresholds.map(t=>Math.floor(D/t)).concat(upper))].sort((a,b)=>a-b);
+  if(fixedLower!==null && (!Number.isSafeInteger(fixedLower) || fixedLower<D || fixedLower>=upper)) {
+    throw new Error('The extension must start beyond the old divisor search.');
+  }
+  const boundaries=fixedLower===null
+    ? [...new Set(smallThresholds.map(t=>Math.floor(D/t)).concat(upper))].sort((a,b)=>a-b)
+    : [fixedLower, upper];
   for(let z=1;z<boundaries.length;z++) {
     const left=boundaries[z-1], right=boundaries[z];
     const start=Math.floor((left-1)/6)+1, stop=Math.floor((right-1)/6)+1;
