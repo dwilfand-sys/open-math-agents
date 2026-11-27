@@ -17,7 +17,7 @@ Each of the two forced double points has three possible matchings. One of their 
 | B6 passes through A1∩A2 | 6, 17, 26, 35 | 0, 35, 41, 61 | 1 |
 | B6 misses both double points | 7, 17, 25, 35 | 0, 35, 41, 61 | 320 |
 
-Taking group images of the surviving intersections removes 49 of the 459 candidates. The 410 survivors occupy 45 of the 52 original orbits. This excludes every singleton-A orbit and four of the 48 empty-A orbits. Pairwise consistency of full A blocks leaves all 45 of these orbits represented. Global feasibility of either of the two starting cases is open in this calculation.
+Taking group images of the surviving intersections removes 49 of the 459 candidates. The 410 survivors occupy 45 of the 52 original orbits. This excludes every singleton-A orbit and four of the 48 empty-A orbits. Pairwise consistency of full A blocks leaves all 45 of these orbits represented. The complete search for both starts is recorded in [ScalesExclusion.md](ScalesExclusion.md).
 
 In either case B35 has 55 B-line partners outside the support. Six meet it at the two double points. The remaining 49 B-lines are edges of a 7-regular graph on the 14 support indices outside B35. Its seven hidden points must partition these edges into seven perfect matchings. Other B-pair intersection constraints continue to apply across those matchings.
 
