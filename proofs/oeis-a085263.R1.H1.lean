@@ -1530,7 +1530,7 @@ theorem level_count_of_cover {n J b g k : ℕ} {S : Finset ℕ} (D : PrimeEnumer
   have hc : ((candidateSet D.ps J b).card:ℚ) ≤ (g:ℚ) +
       ∑ p ∈ (largePrimeSet (2*J+1)) \ S, ((hitSet n p D.ps J b).card:ℚ) := by
     exact_mod_cast hcover
-  have combined := hc.trans (add_le_add_left loss (g:ℚ))
+  have combined := hc.trans (add_le_add (le_refl (g : ℚ)) loss)
   have strict : (k:ℚ) < g := by
     by_cases h3 : 3∈S <;> simp only [h3,if_true,if_false] at combined budget <;> nlinarith
   exact_mod_cast strict
@@ -1599,6 +1599,7 @@ open OMA.S_oeis_a085263
 
 private def levelCutoff (k : ℕ) : ℕ := 100*(k+300000)+15*k^2
 
+set_option maxRecDepth 4096 in
 private theorem level_input_le {n k : ℕ} (hn : 0<n) (hlevel : representations n ≤ k) :
     n ≤ (2 * levelCutoff k + 2)^2 := by
   classical
@@ -1661,8 +1662,10 @@ private theorem level_input_le {n k : ℕ} (hn : 0<n) (hlevel : representations 
       change u ≤ 2*J+1 at hupper
       omega
     exact hcontr (hN.trans (Nat.pow_le_pow_left hlen 2))
-  have hlin : 100*(k+300000) < J := by unfold levelCutoff at hfar; omega
-  have hquad : 15*k^2 < J := by unfold levelCutoff at hfar; omega
+  have hlin : 100*(k+300000) < J :=
+    lt_of_le_of_lt (Nat.le_add_right (100*(k+300000)) (15*k^2)) hfar
+  have hquad : 15*k^2 < J :=
+    lt_of_le_of_lt (Nat.le_add_left (15*k^2) (100*(k+300000))) hfar
   have hJ : 1000000 ≤ J := by omega
   obtain ⟨D⟩ := A085265InclusionExclusion.prime_enumeration S hS
   have hcover := A085265InclusionExclusion.candidate_card_le_good_add_hits D hreg hb hfit hupper hpar
@@ -1670,7 +1673,10 @@ private theorem level_input_le {n k : ℕ} (hn : 0<n) (hlevel : representations 
   let good := (Finset.range J).filter fun x => Squarefree (n-(2*x+b)^2)
   let roots := (Finset.range (n.sqrt + 1)).filter fun w =>
     0 < w ∧ w^2 < n ∧ Squarefree (n-w^2)
-  let emb : ℕ ↪ ℕ := ⟨fun x => 2*x+b, by intro x y h; omega⟩
+  let emb : ℕ ↪ ℕ := ⟨fun x => 2*x+b, by
+    intro x y h
+    change 2*x+b = 2*y+b at h
+    omega⟩
   have sub : good.map emb ⊆ roots := by
     intro w hw
     obtain ⟨x,hx,rfl⟩ := Finset.mem_map.mp hw
@@ -1679,8 +1685,13 @@ private theorem level_input_le {n k : ℕ} (hn : 0<n) (hlevel : representations 
     have hsqrt : 2*x+b ≤ n.sqrt := Nat.le_sqrt'.mpr hsq.le
     change 2*x+b ∈ (Finset.range (n.sqrt + 1)).filter _
     exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), by omega, hsq, hs⟩
+  have heq : roots.card = representations n := by
+    unfold representations
+    apply congrArg Finset.card
+    ext w
+    simp only [roots, Finset.mem_filter]
   have hle : good.card ≤ representations n := by
-    simpa only [Finset.card_map] using (Finset.card_le_card sub)
+    simpa only [Finset.card_map, heq] using (Finset.card_le_card sub)
   change k < good.card at hg
   omega
 
