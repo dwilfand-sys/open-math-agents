@@ -1,6 +1,5 @@
 """Orbit representatives of the mandatory exterior point on B6 and B35."""
 from collections import Counter
-from functools import cache
 
 from anchor_orbits import permutation_images, line_image
 from inside_blocks import bits, local_choices
@@ -53,7 +52,7 @@ def compatible(a, block, candidate):
             return m in singles
         return (j, m) in doubles
     return all((x & m).bit_count() <= 1 for x in singles) and all(
-        (x & m).bit_count() <= 1 for _, x in doubles)
+        (x & m).bit_count() + len(set(edge) & set(j)) <= 1 for edge, x in doubles)
 
 
 if __name__ == '__main__':
