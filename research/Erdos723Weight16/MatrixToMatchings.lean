@@ -12,6 +12,34 @@ abbrev Point := (Pair ⊕ (Fin 8 × Fin 4)) ⊕ Fin 51
 def pairPoint (a b : Fin 8) (h : a < b) : Point :=
   .inl (.inl ⟨(a,b),h⟩)
 
+def orderedPairs : List (Fin 8 × Fin 8) :=
+  [(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(1,2),(1,3),(1,4),(1,5),
+   (1,6),(1,7),(2,3),(2,4),(2,5),(2,6),(2,7),(3,4),(3,5),(3,6),(3,7),
+   (4,5),(4,6),(4,7),(5,6),(5,7),(6,7)]
+
+def wordOf {T : Type*} (entries : List (T × ℕ)) (selected : T → Bool) : ℕ :=
+  (entries.map fun e => if selected e.1 then 2 ^ e.2 else 0).foldr Nat.lor 0
+
+/-- The project's OR fold has a set bit precisely at each selected index. -/
+theorem wordOf_testBit {T : Type*} (entries : List (T × ℕ)) (selected : T → Bool) (k : ℕ) :
+    (wordOf entries selected).testBit k =
+      entries.any (fun e => selected e.1 && decide (e.2 = k)) := by
+  induction entries with
+  | nil => simp [wordOf]
+  | cons e rest ih =>
+    change (((if selected e.1 then 2 ^ e.2 else 0) ||| wordOf rest selected).testBit k) =
+      ((selected e.1 && decide (e.2 = k)) || rest.any _)
+    rw [Nat.testBit_or,ih]
+    cases h : selected e.1 <;> simp [h,Nat.testBit_two_pow]
+
+/-- Recover all twenty-eight edge predicates in the exact order used in
+the upstream hexadecimal constants, using the library's bitwise OR. -/
+theorem encodedGraph_at (G : Fin 8 → Fin 8 → Bool) (i : Fin 28) :
+    (wordOf orderedPairs.zipIdx (fun e => G e.1 e.2)).testBit i.val =
+      G (orderedPairs[i.val]!).1 (orderedPairs[i.val]!).2 := by
+  rw [wordOf_testBit]
+  fin_cases i <;> simp [orderedPairs]
+
 /-- The normalization in the upstream matrix specifies the joint occurrence
 of any two distinct A-lines at a single explicitly labeled point. -/
 theorem commonA_iff
