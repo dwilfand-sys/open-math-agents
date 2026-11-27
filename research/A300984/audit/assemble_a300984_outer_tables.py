@@ -1,6 +1,6 @@
 """Pack the independently replayed 30,000-to-50,000 center batches."""
 
-from gzip import compress
+from gzip import compress, decompress
 from hashlib import sha256
 from pathlib import Path
 
@@ -11,8 +11,13 @@ EXPECTED = {
 }
 
 for sign, (rows, digest) in EXPECTED.items():
-    data = "".join((ROOT / f"CunninghamOuter{sign}{end}.txt").read_text()
-                   for end in range(31000, 51000, 1000)).encode("ascii")
+    blocks = [ROOT / f"CunninghamOuter{sign}{start}To{start+5000}.txt.gz"
+              for start in range(30000, 50000, 5000)]
+    if all(path.exists() for path in blocks):
+        data = b"".join(decompress(path.read_bytes()) for path in blocks)
+    else:
+        data = "".join((ROOT / f"CunninghamOuter{sign}{end}.txt").read_text()
+                       for end in range(31000, 51000, 1000)).encode("ascii")
     assert len(data.splitlines()) == rows and sha256(data).hexdigest() == digest
     output = ROOT / f"CunninghamOuter{sign}30000To50000.txt.gz"
     output.write_bytes(compress(data, compresslevel=9, mtime=0))

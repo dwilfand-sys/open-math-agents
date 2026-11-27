@@ -67,9 +67,12 @@ function readStars(name,gated=false,extension=false) {
 }
 const rows = starName ? readStars(starName) : [];
 const {jointStars} = require('./lagneau_joint_star_bound.cjs');
+const audit=process.argv[20]?require('./lagneau_record_prior.cjs').create(process.argv[20]):null;
 const [mandatoryName,multiName,negExtended,positiveExtended]=process.argv.slice(12);
 const quantile=process.argv[16]==='quantile'?require('./lagneau_joint_quantile.cjs').connect():undefined;
 const readLong=name=>readStars(name).map(r=>({...r,lower:1_000_000_000,upper:3_000_000_000}));
+const ranges=process.argv[19]?require('./lagneau_composite_ranges.cjs'):null;
+const optional=ranges?ranges.open(process.argv[19]):{negative:{},positive:{},separate:[]};
 const multiple=require('./lagneau_multiple_slopes_graph.cjs');
 const mTable=mandatoryName && mandatoryName!=='-' ? multiple.read(mandatoryName,100_000_000,1_000_000_000) : null;
 const mandatory=mTable?(mask,small)=>{
@@ -77,12 +80,16 @@ const mandatory=mTable?(mask,small)=>{
     sel|((mask&(1<<small.indexOf(s)))?1<<i:0),0);
   return mTable[key];
 }:undefined;
-const neg = jointStars(rows,readStars(layerName,true),pairFilter,false,
-  {rows:readStars(negExtended,false,true),longRows:readLong(process.argv[17]),mandatory,quantile});
+const neg = jointStars(rows,readStars(layerName,true),audit?audit.source(pairFilter):pairFilter,false,
+  {rows:readStars(negExtended,false,true),longRows:readLong(process.argv[17]),
+    mandatory:ranges?ranges.multiply(mandatory,optional.negative.long):mandatory,
+    mandatoryShort:optional.negative.short,quantile});
 const gatedBoth = jointStars(readStars(positiveStarName),readStars(positiveLayerName,true),neg,true,
-  {rows:readStars(positiveExtended,false,true),longRows:readLong(process.argv[18]),quantile});
+  {rows:readStars(positiveExtended,false,true),longRows:readLong(process.argv[18]),
+    mandatory:optional.positive.long,mandatoryShort:optional.positive.short,quantile});
 const disjoint=multiName && multiName!=='-' ? multiple.extend(multiple.read(multiName,1_000_000_000,10_000_000_000),gatedBoth) : gatedBoth;
-const filtered = positiveTailGraph(positive,disjoint);
+const withComposite=optional.separate.length?ranges.extend(optional.separate,disjoint):disjoint;
+const filtered = positiveTailGraph(positive,audit?audit.result(withComposite):withComposite);
 const result = combine(factors, base.maxDivisor, filtered);
 const num = BigInt(result.numeratorUpper.replace('.', ''));
 const afterOldSingletons = base.ceilDiv(num * 979789013592184n, base.scale);

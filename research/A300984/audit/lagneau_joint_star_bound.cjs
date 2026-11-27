@@ -66,16 +66,18 @@ function jointStars(rows, layers, previous, positive=false, extra={}) {
         let ordered=merged.get(group).filter(({t})=>seen[t]!==marker);
         // A mandatory row in this leaf sign and mask is always triggered,
         // even where its high coordinates overlap those of a medium star.
-        if(extra.mandatory) {
-          const f=BigInt(extra.mandatory(mask,state.small));
-          if(f<0n || f>scale)throw Error('Bad mandatory star factor');
-          if(f<scale) {
+        if(extra.mandatory || extra.mandatoryShort) {
+          const f=extra.mandatory?BigInt(extra.mandatory(mask,state.small)):scale;
+          const short=extra.mandatoryShort?BigInt(extra.mandatoryShort(mask,state.small)):scale;
+          if(f<=0n || f>scale || short<=0n || short>scale)throw Error('Bad mandatory star factor');
+          const requiredFactor=ceilDiv(f*short,scale);
+          if(requiredFactor<scale) {
             // Short stars use only leaves <=100m. The mandatory test uses
             // only leaves >100m, so both conditional survival factors multiply.
             ordered=ordered.map(row=>row.short ? {...row,factor:ceilDiv(row.factor*f,scale)} : row)
               .sort((a,b)=>a.factor<b.factor?-1:a.factor>b.factor?1:0);
-            const at=ordered.findIndex(r=>r.factor>f);
-            ordered.splice(at<0?ordered.length:at,0,{always:true,factor:f});
+            const at=ordered.findIndex(r=>r.factor>requiredFactor);
+            ordered.splice(at<0?ordered.length:at,0,{always:true,factor:requiredFactor});
           }
         }
         let noOldUpper=scale, noLargeUpper=scale, noOldOrGateLower=scale, loss=0n;
