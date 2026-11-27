@@ -275,3 +275,41 @@ theorem all_positive_shifts (n s : ℕ) (hs : 0 < s) :
     d ∣ u ∧ (Odd (u / d) ↔ ∃ k : ℕ, n + s = 2 ^ k) :=
   all_shift_parities n s _ hs (shift_constant_exact s hs)
 
+/-- The exact two-adic valuation is three times the number of ones in the
+binary expansion of the sum of the two indices, including at `(0, 0)`. -/
+theorem factorial_pair_valuation (n s : ℕ) :
+    (((4 * n).factorial * (4 * s).factorial) /
+      (n.factorial * s.factorial * (n + s).factorial ^ 3)).factorization 2 =
+      3 * ((2 : ℕ).digits (n + s)).sum := by
+  let d := n.factorial * s.factorial * (n + s).factorial ^ 3
+  let u := (4 * n).factorial * (4 * s).factorial
+  let q := u / d
+  have hns := mul_ne_zero (Nat.factorial_ne_zero n) (Nat.factorial_ne_zero s)
+  have hcube := pow_ne_zero 3 (Nat.factorial_ne_zero (n + s))
+  have hd : d ≠ 0 := mul_ne_zero hns hcube
+  have hu : u ≠ 0 := mul_ne_zero (Nat.factorial_ne_zero _) (Nat.factorial_ne_zero _)
+  have heq : q * d = u := Nat.div_mul_cancel (factorial_pair_divisibility n s)
+  have hq : q ≠ 0 := fun zero ↦ hu (by simpa [zero] using heq.symm)
+  have mulVal (a b : ℕ) (ha : a ≠ 0) (hb : b ≠ 0) :
+      (a * b).factorization 2 = a.factorization 2 + b.factorization 2 := by
+    rw [Nat.factorization_mul ha hb, Finsupp.add_apply]
+  have total : q.factorization 2 + d.factorization 2 = u.factorization 2 :=
+    (mulVal _ _ hq hd).symm.trans (congrArg (fun j : ℕ ↦ j.factorization 2) heq)
+  have vd : d.factorization 2 = n.factorial.factorization 2 + s.factorial.factorization 2 +
+      3 * (n + s).factorial.factorization 2 := by
+    dsimp only [d]
+    rw [mulVal _ _ hns hcube, mulVal _ _ (Nat.factorial_ne_zero n) (Nat.factorial_ne_zero s),
+      Nat.factorization_pow, Finsupp.smul_apply, nsmul_eq_mul]
+  have four (t : ℕ) : (4 * t).factorial.factorization 2 = t.factorial.factorization 2 + 3 * t := by
+    rw [show 4 * t = 2 * (2 * t) by omega,
+      Nat.factorization_factorial_mul Nat.prime_two, Nat.factorization_factorial_mul Nat.prime_two]
+    omega
+  have vu : u.factorization 2 = (n.factorial.factorization 2 + 3 * n) +
+      (s.factorial.factorization 2 + 3 * s) := by
+    dsimp only [u]
+    rw [mulVal _ _ (Nat.factorial_ne_zero _) (Nat.factorial_ne_zero _), four n, four s]
+  have vdigs : (n + s).factorial.factorization 2 = n + s - ((2 : ℕ).digits (n + s)).sum := by
+    simpa using (Nat.sub_one_mul_factorization_factorial (n := n + s) Nat.prime_two)
+  have bound := Nat.digit_sum_le 2 (n + s)
+  change q.factorization 2 = _
+  omega
