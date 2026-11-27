@@ -197,6 +197,7 @@ private theorem finite_two {n : ℕ} (hn : 62 ≤ n) (hmax : n ≤ 365000) :
 
 end A085267Finite
 
+set_option maxHeartbeats 0 in
 theorem OMA.solution : OMA.R_oeis_a085267_R1.H1 := by
   intro n hpos hlimit
   by_cases hsmall : n ≤ 61
