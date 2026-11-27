@@ -30,6 +30,8 @@ The large-prime reductions are exact integer identities:
 
 Trial division up to the integer square roots 6,517 and 4,923 verifies primality of the two large factors. The Chinese remainder theorem now gives T(n)≡1 modulo n for each displayed n.
 
+A third member, 8,631,398,911,361,689 = 205,129³, follows from the historically known exceptional prime 205,129 and the central-trinomial congruence. The [prime-cube supplement](prime-cube.md) gives the proof, its literature provenance, and the explicit residue modulo the fourth power.
+
 ## Modulo the square
 
 The residues of T(n) modulo n² are, respectively, 223,733,948,606,370,725 and 349,250,221,206,625,829. Thus neither example satisfies the stronger prime-characterization congruence. The [separate exact checker](check_prime_squares.py) gives the modulo-p² digit reduction and reconstructs these residues by CRT.
