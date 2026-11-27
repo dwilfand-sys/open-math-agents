@@ -33,3 +33,11 @@ python verify_scales_inside.py
 ```
 
 The independent minimum-domain search visits 226,745 states in the first start and 167,798 in the second. It returns the same four block tuples. Both searches traverse finite domains without a time or node cutoff.
+
+`Case4SplitCertificate.json` records a branching colour at each of the 394,539 nonterminal states. The replay checker chooses every possible member of the recorded colour and independently tests all remaining domains. The certificate cannot suppress a branch. It is 197,412 bytes and can be replayed without running the search that generated it.
+
+```sh
+python scales_split_certificate.py
+```
+
+`ScalesTerminal.lean` contains a separate theorem for each of the four recorded matrices. Its general lemma proves that an incident-line predicate covering all 16 support pencils would pass a finite compatibility search. The four concrete checks exclude the indicated missing B35 partner. The Lean source has been audited against the pinned list APIs and independently simulated, with 89–103 recursive search states per check. Compilation and the project-level bridge from the original matrix hypotheses are pending.
