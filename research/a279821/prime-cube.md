@@ -70,6 +70,13 @@ $(1-2x-3x^2)^{-1/2}$. Sun also records it in A279821.
 
 ## Consequence for the square-modulus conjecture on prime powers
 
+For each fixed prime $p>3$, a composite power of $p$ can satisfy Sun’s
+square-modulus congruence if and only if $T_p\equiv1\pmod{p^4}$. Indeed,
+any such power $p^a$, $a\ge2$, forces $T_{p^a}\equiv1\pmod{p^4}$, hence
+$T_p\equiv1\pmod{p^4}$ by the congruence above. Conversely that condition
+already makes $n=p^2$ a counterexample since $T_{p^2}\equiv T_p\pmod{p^4}$.
+Thus all composite prime powers can be tested at exponent two.
+
 For every nonexceptional $p>3$, the cube criterion and the congruence
 modulo $p^4$ show that $v_p(T_{p^a}-1)=2$ for every $a\ge1$.
 Sun reports that $205129$ is the only exceptional Bernoulli prime below
