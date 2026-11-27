@@ -36,7 +36,7 @@ lemma rank_from_sixtyone (h1 : H1) (h2 : H2) (m : ℕ) (hm : 61 ≤ m) :
     have hok := two_from_sixtytwo h1 h2 (n := m+1) (by omega)
     have hstep : termsThrough (m+1) = termsThrough m + 1 := by
       unfold termsThrough
-      rw [Finset.range_succ (m+1)]
+      rw [Finset.range_add_one (m+1)]
       simp [Finset.filter_insert, hok]
     omega
 
