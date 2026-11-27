@@ -1,0 +1,852 @@
+[
+  {
+    "index": 0,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          28,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 216,
+    "missing_pair": 216,
+    "surviving": [],
+    "certificate_sha256": "4e394dc68dfdf50318af58bf86f89f03017bd53da479c9a25ce9418c75e77f5a"
+  },
+  {
+    "index": 1,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          31,
+          45,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 8,
+    "inside": 116,
+    "missing_pair": 116,
+    "surviving": [],
+    "certificate_sha256": "8d8a40678fec5216e40ba77524fe0db4f11a306ed19f9efb09bfa3eda2d47c75"
+  },
+  {
+    "index": 2,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          27,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 88,
+    "missing_pair": 88,
+    "surviving": [],
+    "certificate_sha256": "0d2d3710b02c826306e72bdc76807ae1af8bf20e23ea4194b87f5d7d4f2db761"
+  },
+  {
+    "index": 3,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          31,
+          40,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 109,
+    "missing_pair": 109,
+    "surviving": [],
+    "certificate_sha256": "f1ae03732dc267cff3df9de89ccefb4f39ae2d9dd327538904b364027efbbff2"
+  },
+  {
+    "index": 4,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          33,
+          37,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 50,
+    "missing_pair": 50,
+    "surviving": [],
+    "certificate_sha256": "fed741e53e66952bb1fe4ff8c4da54368fb644018ebb3d32ab07894313fa4105"
+  },
+  {
+    "index": 5,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          22,
+          27,
+          45,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 59,
+    "missing_pair": 59,
+    "surviving": [],
+    "certificate_sha256": "a0c098c6a9a09cd9bb0029407faa09ccfa17fd9511c80bc6451a02b32dcbbe18"
+  },
+  {
+    "index": 6,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          22,
+          33,
+          37,
+          45
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 64,
+    "missing_pair": 64,
+    "surviving": [],
+    "certificate_sha256": "f7b131e92d58bf72884056ecc823827b5873cf1898263448fe79aacd117bdd9e"
+  },
+  {
+    "index": 7,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          25,
+          27,
+          42,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 86,
+    "missing_pair": 86,
+    "surviving": [],
+    "certificate_sha256": "57d085381df88b8f92d49dbcf70b3412c42b49b619accbb193b6ef915667aed7"
+  },
+  {
+    "index": 8,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          61,
+          67,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          25,
+          31,
+          40,
+          42
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 208,
+    "missing_pair": 208,
+    "surviving": [],
+    "certificate_sha256": "903fc9d9208db5f554b97965caf2e2b2153fa158c1f3e96e80e1ee86c4a3a479"
+  },
+  {
+    "index": 9,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          28,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 52,
+    "missing_pair": 52,
+    "surviving": [],
+    "certificate_sha256": "059f5b14156d8b6146531b3bab43def84c731058d93277c070a015055924c134"
+  },
+  {
+    "index": 10,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          31,
+          45,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 8,
+    "inside": 25,
+    "missing_pair": 25,
+    "surviving": [],
+    "certificate_sha256": "f7ffd0df2eb7c335c52f2a7685ac26aa95baec73754b4a6723ce6fbfb6497539"
+  },
+  {
+    "index": 11,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          27,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 26,
+    "missing_pair": 26,
+    "surviving": [],
+    "certificate_sha256": "dabb90776069a8e90e51a54a24bc0d0e22547c3b8e2398b4f714a25837da7ef3"
+  },
+  {
+    "index": 12,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          31,
+          40,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 16,
+    "missing_pair": 16,
+    "surviving": [],
+    "certificate_sha256": "919eeaa27fbceb28837c60eeda5c24412ce197905b4332734fac28a96d566734"
+  },
+  {
+    "index": 13,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          33,
+          37,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 83,
+    "missing_pair": 83,
+    "surviving": [],
+    "certificate_sha256": "e57629af2148c8a1ddf4eb2a2ac29365d622a03d15894dbc5c4aa29f15773e82"
+  },
+  {
+    "index": 14,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          22,
+          27,
+          45,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 16,
+    "missing_pair": 16,
+    "surviving": [],
+    "certificate_sha256": "f3198da2103573428f4cf0abd1d6726f7ea249199b4568cf0dd97fc0ffabbc2b"
+  },
+  {
+    "index": 15,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          63,
+          66,
+          70
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          25,
+          27,
+          42,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 75,
+    "missing_pair": 75,
+    "surviving": [],
+    "certificate_sha256": "4c4ff8b718afa582928b2b5f0fd50176f63fd658118d0ae8f578e6ada29e3c3f"
+  },
+  {
+    "index": 16,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          64,
+          66,
+          69
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          28,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 58,
+    "missing_pair": 58,
+    "surviving": [],
+    "certificate_sha256": "0e083992beea980908da15fbde70ebdb80622ca9e5e52fb5b4296ee62a06f84f"
+  },
+  {
+    "index": 17,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          64,
+          66,
+          69
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          31,
+          45,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 48,
+    "missing_pair": 48,
+    "surviving": [],
+    "certificate_sha256": "e8d1a077b0d91b60259b4fa62be364d1ce8b8c787c4c92482b8ae44d27ff5a0a"
+  },
+  {
+    "index": 18,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          64,
+          66,
+          69
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          27,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 46,
+    "missing_pair": 46,
+    "surviving": [],
+    "certificate_sha256": "dffb4957d12b642a159e64ccf4734aa3fad5110e22a6acc4b456bbc02b7d50aa"
+  },
+  {
+    "index": 19,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          64,
+          66,
+          69
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          33,
+          37,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 8,
+    "inside": 81,
+    "missing_pair": 81,
+    "surviving": [],
+    "certificate_sha256": "ed8a40ac289ffe084ebfc5545694985340a458ec659ae54d9c6a2fad7f38b973"
+  },
+  {
+    "index": 20,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          58,
+          64,
+          66,
+          69
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          22,
+          28,
+          40,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 8,
+    "missing_pair": 8,
+    "surviving": [],
+    "certificate_sha256": "0120bf303f10773db33fb521cd8ca0cac576a76870df435a971ce3f8cba50246"
+  },
+  {
+    "index": 21,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          60,
+          61,
+          67,
+          68
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          18,
+          28,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 66,
+    "missing_pair": 66,
+    "surviving": [],
+    "certificate_sha256": "d0a93d970b2dd2e245c20b0a304498b9cb9edfc17df51802a74464c1e2eae943"
+  },
+  {
+    "index": 22,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          60,
+          61,
+          67,
+          68
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          27,
+          60,
+          66
+        ]
+      ]
+    ],
+    "orbit_size": 4,
+    "inside": 23,
+    "missing_pair": 23,
+    "surviving": [],
+    "certificate_sha256": "0717eab1c33407f8a9ee045575f4007044e1ba3c691b23475d957d9aef2ec3be"
+  },
+  {
+    "index": 23,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          60,
+          61,
+          67,
+          68
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          19,
+          33,
+          37,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 20,
+    "missing_pair": 20,
+    "surviving": [],
+    "certificate_sha256": "4e7e734be40c704249795c17a8b47236b6c736e9ea7604bb90d9d3cd6ba421f4"
+  },
+  {
+    "index": 24,
+    "seed": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          60,
+          61,
+          67,
+          68
+        ]
+      ],
+      [
+        [
+          4,
+          5
+        ],
+        [
+          25,
+          27,
+          42,
+          60
+        ]
+      ]
+    ],
+    "orbit_size": 2,
+    "inside": 6,
+    "missing_pair": 6,
+    "surviving": [],
+    "certificate_sha256": "016f64abca5435331a6b93f8ebc54676727bb08ca75f3fe73c0e76ce6600e10e"
+  }
+]
