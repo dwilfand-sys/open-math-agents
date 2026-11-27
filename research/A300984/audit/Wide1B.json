@@ -1,0 +1,135 @@
+{
+  "cap": 1000000000,
+  "B": 73,
+  "precision": 100000000,
+  "rows": [
+    {
+      "small": 0,
+      "vertices": 807354,
+      "edges": 3078498,
+      "lowerFirst": "356069876825593",
+      "upperOrderedStars": "5963734969969097543958",
+      "survivalUpper": "967901338248045"
+    },
+    {
+      "small": 5,
+      "vertices": 719203,
+      "edges": 2448682,
+      "lowerFirst": "385697321153026",
+      "upperOrderedStars": "9039729815492843043998",
+      "survivalUpper": "966523305617463"
+    },
+    {
+      "small": 11,
+      "vertices": 737108,
+      "edges": 2479461,
+      "lowerFirst": "436091077582221",
+      "upperOrderedStars": "10769037693173113324756",
+      "survivalUpper": "962496750517499"
+    },
+    {
+      "small": 13,
+      "vertices": 748270,
+      "edges": 2801150,
+      "lowerFirst": "485448504661074",
+      "upperOrderedStars": "13869545165587086388128",
+      "survivalUpper": "959243738009392"
+    },
+    {
+      "small": 17,
+      "vertices": 741345,
+      "edges": 2381517,
+      "lowerFirst": "392411343272383",
+      "upperOrderedStars": "8802964804973914831256",
+      "survivalUpper": "965760261641773"
+    },
+    {
+      "small": 23,
+      "vertices": 743364,
+      "edges": 2364931,
+      "lowerFirst": "381699829620600",
+      "upperOrderedStars": "8329642457114063004140",
+      "survivalUpper": "966566515465875"
+    },
+    {
+      "small": 29,
+      "vertices": 745218,
+      "edges": 2352791,
+      "lowerFirst": "365555450836091",
+      "upperOrderedStars": "7599973075299911071012",
+      "survivalUpper": "967775095029742"
+    },
+    {
+      "small": 41,
+      "vertices": 746710,
+      "edges": 2438511,
+      "lowerFirst": "398122489602817",
+      "upperOrderedStars": "8794141667639835739522",
+      "survivalUpper": "965204601220532"
+    },
+    {
+      "small": 43,
+      "vertices": 757147,
+      "edges": 2809308,
+      "lowerFirst": "469548874794959",
+      "upperOrderedStars": "12155323000223545086872",
+      "survivalUpper": "959946979263492"
+    },
+    {
+      "small": 47,
+      "vertices": 747415,
+      "edges": 2491535,
+      "lowerFirst": "420966866906341",
+      "upperOrderedStars": "9630563397779482512044",
+      "survivalUpper": "963404990226745"
+    },
+    {
+      "small": 53,
+      "vertices": 748041,
+      "edges": 2374462,
+      "lowerFirst": "377331362153772",
+      "upperOrderedStars": "8140554431170485055718",
+      "survivalUpper": "966897430459754"
+    },
+    {
+      "small": 59,
+      "vertices": 748359,
+      "edges": 2423546,
+      "lowerFirst": "386473823242462",
+      "upperOrderedStars": "8403148135008343387466",
+      "survivalUpper": "966140695116375"
+    },
+    {
+      "small": 61,
+      "vertices": 760654,
+      "edges": 2759923,
+      "lowerFirst": "429680085624204",
+      "upperOrderedStars": "10520711101840312291836",
+      "survivalUpper": "962994428264267"
+    },
+    {
+      "small": 67,
+      "vertices": 757737,
+      "edges": 2725727,
+      "lowerFirst": "435489722990220",
+      "upperOrderedStars": "11053102016651088117482",
+      "survivalUpper": "962691355866499"
+    },
+    {
+      "small": 71,
+      "vertices": 749030,
+      "edges": 2320214,
+      "lowerFirst": "343852956945405",
+      "upperOrderedStars": "6885849998065990276304",
+      "survivalUpper": "969531444888942"
+    },
+    {
+      "small": 73,
+      "vertices": 757304,
+      "edges": 2751119,
+      "lowerFirst": "445338234541877",
+      "upperOrderedStars": "11327862203449457985460",
+      "survivalUpper": "961875848409287"
+    }
+  ]
+}

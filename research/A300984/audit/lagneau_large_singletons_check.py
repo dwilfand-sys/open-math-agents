@@ -28,22 +28,28 @@ def odd_segment(first,length,primes):
 
 
 def run(lower,upper):
-    from operator import and_
     base = sieve_primes(isqrt(2*upper))
     scale = 10**15
     factor = scale
     first, stop = (lower-1)//6+1, (upper-1)//6+1
     total = 0
-    for k in range(first,stop,65536):
-        size = min(stop-k,65536)
+    block = 65536
+    for k in range(first,stop,32*block):
+        size = min(stop-k,32*block)
         lo = 6*k+1
-        hi = lo + 6*(size-1)
         flags = odd_segment(lo,3*size-2,base)[::3]
         shifted = odd_segment(2*lo-1,6*size-5,base)[::6]
         assert len(flags)==len(shifted)==size
-        count = sum(map(and_,flags,shifted))
-        total += count
-        factor = (factor*hi+hi+count-1)//(hi+count)
+        for i in range(0,size,block):
+            end=min(size,i+block)
+            # The two buffers contain only 0 and 1 bytes. Their bitwise
+            # intersection therefore has one set bit for each accepted r.
+            left=int.from_bytes(flags[i:end],'little')
+            right=int.from_bytes(shifted[i:end],'little')
+            count=(left & right).bit_count()
+            hi=lo+6*(end-1)
+            total+=count
+            factor=(factor*hi+hi+count-1)//(hi+count)
     return total,factor
 
 

@@ -1,0 +1,183 @@
+{
+  "cap": 1000000000,
+  "B": 73,
+  "precision": 100000000,
+  "rows": [
+    {
+      "small": 0,
+      "vertices": 807354,
+      "edges": 3078498,
+      "triples": 444697,
+      "lowerEdgeFirst": "356069876825593",
+      "lowerTripleFirst": "1792320064563034099721",
+      "upperVertexStars": "70397808398008064059508596420718021219",
+      "upperPairStars": "110276022819686271281893901652",
+      "survivalUpper": "967221222988317"
+    },
+    {
+      "small": 5,
+      "vertices": 719203,
+      "edges": 2448682,
+      "triples": 203970,
+      "lowerEdgeFirst": "385697321153026",
+      "lowerTripleFirst": "1053473529243621888428",
+      "upperVertexStars": "99740897601212301181338057542356608475",
+      "upperPairStars": "153696477237882766131323752640",
+      "survivalUpper": "966699411408732"
+    },
+    {
+      "small": 11,
+      "vertices": 737108,
+      "edges": 2479461,
+      "triples": 278917,
+      "lowerEdgeFirst": "436091077582221",
+      "lowerTripleFirst": "1503473796107515368862",
+      "upperVertexStars": "121640770876635847931868177870630252594",
+      "upperPairStars": "214985350530515221609794376098",
+      "survivalUpper": "962755670642405"
+    },
+    {
+      "small": 13,
+      "vertices": 748270,
+      "edges": 2801150,
+      "triples": 289918,
+      "lowerEdgeFirst": "485448504661074",
+      "lowerTripleFirst": "1397951524527893016847",
+      "upperVertexStars": "151644049535145799888768547569341362864",
+      "upperPairStars": "134826769028854013898574267006",
+      "survivalUpper": "959170466303135"
+    },
+    {
+      "small": 17,
+      "vertices": 741345,
+      "edges": 2381517,
+      "triples": 253121,
+      "lowerEdgeFirst": "392411343272383",
+      "lowerTripleFirst": "1247362332173687352305",
+      "upperVertexStars": "98572995102011969463495482074481538541",
+      "upperPairStars": "165018170697039290366371996692",
+      "survivalUpper": "965861571221805"
+    },
+    {
+      "small": 23,
+      "vertices": 743364,
+      "edges": 2364931,
+      "triples": 252267,
+      "lowerEdgeFirst": "381699829620600",
+      "lowerTripleFirst": "1160235933789942295560",
+      "upperVertexStars": "92845328362195171135664621451531401398",
+      "upperPairStars": "150952914961580631107724276080",
+      "survivalUpper": "966636085464074"
+    },
+    {
+      "small": 29,
+      "vertices": 745218,
+      "edges": 2352791,
+      "triples": 250889,
+      "lowerEdgeFirst": "365555450836091",
+      "lowerTripleFirst": "1119001053362089536848",
+      "upperVertexStars": "84669288676565296573855004089634837211",
+      "upperPairStars": "132597758427380234892054166772",
+      "survivalUpper": "967753287078183"
+    },
+    {
+      "small": 41,
+      "vertices": 746710,
+      "edges": 2438511,
+      "triples": 295263,
+      "lowerEdgeFirst": "398122489602817",
+      "lowerTripleFirst": "1376233524649419821838",
+      "upperVertexStars": "99319792884913419634710937247847377471",
+      "upperPairStars": "174614284540333391018886227948",
+      "survivalUpper": "965268071984908"
+    },
+    {
+      "small": 43,
+      "vertices": 757147,
+      "edges": 2809308,
+      "triples": 363403,
+      "lowerEdgeFirst": "469548874794959",
+      "lowerTripleFirst": "1698558657806986548514",
+      "upperVertexStars": "136393245313548016450108056213527060408",
+      "upperPairStars": "163288092402682119395297882998",
+      "survivalUpper": "959812483382432"
+    },
+    {
+      "small": 47,
+      "vertices": 747415,
+      "edges": 2491535,
+      "triples": 326476,
+      "lowerEdgeFirst": "420966866906341",
+      "lowerTripleFirst": "1572246702659768161970",
+      "upperVertexStars": "109721246782202680354662511850824961949",
+      "upperPairStars": "206385650759321073962515198284",
+      "survivalUpper": "963530686352052"
+    },
+    {
+      "small": 53,
+      "vertices": 748041,
+      "edges": 2374462,
+      "triples": 268630,
+      "lowerEdgeFirst": "377331362153772",
+      "lowerTripleFirst": "1193812837445261027851",
+      "upperVertexStars": "91050717234583790891480451110211758841",
+      "upperPairStars": "153857684159464010138290099776",
+      "survivalUpper": "966953255149385"
+    },
+    {
+      "small": 59,
+      "vertices": 748359,
+      "edges": 2423546,
+      "triples": 287205,
+      "lowerEdgeFirst": "386473823242462",
+      "lowerTripleFirst": "1250627344471330269555",
+      "upperVertexStars": "94147923869808301993301787494320787461",
+      "upperPairStars": "152291133259957320301496919740",
+      "survivalUpper": "966156781925526"
+    },
+    {
+      "small": 61,
+      "vertices": 760654,
+      "edges": 2759923,
+      "triples": 318829,
+      "lowerEdgeFirst": "429680085624204",
+      "lowerTripleFirst": "1364754437393331972827",
+      "upperVertexStars": "116230000495602469165262032957812960620",
+      "upperPairStars": "114717889646669980633044126398",
+      "survivalUpper": "962763317582127"
+    },
+    {
+      "small": 67,
+      "vertices": 757737,
+      "edges": 2725727,
+      "triples": 310371,
+      "lowerEdgeFirst": "435489722990220",
+      "lowerTripleFirst": "1348868722986247212325",
+      "upperVertexStars": "121715725691049108361781912526535959926",
+      "upperPairStars": "117313771018408202920196562552",
+      "survivalUpper": "962495887186475"
+    },
+    {
+      "small": 71,
+      "vertices": 749030,
+      "edges": 2320214,
+      "triples": 243802,
+      "lowerEdgeFirst": "343852956945405",
+      "lowerTripleFirst": "985515445178659086402",
+      "upperVertexStars": "76233374020786329277639164920612282452",
+      "upperPairStars": "118077864270192457430329579082",
+      "survivalUpper": "969505866638803"
+    },
+    {
+      "small": 73,
+      "vertices": 757304,
+      "edges": 2751119,
+      "triples": 333970,
+      "lowerEdgeFirst": "445338234541877",
+      "lowerTripleFirst": "1439561199108673057820",
+      "upperVertexStars": "125401075451460118446010234958319012336",
+      "upperPairStars": "132167915361290216236053059618",
+      "survivalUpper": "961709843972931"
+    }
+  ]
+}

@@ -32,7 +32,14 @@ python lagneau_sample_refine.py holdout.json --seconds 4
 python lagneau_sample_audit.py holdout.json
 ~~~
 
+## Patterns of doubling
+
+Every fixed finite pattern of membership for the numbers $2^i p^2$ ($i\ge2$) occurs for a positive proportion of primes. A separate Lean certificate verifies the sharp spacing between two obstructions from the same prime square. [Theorem, explicit examples and proof](A300984FinitePatterns.md) · [Lean certificate](DoublingObstructions.lean)
+
 ## Analytic bounds
+
+The strongest bound in this audit is **51.228302%** on the limit superior of the A082539 proportion among distinct represented primes. It still leaves the strict-majority conjecture open. Two independently implemented sieves agree on all 24 new prime-pair tables. [Proof and reproduction commands](A300984DoubleMasks.md)
+
 
 A finite sieve through one billion, combined with tests on four ranges of represented primes, gives a **52.842235% upper bound** on the limit superior of the proportion of distinct represented primes in A082539. Two independent sieves reproduced all 3,203,190 extra prime-pair conditions. This bound leaves the strict majority open. [Calculation and reproduction commands](A300984LargeSingletons.md)
 

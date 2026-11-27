@@ -1,0 +1,295 @@
+{
+  "cap": 1000000000,
+  "B": 73,
+  "precision": 100000000,
+  "rows": [
+    {
+      "selected": [
+        5,
+        13
+      ],
+      "vertexMax": 13513513,
+      "vertices": 592013,
+      "edges": 1368728,
+      "lowerFirst": "275923945236616",
+      "upperOrderedStars": "7179950046377405418922",
+      "survivalUpper": "976283347637032"
+    },
+    {
+      "selected": [
+        5,
+        17
+      ],
+      "vertexMax": 11764705,
+      "vertices": 525632,
+      "edges": 1442509,
+      "lowerFirst": "287396086258481",
+      "upperOrderedStars": "7527081391038818990914",
+      "survivalUpper": "975333253492404"
+    },
+    {
+      "selected": [
+        11,
+        13
+      ],
+      "vertexMax": 6993006,
+      "vertices": 330631,
+      "edges": 1439760,
+      "lowerFirst": "320168137811213",
+      "upperOrderedStars": "8675608832247777368976",
+      "survivalUpper": "972700544460951"
+    },
+    {
+      "selected": [
+        5,
+        29
+      ],
+      "vertexMax": 6896551,
+      "vertices": 317139,
+      "edges": 1513210,
+      "lowerFirst": "321722381620883",
+      "upperOrderedStars": "8768885035437469266110",
+      "survivalUpper": "972594733743257"
+    },
+    {
+      "selected": [
+        5,
+        43
+      ],
+      "vertexMax": 4651162,
+      "vertices": 220989,
+      "edges": 1516818,
+      "lowerFirst": "331987758276078",
+      "upperOrderedStars": "9203849034269660346958",
+      "survivalUpper": "971808168693461"
+    },
+    {
+      "selected": [
+        13,
+        17
+      ],
+      "vertexMax": 4524886,
+      "vertices": 220721,
+      "edges": 1437990,
+      "lowerFirst": "326329145382332",
+      "upperOrderedStars": "8578311345646477699172",
+      "survivalUpper": "972054157126601"
+    },
+    {
+      "selected": [
+        5,
+        47
+      ],
+      "vertexMax": 4255319,
+      "vertices": 203080,
+      "edges": 1455627,
+      "lowerFirst": "290522062236872",
+      "upperOrderedStars": "7269707898235606651338",
+      "survivalUpper": "974902949147489"
+    },
+    {
+      "selected": [
+        11,
+        23
+      ],
+      "vertexMax": 3952569,
+      "vertices": 195256,
+      "edges": 1450286,
+      "lowerFirst": "359349906614272",
+      "upperOrderedStars": "10120086826513048224892",
+      "survivalUpper": "969596816245014"
+    },
+    {
+      "selected": [
+        5,
+        53
+      ],
+      "vertexMax": 3773584,
+      "vertices": 180489,
+      "edges": 1405008,
+      "lowerFirst": "281448809892261",
+      "upperOrderedStars": "6981296269342392320186",
+      "survivalUpper": "975647200460809"
+    },
+    {
+      "selected": [
+        5,
+        59
+      ],
+      "vertexMax": 3389830,
+      "vertices": 163479,
+      "edges": 1485160,
+      "lowerFirst": "314100826625378",
+      "upperOrderedStars": "8267558078200447287628",
+      "survivalUpper": "973092335437966"
+    },
+    {
+      "selected": [
+        13,
+        23
+      ],
+      "vertexMax": 3344481,
+      "vertices": 166746,
+      "edges": 1307019,
+      "lowerFirst": "259298165654659",
+      "upperOrderedStars": "5995218540194767946186",
+      "survivalUpper": "977328737285915"
+    },
+    {
+      "selected": [
+        5,
+        61
+      ],
+      "vertexMax": 3278688,
+      "vertices": 158601,
+      "edges": 1476692,
+      "lowerFirst": "310833628045353",
+      "upperOrderedStars": "8108743389143651067440",
+      "survivalUpper": "973333023110596"
+    },
+    {
+      "selected": [
+        11,
+        29
+      ],
+      "vertexMax": 3134796,
+      "vertices": 156655,
+      "edges": 1377769,
+      "lowerFirst": "318777392281256",
+      "upperOrderedStars": "8251854164740123332118",
+      "survivalUpper": "972629731734182"
+    },
+    {
+      "selected": [
+        5,
+        67
+      ],
+      "vertexMax": 2985074,
+      "vertices": 144992,
+      "edges": 1403359,
+      "lowerFirst": "289099102621361",
+      "upperOrderedStars": "7185472060121176107418",
+      "survivalUpper": "975000617908607"
+    },
+    {
+      "selected": [
+        5,
+        73
+      ],
+      "vertexMax": 2739726,
+      "vertices": 132822,
+      "edges": 1374888,
+      "lowerFirst": "278294785041934",
+      "upperOrderedStars": "6862430600522039767156",
+      "survivalUpper": "975896968498997"
+    },
+    {
+      "selected": [
+        13,
+        29
+      ],
+      "vertexMax": 2652519,
+      "vertices": 134337,
+      "edges": 1327244,
+      "lowerFirst": "283649607526502",
+      "upperOrderedStars": "6719082969459343041082",
+      "survivalUpper": "975304626576937"
+    },
+    {
+      "selected": [
+        17,
+        23
+      ],
+      "vertexMax": 2557544,
+      "vertices": 131183,
+      "edges": 1384504,
+      "lowerFirst": "315331819124555",
+      "upperOrderedStars": "7929674032535367388998",
+      "survivalUpper": "972808193806383"
+    },
+    {
+      "selected": [
+        11,
+        41
+      ],
+      "vertexMax": 2217294,
+      "vertices": 115038,
+      "edges": 1471503,
+      "lowerFirst": "384147678069157",
+      "upperOrderedStars": "11070594523161612482230",
+      "survivalUpper": "967655183512163"
+    },
+    {
+      "selected": [
+        11,
+        43
+      ],
+      "vertexMax": 2114164,
+      "vertices": 108996,
+      "edges": 1377222,
+      "lowerFirst": "373299119992587",
+      "upperOrderedStars": "10617460362333715288494",
+      "survivalUpper": "968486067566230"
+    },
+    {
+      "selected": [
+        17,
+        29
+      ],
+      "vertexMax": 2028397,
+      "vertices": 104911,
+      "edges": 1237549,
+      "lowerFirst": "276069743698140",
+      "upperOrderedStars": "6397816570371509294522",
+      "survivalUpper": "975887401944333"
+    },
+    {
+      "selected": [
+        13,
+        41
+      ],
+      "vertexMax": 1876172,
+      "vertices": 97114,
+      "edges": 1340012,
+      "lowerFirst": "362901397264461",
+      "upperOrderedStars": "9955277213702427031578",
+      "survivalUpper": "969172658207109"
+    },
+    {
+      "selected": [
+        11,
+        53
+      ],
+      "vertexMax": 1715265,
+      "vertices": 89330,
+      "edges": 1238460,
+      "lowerFirst": "320957660430546",
+      "upperOrderedStars": "8478569019512451624532",
+      "survivalUpper": "972527932503580"
+    },
+    {
+      "selected": [
+        13,
+        47
+      ],
+      "vertexMax": 1636661,
+      "vertices": 85670,
+      "edges": 1286019,
+      "lowerFirst": "350134901117695",
+      "upperOrderedStars": "9416783093371155769290",
+      "survivalUpper": "970149497171169"
+    },
+    {
+      "selected": [
+        23,
+        29
+      ],
+      "vertexMax": 1499250,
+      "vertices": 79191,
+      "edges": 1245979,
+      "lowerFirst": "302300063967552",
+      "upperOrderedStars": "7461552181354874791952",
+      "survivalUpper": "973848793400746"
+    }
+  ]
+}
