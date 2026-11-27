@@ -10,6 +10,8 @@ Each A-line has exactly 12,920 possible blocks of three double points and four s
 
 Fix each representative in turn. Choose one block on each A-line, requiring the two incident blocks to agree on every shared double point. Distinct points must not repeat any unordered pair of A- or B-lines. The search enumerated 1,645 complete block tuples across the 25 representatives. Restoring the orbit sizes of the initial choices gives 6,696 distinct labelled inside configurations.
 
+A second traversal built block compatibility from the 80 line-pair resources and searched the same labelled blocks using independently implemented domain search. At every one of the 25 seed representatives, the two searches returned exactly the same set of eight-block tuples. The second traversal also found a missing B-line pair for all 1,645 tuples.
+
 Each of the 1,645 tuples has two B-lines which have yet to meet and cannot meet at a hidden point. A hidden point would have to contain both lines in a perfect matching on the support. After deleting their four endpoints, all possible matchings of the remaining twelve support points were enumerated. Every matching repeats a B-line pair which already met at an inside point. This prevents extension for that tuple. Relabelling gives the same conclusion across its entire initial orbit.
 
 Independent group enumeration reconstructed all 6,696 labelled configurations from the representatives and divided them into 149 full cube orbits. Of those, 132 have trivial stabilizer, 11 have stabilizer order two and six have stabilizer order three. Direct symmetric searches independently recover the 11 and six exceptional orbits. [Symmetry calculation](CubeSymmetry.md)
