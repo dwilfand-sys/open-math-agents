@@ -11,7 +11,7 @@ Both numbers exceed the largest listed member, 254,677, and are squarefree. Eith
 
 ## Proof
 
-Let P(x)=x⁻¹+1+x, so T(n) is the constant term of P(x)ⁿ. For prime p, integers k≥0 and 0≤d<p, Frobenius gives P(x)^(pk+d) ≡ P(x)ᵈ P(xᵖ)ᵏ modulo p. Every exponent of the latter factor is divisible by p. Among exponents −d,…,d of the former factor the only multiple of p is 0. Thus T(pk+d) ≡ T(k)T(d) modulo p. Iterating gives a product over base-p digits. This standard central-trinomial Lucas congruence is a special case of the theorem of Henningsen and Straub. [Generalized Lucas congruences and linear p-schemes](https://arminstraub.com/downloads/pub/generalized-lucascongruences.pdf)
+Let P(x)=x⁻¹+1+x, so T(n) is the constant term of P(x)ⁿ. For prime p, integers k≥0 and 0≤d<p, Frobenius gives P(x)^(pk+d) ≡ P(x)ᵈ P(xᵖ)ᵏ modulo p. Every exponent of the latter factor is divisible by p. Among exponents −d,…,d of the former factor the only multiple of p is 0. Thus T(pk+d) ≡ T(k)T(d) modulo p. Iterating gives a product over base-p digits. Deutsch and Sagan proved this exact digit rule in Theorem 4.7 of their 2006 paper. Henningsen and Straub give a broader result. [Deutsch and Sagan, Congruences for Catalan and Motzkin numbers and related sequences](https://doi.org/10.1016/j.jnt.2005.06.005) [Generalized Lucas congruences and linear p-schemes](https://arminstraub.com/downloads/pub/generalized-lucascongruences.pdf)
 
 The digit certificates follow, with the least significant digit first. Small central coefficients can be computed directly as T(d)=Σᵢ C(d,2i)C(2i,i).
 
@@ -29,6 +29,16 @@ The large-prime reductions are exact integer identities:
 - T(74)=11,487,117,228,265,155,906,523,774,113,186,123=1+473,845,955,488,022,565,616,961,974·24,242,303.
 
 Trial division up to the integer square roots 6,517 and 4,923 verifies primality of the two large factors. The Chinese remainder theorem now gives T(n)≡1 modulo n for each displayed n.
+
+## Modulo the square
+
+The residues of T(n) modulo n² are, respectively, 223,733,948,606,370,725 and 349,250,221,206,625,829. Thus neither example satisfies the stronger prime-characterization congruence. The [separate exact checker](check_prime_squares.py) gives the modulo-p² digit reduction and reconstructs these residues by CRT.
+
+For a prime p≥5 put Hₚ=Σ_{i=1}^{⌊p/3⌋}1/i² modulo p. A further consequence of [Pan and Sun’s central trinomial congruence](https://arxiv.org/abs/2012.05121) is that p³ is a member of A279821 if and only if Hₚ=0. Indeed T(p³)≡T(p) modulo p³ by the adjacent quadratic bound, and (T(p)−1)/p²≡Hₚ/3 modulo p. When Hₚ is nonzero, vₚ(T(pᵃ)−1)=2 for every a≥1, since all adjacent differences from level 2 onward are divisible by p⁴. Therefore no pᵃ, a≥3, then belongs to this sequence.
+
+## Lean research draft
+
+The [single-file Lean draft](A279821.lean) states the complete-list and square-modulus conjectures separately and formalizes the first counterexample. Its source has no proof placeholders and awaits a Lean kernel verdict. No A279821 statement or matching assignment was found on Left to Solve.
 
 ## Discovery and verification
 
