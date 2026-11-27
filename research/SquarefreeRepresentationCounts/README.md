@@ -41,10 +41,12 @@ For r≤9 use T=128, for which Π(T)=30. The inclusion–exclusion draft proves 
 
 Substitution leaves an increasing affine lower bound in each row. At the respective lower endpoints these bounds exceed 4,283, 4,241 and 804,713. For r≥10 take T=16r. The prime-product estimates in `high_budget` give J≥4r·8^r, rC≥87/50, rΠ(2J+1)≤8J/5 and r·2^r(1+2Π(16r))≤J/100. Substituting and multiplying the large-range bound by r gives rR(n)≥(27/400)J. Hence R(n)≥(27/400)·4·8^r>100.
 
+The same estimates prove R(n) tends to infinity. For r≤9 each of the three lower bounds is affine in J with positive slope. For r≥10, the product of the r primes of S is at least 3^r and at most 2J+2, so R(n)≥(27/400)J/log₃(2J+2), which also tends to infinity. Finally J tends to infinity with n. Thus every fixed representation count occurs only finitely often, and each nonempty level has a largest element. This qualitative conclusion also follows from the classical asymptotic estimate for the representation function. Excluding the zero square changes that count by at most one.
+
 ## 4. Finite segment and independent verification
 
 For n>3,202²=10,252,804, the candidate count J is at least 1,600. It remains to classify positive n through that bound. The supplied program removes multiples of prime squares to obtain a bitset for positive squarefree integers. Shifting by k² marks exactly the integers represented using root k. Binary addition on bit planes counts representations simultaneously. Through 200,000, the first 512 roots include all possible roots. On the rest of the finite segment those same roots already give at least 101 distinct representations for every integer. The program then reads the entire frequency and last-occurrence table from the fully counted prefix.
 
 A separately implemented scalar check marked multiples of every integer square d² for d≥2. It tried k individually for each n through 10,252,804 and stopped upon finding 101 representations. It reproduced the frequency and last-occurrence arrays. Among n>200,000 the largest root ever needed to find the 101st representation was 503, attained at n=5,336,100. The intermediate intervals and large-range constants were also re-evaluated independently with integer or rational arithmetic.
 
-Run `python count_squarefree_representations.py` with Python 3.10 or newer. The program uses only the standard library. The related OEIS sequence defining R(n) is [A085263](https://oeis.org/A085263).
+Run `python count_squarefree_representations.py` with Python 3.10 or newer. The program uses only the standard library. The independent scalar implementation runs with `node check_squarefree_counts_independent.cjs`. The related OEIS sequence defining R(n) is [A085263](https://oeis.org/A085263).
