@@ -6,7 +6,7 @@ const base = require('./lagneau_crt_bound.cjs');
 const {augment} = require('./lagneau_wide_graph.cjs');
 const {positiveTailGraph} = require('./lagneau_extra_residue_one.cjs');
 const {combine} = require('./lagneau_linear_tail.cjs');
-const [, , , , catalog, negativeName, extraName, positiveName, starName] = process.argv;
+const [, , , , catalog, negativeName, extraName, positiveName, starName, positiveStarName] = process.argv;
 const read = name => JSON.parse(fs.readFileSync(name, 'utf8'));
 const readCatalog = name => read(path.join(catalog, name));
 if (base.maxDivisor !== 20_000_000 || base.smallLimit !== 73) throw Error('Incorrect baseline');
@@ -56,7 +56,9 @@ function readStars(name) {
 }
 const rows = starName ? readStars(starName) : [];
 const refined = rows.length ? require('./lagneau_star_correction.cjs').mediumStars(rows,pairFilter) : pairFilter;
-const filtered = positiveTailGraph(positive, refined);
+const refinedBoth = positiveStarName
+  ? require('./lagneau_star_correction.cjs').mediumStars(readStars(positiveStarName),refined,true) : refined;
+const filtered = positiveTailGraph(positive, refinedBoth);
 const result = combine(factors, base.maxDivisor, filtered);
 const num = BigInt(result.numeratorUpper.replace('.', ''));
 const afterOldSingletons = base.ceilDiv(num * 979789013592184n, base.scale);

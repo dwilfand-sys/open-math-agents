@@ -2,10 +2,10 @@
 
 const {ceilDiv, scale} = require('./lagneau_crt_bound.cjs');
 
-function mediumStars(rows, previous) {
+function mediumStars(rows, previous, positive=false) {
   const bySmall=new Map();
   for (const row of rows) {
-    if (row.slope<=73 || row.slope%6!==5 || row.lower!==14_000_000 || row.upper!==1_000_000_000)
+    if (row.slope<=73 || row.slope%6!==(positive?1:5) || row.lower!==14_000_000 || row.upper!==1_000_000_000)
       throw Error('Unexpected medium-prime range');
     const small=row.small || 0;
     if (!bySmall.has(small)) bySmall.set(small,[]);
@@ -17,20 +17,25 @@ function mediumStars(rows, previous) {
   }
   return {
     makeGraph(factor,family,outer) {
-      const smallSlopes=[];
+      const smallSlopes=[], positiveBits=[13,43,61,67,73].map(s=>1<<family.small.indexOf(s));
       for (let k=0; k<family.small.length; ++k) {
         if (family.small[k]%6===5) smallSlopes.push([family.small[k],1<<k]);
       }
-      for (const row of rows)
+      for (const row of rows) {
         if (factor[row.slope]!==row.slope) throw Error('Medium center is composite');
-      return {core:previous.makeGraph(factor,family,outer),smallSlopes};
+        if (positive && factor[2*row.slope-1]===2*row.slope-1) throw Error('Forbidden singleton center');
+      }
+      return {core:previous.makeGraph(factor,family,outer),smallSlopes,positiveBits};
     },
     makeCorrection(state,weights) {
       const inner = previous.makeCorrection(state.core,weights);
       return (weight,mask,seen) => {
         const prior = inner(weight,mask,seen);
         const least=state.smallSlopes.find(([s,bit])=>(mask&bit)!==0);
-        const candidates=bySmall.get(least?least[0]:0);
+        const key=positive
+          ? state.positiveBits.reduce((v,bit,i)=>v+((mask&bit)?(1<<i):0),0)
+          : least?least[0]:0;
+        const candidates=bySmall.get(key);
         if (!candidates) return prior;
         const ordered=candidates.filter(r=>seen[r.slope]!==mask+1);
         let none=weight, loss=0n;
