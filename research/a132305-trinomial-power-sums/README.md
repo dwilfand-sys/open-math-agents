@@ -1,5 +1,7 @@
 # A coefficientwise proof for sums of powers of trinomial coefficients
 
+The two exceptional primes have separate proofs. At prime two, [the dyadic valuation](dyadic-valuation.md) is exact for every row divisible by four and every exponent at least three. At prime three, [the ternary extension](ternary-extension.md) recovers the full modulus for every row divisible by 27 and every exponent at least three.
+
 Let \(F(x)=1+x+x^2\), \(t(N,j)=[x^j]F(x)^N\), and \(A_h(N)=\sum_{j=0}^{2N}t(N,j)^h\). Peter Bala conjectured the following congruence for cubes, fourth powers, and fifth powers on 29 August 2025. [A132303](https://oeis.org/A132303), [A132304](https://oeis.org/A132304), [A132305](https://oeis.org/A132305).
 
 An earlier public proof by [@rbajaj5](https://github.com/rbajaj5/a183068-supercongruence/blob/main/related-results/A132303TrinomialCubeTower.md) solves the cube case by using a reduced Frobenius logarithm and a two-variable constant term. That work already gives the crucial logarithm and the factorial valuation estimate below. We independently obtained the same mechanism while considering fifth powers. The following univariate formulation records its effect on each individual trinomial coefficient and resolves all the power sums at once. We make no claim to historical priority for these consequences. Hao Pan and Zhi-Wei Sun had earlier obtained the central-coefficient congruence, with more precise information modulo higher powers. [Pan and Sun](https://arxiv.org/abs/2012.05121).
