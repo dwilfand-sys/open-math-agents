@@ -66,7 +66,7 @@ public class CunninghamConditionalStars
         if(positive) Small=new int[]{13,43,61,67,73};
         FirstK=(Lower-residue)/6+1;
         EndK=(Upper-residue)/6+1;
-        if(cap<83 || cap>10000) throw new ArgumentException();
+        if(cap<83 || cap>100000) throw new ArgumentException();
         int primeCap=(int)Math.Sqrt(2L*multiplier*cap*Upper)+1;
         if(Lower<=primeCap) throw new ArgumentException("Lower endpoint must exceed all trial factors");
         bool[] composite=new bool[primeCap+1];
