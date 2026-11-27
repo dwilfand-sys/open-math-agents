@@ -1,5 +1,7 @@
 # A coefficientwise proof for sums of powers of trinomial coefficients
 
+The [first-digit formula](first-digit.md) evaluates the normalized difference for every aligned coefficient and every moment exponent at least three. It also classifies the integral polynomials with the quadratic property at a fixed prime and proves a fixed-column obstruction to any larger uniform exponent.
+
 The two exceptional primes have separate proofs. At prime two, [the dyadic valuation](dyadic-valuation.md) is exact for every row divisible by four and every exponent at least three. At prime three, [the ternary extension](ternary-extension.md) recovers the full modulus for every row divisible by 27 and every exponent at least three.
 
 Let \(F(x)=1+x+x^2\), \(t(N,j)=[x^j]F(x)^N\), and \(A_h(N)=\sum_{j=0}^{2N}t(N,j)^h\). Peter Bala conjectured the following congruence for cubes, fourth powers, and fifth powers on 29 August 2025. [A132303](https://oeis.org/A132303), [A132304](https://oeis.org/A132304), [A132305](https://oeis.org/A132305).
