@@ -11,6 +11,8 @@ public class CompactClique
     static readonly long[] visits = new long[9];
     static readonly ulong[][][] compat = new ulong[8][][];
     static readonly ulong[][][] layers = new ulong[9][][];
+    static readonly int[][][] occupied = new int[9][][];
+    static readonly int[,] occupiedCount = new int[9,8];
     static BinaryWriter output;
 
     static int PopCount(ulong x)
@@ -30,8 +32,9 @@ public class CompactClique
         }
         int rest = live ^ (1 << a);
         ulong[][] old = layers[depth], next = layers[depth+1];
-        for (int u=0; u<words[a]; ++u)
+        for (int chunk=0; chunk<occupiedCount[depth,a]; ++chunk)
         {
+            int u = occupied[depth][a][chunk];
             ulong v = old[a][u];
             while (v != 0)
             {
@@ -45,13 +48,20 @@ public class CompactClique
                     if ((rest & (1<<b)) == 0) continue;
                     ulong[] row = compat[a][b];
                     ulong[] source = old[b], target = next[b];
-                    int count = 0, offset = i*words[b];
-                    for (int k=0; k<words[b]; ++k)
+                    int count = 0, numWords = 0, offset = i*words[b];
+                    int[] oldWords = occupied[depth][b], nextWords = occupied[depth+1][b];
+                    for (int m=0; m<occupiedCount[depth,b]; ++m)
                     {
+                        int k = oldWords[m];
                         ulong common = source[k] & row[offset+k];
-                        target[k] = common;
-                        count += PopCount(common);
+                        if (common != 0)
+                        {
+                            nextWords[numWords++] = k;
+                            target[k] = common;
+                            count += PopCount(common);
+                        }
                     }
+                    occupiedCount[depth+1,b] = numWords;
                     if (count == 0)
                     {
                         valid = false;
@@ -94,11 +104,20 @@ public class CompactClique
         for (int d=0; d<=8; ++d)
         {
             layers[d] = new ulong[8][];
-            for (int a=0; a<8; ++a) layers[d][a] = new ulong[words[a]];
+            occupied[d] = new int[8][];
+            for (int a=0; a<8; ++a)
+            {
+                layers[d][a] = new ulong[words[a]];
+                occupied[d][a] = new int[words[a]];
+            }
         }
         for (int a=0; a<8; ++a)
+        {
+            occupiedCount[0,a]=words[a];
+            for (int k=0;k<words[a];++k) occupied[0][a][k]=k;
             for (int i=0; i<sizes[a]; ++i)
                 layers[0][a][i/64] |= 1UL<<(i%64);
+        }
         Visit(0,255,first);
         output.Flush();
         Console.Error.WriteLine(String.Join(",",visits));
