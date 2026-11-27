@@ -8,7 +8,7 @@ from scales_fixed_intersection import case_data, compatible
 from scales_forced_doubles import two_cases
 
 
-def solve(blocks, fixed, first_limit=None):
+def solve(blocks, fixed, first_limit=None, split_log=None):
     stats = Counter()
     solutions = []
     dom = {a: bits(i for i, block in enumerate(opts) if all(
@@ -21,6 +21,8 @@ def solve(blocks, fixed, first_limit=None):
             solutions.append(tuple(sorted(chosen)))
             return
         a = min(domains, key=lambda h: (domains[h].bit_count(), -h))
+        if split_log is not None:
+            split_log.append(a)
         possible = list(members(domains[a]))
         if not chosen and first_limit is not None:
             possible = possible[:first_limit]
