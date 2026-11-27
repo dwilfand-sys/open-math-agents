@@ -97,6 +97,32 @@ def large_valuations(limit, samples):
     print(f"Upper bound: {witnesses} independently evaluated constructive witnesses.")
 
 
+def prime_power_rows():
+    identities = 0
+    complete_rows = 0
+    for p in (2, 3, 5, 7, 11):
+        power = 1
+        while power <= 300:
+            for m in range(1, 81):
+                row_values = [order(math.comb(m - 1, t), p) for t in range(m)]
+                counts = set()
+                least = None
+                for n in range(1, power + 1):
+                    t = (m * n - 1) // power
+                    valuation = ratio_val(m, n, power - n, p)
+                    assert valuation + row_values[t] == vfact(m, p), (p, power, m, n)
+                    if n < power:
+                        counts.add(t)
+                        least = valuation if least is None else min(least, valuation)
+                    identities += 1
+                if power > m:
+                    assert counts == set(range(m))
+                    assert least == order(normalization(m), p)
+                    complete_rows += 1
+            power *= p
+    print(f"Prime-power totals: {identities} binomial identities and {complete_rows} full positive rows.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--grid-arity", type=int, default=40)
@@ -108,3 +134,4 @@ if __name__ == "__main__":
         parser.error("positive ranges and grid arity at least two are required")
     exact_grid(args.grid_arity, args.grid_side)
     large_valuations(args.valuation_arity, args.samples)
+    prime_power_rows()
