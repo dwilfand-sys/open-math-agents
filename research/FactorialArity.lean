@@ -134,4 +134,53 @@ theorem prime_power_valuation (p e n s : ℕ) (hp : p.Prime) :
   change r.factorization p = _
   nlinarith only [ht, mult]
 
+/-- The single nonzero base-`p` digit has coefficient one precisely at
+the powers of `p`. -/
+theorem digit_sum_one_iff {p : ℕ} (hp : 1 < p) (n : ℕ) :
+    (p.digits n).sum = 1 ↔ ∃ j : ℕ, n = p^j := by
+  have zero (l : List ℕ) : l.sum = 0 → Nat.ofDigits p l = 0 := by
+    induction l with
+    | nil => intro _; rfl
+    | cons a l ih =>
+      intro eq
+      rw [List.sum_cons] at eq
+      have ha : a = 0 := by omega
+      have hl : l.sum = 0 := by omega
+      simp [Nat.ofDigits_cons, ha, ih hl]
+  have one (l : List ℕ) : l.sum = 1 → ∃ j : ℕ, Nat.ofDigits p l = p^j := by
+    induction l with
+    | nil => simp
+    | cons a l ih =>
+      intro eq
+      rw [List.sum_cons] at eq
+      by_cases ha : a = 0
+      · obtain ⟨j,hj⟩ := ih (by omega)
+        exact ⟨j+1, by rw [Nat.ofDigits_cons, ha, zero_add, hj, pow_succ']; rfl⟩
+      · have ha1 : a = 1 := by omega
+        have hl : l.sum = 0 := by omega
+        exact ⟨0, by simp [Nat.ofDigits_cons, ha1, zero l hl]⟩
+  constructor
+  · intro h
+    simpa only [Nat.ofDigits_digits] using one _ h
+  · rintro ⟨j, rfl⟩
+    have h := Nat.digits_base_pow_mul (b := p) (k := j) (m := 1) hp (by decide)
+    rw [Nat.mul_one, Nat.digits_of_lt p 1 (by decide) hp] at h
+    simp [h]
+
+/-- At every nontrivial prime-power arity, the least possible exponent
+of `p` at positive total degree occurs exactly at power-of-`p` degrees. -/
+theorem least_exponent_iff (p e n s : ℕ) (hp : p.Prime) :
+    (((p^(e+1)*n).factorial * (p^(e+1)*s).factorial) /
+      (n.factorial * s.factorial * (n+s).factorial ^ (p^(e+1)-1))).factorization p =
+      geometric p (e+1) ↔ ∃ j : ℕ, n+s = p^j := by
+  rw [prime_power_valuation p (e+1) n s hp, ← digit_sum_one_iff hp.one_lt (n+s)]
+  have hg : 0 < geometric p (e+1) := by
+    simp only [geometric]
+    exact Nat.add_pos_right _ (pow_pos hp.pos _)
+  constructor
+  · intro eq
+    exact Nat.eq_of_mul_eq_mul_left hg (eq.trans (Nat.mul_one _).symm)
+  · intro h
+    rw [h, Nat.mul_one]
+
 end FactorialArity
