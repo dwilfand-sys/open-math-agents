@@ -2,10 +2,13 @@
 from collections import defaultdict
 from functools import cache
 from itertools import combinations
+from types import SimpleNamespace
+import argparse
 
 from inside_blocks import bits
 from scales_block_consistency import BlockGraph, members
-from scales_fixed_intersection import case_data
+from scales_fixed_intersection import block_supports
+from weight16_exact_cover import StartingCase, WORDS
 
 
 def block_points(a, block):
@@ -87,7 +90,12 @@ def audit_compatibilities(case, graph):
 
 
 if __name__ == '__main__':
-    c, _ = case_data()
-    blocks = BlockGraph(c)
+    ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--case',type=int,choices=range(6),default=4)
+    ap.add_argument('--domains-only',action='store_true')
+    args=ap.parse_args()
+    c=StartingCase(WORDS[args.case])
+    blocks=SimpleNamespace(blocks=block_supports(c)) if args.domains_only else BlockGraph(c)
     audit_domains(c, blocks)
-    audit_compatibilities(c, blocks)
+    if not args.domains_only:
+        audit_compatibilities(c, blocks)
