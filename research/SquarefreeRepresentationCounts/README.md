@@ -6,6 +6,8 @@ There are exactly two integers with R(n)=0, namely 1 and 13. Exactly nine have R
 
 This is a written proof with independently reproduced integer computations. The counting extension has no project Lean kernel verdict. The argument uses the bounds in our [squarefree sieve draft](../../proofs/oeis-a085265.lean), which can also be read at its [fixed revision](https://github.com/dwilfand-sys/open-math-agents/blob/acedc78ebba2903e02b4361c4c7e95e6dafdb367/proofs/oeis-a085265.lean). This note does not establish priority. For the classical asymptotic theory and a related representation theorem allowing the square zero, see Jorge Jiménez Urroz, [Expositiones Mathematicae 40 (2022), 665–678](https://doi.org/10.1016/j.exmath.2021.12.002).
 
+A standalone Lean certificate proves that every level from 0 through 100 occurs by 10,038 and therefore has a least member. It also checks that the nine listed integers are exactly the single-representation cases through 1,024. The full frequency and last-occurrence claims above still rely on the larger computation and the analytic tail estimate. Lean 4.37.0-rc1 checked the standalone file on 27 November 2026. [Finite certificates](FiniteWitnesses.lean)
+
 ## 1. Candidate squares and the common-prime sieve
 
 Set u=⌊√(n−1)⌋. If 4 divides n, take the odd integers k in [1,u]. Otherwise take the even ones in that interval. Write these J candidates as k=2x+b with 0≤x<J and b equal to 1 or 2, respectively. Each difference is positive and avoids divisibility by 4. Also u≤2J+1.
