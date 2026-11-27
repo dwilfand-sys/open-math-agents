@@ -65,9 +65,9 @@ private theorem fiveCollision {a b c d e : ℤ} (ab : a < b) (bc : b < c)
     all_goals
       rcases sm with h|h|h|h|h <;> subst s <;> first | contradiction | omega
 
+set_option maxHeartbeats 14000000 in
 /-- The four linear conclusions express two facts. The ordered set is
 centrally symmetric, and its largest radius is the sum of the other two. -/
-set_option maxHeartbeats 14000000 in
 private theorem orderedSeven (f : Fin 7 → ℤ) (mono : StrictMono f)
     (hit : ∀ a b c d e : Fin 7, a < b → b < c → c < d → d < e →
       f a+f d=f b+f c ∨ f a+f e=f b+f c ∨ f a+f e=f b+f d ∨
