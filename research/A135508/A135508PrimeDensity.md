@@ -41,3 +41,31 @@ Now enlarge $S$ to include all primes from 5 up to a bound tending to infinity. 
 The Lean draft addresses eventual divisibility by every fixed positive integer and the fixed-progression statement used above. The counting argument in this note is a mathematical proof outside the Lean draft. Cloitre's Proposition 6.5 gives an exact description of the 2-adic valuations. His Theorem 6.16 concerns the density of indices among all integers satisfying a different condition under a prime-index hypothesis.
 
 [Benoît Cloitre, Primes in LCM recurrences](https://arxiv.org/html/2510.18891v3)
+
+## A quantitative bound and reciprocal convergence
+
+The two estimates
+
+$$
+E(X)\ll\frac{X}{(\log X)^2},
+\qquad
+\sum_{\substack{p\ \mathrm{prime}\\a(p-1)\ne p}}\frac1p<\infty
+$$
+
+follow from the published general-modulus form of Linnik's theorem and the upper-bound Selberg sieve.
+
+For each prime $q\ge11$, Xylouris's Theorem 1 gives a prime $r\le C(3q)^5$ in the reduced class $r\equiv-2\pmod q$, $r\equiv2\pmod3$. Such an $r$ exceeds 5 because $q\mid r+2$. The choices $(q,r)=(5,23),(7,47)$ satisfy the same congruences. Increasing the absolute constant if necessary, every prime $q\ge5$ thus has a suitable $r\le Kq^5$.
+
+Fix a sufficiently large real $Y$, and let $p$ be exceptional in $Y<p\le2Y$. The accepted recurrence reduction gives $a(p-1)=p$ whenever $p\equiv2\pmod3$, so $p\equiv1\pmod3$. Thus neither 2 nor 3 divides $p-2$. If a prime $5\le q\le Y^{1/10}$ divided $p-2$, its witness would satisfy $r\le K\sqrt Y<p-3$. Then $q\mid x(p-3)$ by persistence, which gives $a(p-1)=p$, a contradiction.
+
+Set $z=Y^{1/10}$. Both $p-2$ and $p$ have no prime divisor up to $z$. The upper-bound Selberg sieve for $n(n+2)$ gives
+
+$$
+\#\{n\le2Y:\ \gcd(n(n+2),\prod_{\ell\le z,\ \ell\ \mathrm{prime}}\ell)=1\}
+\ll \frac{Y}{(\log z)^2}+(z\log z)^2
+\ll\frac{Y}{(\log Y)^2}.
+$$
+
+This bounds the exceptions in $(Y,2Y]$. To sum the dyadic estimates up to $X$, count $p\le\sqrt X$ trivially. For the remaining dyadic intervals the logarithm is comparable to $\log X$ and their lengths sum to $O(X)$. This proves the stated bound for $E(X)$. The sum of reciprocals in $(2^j,2^{j+1}]$ is $O(j^{-2})$ by the same estimate. Summing over $j$ proves convergence.
+
+[Xylouris, *Linniks Konstante ist kleiner als 5*, Theorem 1](https://doi.org/10.22405/2226-8383-2018-19-3-80-94) · [Rudnick, *Selberg's sieve — twin primes*, estimate for the sifted set preceding Theorem 1.2](https://www.math.tau.ac.il/~rudnick/courses/sieves2015/selberg%20sieve%20twin%20primes.pdf)
