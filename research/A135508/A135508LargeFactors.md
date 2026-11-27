@@ -100,3 +100,21 @@ E(X)=T(X)-\mathbf{1}_{X\ge7}+E_{\mathrm{comp}}(X)
 $$
 
 This is an additive error estimate. It places no lower bound on the number of twin primes.
+
+## Classical proof of the counting estimate
+
+The same bound for $E_{\mathrm{comp}}(X)$ and the resulting estimate for $E(X)-T(X)$ also follow from Bombieri–Vinogradov and the Selberg sieve. This argument uses no pointwise estimate from GRH.
+
+Again take $Y<N\le2Y$, where $Y$ is sufficiently large. Set $x=Y/2$ and $Q=\sqrt{x}/(3(\log x)^7)$. Call a prime $7<q\le Q$ bad if the simultaneous class $r\equiv-2\pmod q$, $r\equiv2\pmod3$ contains no prime $r\le x$. At a bad modulus the discrepancy in counting primes for this reduced class modulo $3q$ is exactly $\operatorname{li}(x)/\varphi(3q)\gg x/(q\log x)$. Apply the Bombieri–Vinogradov theorem in the prime-counting form with error $O(x/(\log x)^5)$, summing over moduli through $3Q$. The distinct moduli $3q$ give
+
+$$
+\sum_{\substack{q\le Q\\q\ \mathrm{bad}}}\frac1q \ll (\log x)^{-4}.
+$$
+
+If $q\le Q$ is the least prime factor of an exceptional $N$, it is bad: any prime in the required class below $x<N$ would be timely. The finitely many prime factors up to 7 are already covered. Counting all positive multiples of the bad $q$ up to $2Y$ bounds this case by $O(Y/(\log Y)^4)$.
+
+For $q>Q$, we have $q^3>2Y$ once $Y$ is sufficiently large. Hence a composite $N$ in this case is $qs$ for primes $q\le s$. The range $Q<q\le\sqrt{2Y}$ still occupies only $O(\log\log Y)$ dyadic intervals and $\log q$ is comparable to $\log Y$. The uniform sieve for $s(qs+2)$ above gives the same $O(Y\log\log Y/(\log Y)^3)$ contribution. This proves the counting, weighted convergence and twin-prime comparison estimates from classical results alone.
+
+More generally, for any fixed $A>0$, the number of exceptions with $\Omega(p-2)\ge3$ is $O_A(X/(\log X)^A)$ by this averaging argument. Their least factor is at most $(2Y)^{1/3}$. This lies within the Bombieri–Vinogradov range even if its logarithmic exponent is enlarged to obtain an arbitrarily large fixed logarithmic saving.
+
+[Dimitris Koukoulopoulos, *The Distribution of Prime Numbers*, Theorem 18.9 and equation (26.1)](https://dms.umontreal.ca/~koukoulo/documents/publications/primes.pdf)
