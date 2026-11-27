@@ -8,6 +8,8 @@ are infinite and have natural density zero. These are two distinct questions. Pe
 
 **Theorem.** For every fixed positive integer \(h\), the set of \(n\) having at least \(h\) distinct unordered representations \(n=P(a,b)\) by coprime integers \(a,b>1\) has natural density one. Each representation counted in the proof has \(a\) even, \(a+1\) prime, and \(b\) odd. In particular, A400795 has natural density zero.
 
+Paul Erdős and Carl Pomerance studied the same shifted gcd in [“On the Number of False Witnesses for a Composite Number,” *Mathematics of Computation* 46 (1986), 259–279, Theorem 4.1 and (4.2)–(4.4)](https://renyi.hu/~p_erdos/1986-11.pdf). For a general integer \(N\) they estimate \(\sum_{q\mid N,\ q\ {\rm prime}}\log\gcd(q-1,N-1)\) on a set of density one, using counts of prime divisors in progressions. Taking \(N=2(n+1)\) gives the gcd below. Here the statistic counts the factors where this gcd equals one and uses them to construct lattice-point representations.
+
 ### 1. A witness from a prime dividing \(n+1\)
 
 Let \(q\) be an odd prime dividing \(n+1\) with \(q<n+1\). Set \(a=q-1\) and \(b=2(n+1)/q-1\). Then \(a\ge2\) is even, \(b\ge3\) is odd, and \((a+1)(b+1)=2(n+1)\). Since \(qb=2(n+1)-q\) and \(q\equiv1\bmod(q-1)\),
@@ -20,7 +22,7 @@ When this gcd is one, \(2P(a,b)=(a+1)(b+1)-2=2n\). Distinct qualifying primes yi
 
 For an odd prime \(q\) put \(H(q)=\sum_{s\mid q-1,\ s\ {\rm odd\ prime}}1/s\). Fix an integer \(K\ge3\), and let \(W\) be the product of odd primes at most \(K\). Among primes \(q\equiv-1\bmod W\), no odd prime \(s\le K\) divides \(q-1\). We show that those with \(H(q)\le 8/K\) have a divergent sum of reciprocals.
 
-Write \(T(X)=\pi(X;W,-1)\sim X/(\varphi(W)\log X)\), by the prime number theorem in a fixed arithmetic progression. For \(K<s\le X^{1/4}\) prime, the conditions \(q\equiv-1\bmod W\), \(q\equiv1\bmod s\) define one reduced residue class modulo \(Ws\). For \(X\) sufficiently large in terms of \(W\), one has \(Ws\le X^{1/2}\). The [Brun-Titchmarsh inequality](https://www.math.tau.ac.il/~rudnick/courses/sieves2015/BrunTitchmarsh.pdf) bounds the number of such \(q\le X\) by
+Write \(T(X)=\pi(X;W,-1)\sim X/(\varphi(W)\log X)\), by the prime number theorem in a fixed arithmetic progression. For \(K<s\le X^{1/4}\) prime, the conditions \(q\equiv-1\bmod W\), \(q\equiv1\bmod s\) define one reduced residue class modulo \(Ws\). For \(X\) sufficiently large in terms of \(W\), one has \(Ws\le X^{1/2}\). The [Brun–Titchmarsh inequality](https://www.math.tau.ac.il/~rudnick/courses/sieves2015/BrunTitchmarsh.pdf) bounds the number of such \(q\le X\) by
 \[
 \frac{2X}{\varphi(W)(s-1)\log(X/(Ws))}
 \le\frac{4X}{\varphi(W)(s-1)\log X}.
@@ -48,6 +50,8 @@ The densities of the two exceptional events equal their probabilities since they
 
 ### Scope
 
-The proof addresses the density part of the conjecture. Infinitude for unrestricted inputs remains open in this note. A density-zero set may be finite or infinite. The argument is a mathematical manuscript using the prime number theorem in arithmetic progressions and the Brun-Titchmarsh inequality. Historical priority and a Lean kernel certificate are unconfirmed.
+The proof addresses the density part of the conjecture. Infinitude for unrestricted inputs remains open in this note. A density-zero set may be finite or infinite. The argument is a mathematical manuscript using the prime number theorem in arithmetic progressions and the Brun–Titchmarsh inequality. Historical priority and a Lean kernel certificate are unconfirmed.
 
-The [exhaustive checker](check_density_witnesses.py) compares the prime construction with direct enumeration of the triangles. Codex prepared this argument for @dwilfand-sys.
+The [prime-factor count](Multiplicity.md) and [products of distinct primes](CompositeWitnesses.md) give more precise estimates for the number of coprime triangle representations. The [exhaustive checker](check_density_witnesses.py) compares the prime construction with direct enumeration of the triangles. Codex prepared this argument for @dwilfand-sys.
+
+The [composite-divisor checker](check_composite_witnesses.py) also compares counts by the number of prime factors. [PrimeWitness.lean](PrimeWitness.lean) is a draft Lean proof of the finite divisor identity. It has no kernel verdict.
