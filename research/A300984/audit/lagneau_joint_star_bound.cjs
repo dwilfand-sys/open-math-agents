@@ -7,7 +7,15 @@ const {ceilDiv, scale} = require('./lagneau_crt_bound.cjs');
 // A previous nonlinear divisor <=10^9 containing such a high prime needs a
 // second active medium prime <250, hence vanishes on the gate.
 function jointStars(rows, layers, previous, positive=false, extra={}) {
-  const byFilter=new Map(), merged=new Map();
+  const byFilter=new Map(), merged=new Map(), longRows=new Map();
+  for(const row of extra.longRows||[]) {
+    if(row.lower!==1_000_000_000 || row.upper!==3_000_000_000 ||
+       row.slope<=73 || row.slope>1000 || row.slope%6!==(positive?1:5))
+      throw Error('Unexpected long-leaf range');
+    const key=row.small+':'+row.slope;
+    if(longRows.has(key))throw Error('Repeated long-leaf row');
+    longRows.set(key,BigInt(row.factor));
+  }
   for(const [data,layer,extension] of [[rows,false,false],[layers,true,false],[extra.rows||[],false,true]]) {
     for(const raw of data) {
       const multiplier=raw.multiplier||1, t=raw.slope;
@@ -40,9 +48,16 @@ function jointStars(rows, layers, previous, positive=false, extra={}) {
         const least=state.negative.find(([,bit])=>(mask&bit)!==0);
         const required=least?least[0]:0;
         const filter=positive?state.positiveBits.reduce((v,bit,i)=>v+((mask&bit)?1<<i:0),0):required;
-        const group=required+':'+filter;
+        // Above 1b the negative joint small-slope filter is disjoint from the
+        // new leaves if at most one negative small prime was selected.
+        const allowLong=positive || state.negative.filter(([,bit])=>mask&bit).length<=1;
+        const group=required+':'+filter+':'+allowLong;
         if(!merged.has(group)) {
-          const standard=byFilter.get('1:'+filter)||[];
+          const initial=byFilter.get('1:'+filter)||[];
+          const standard=!allowLong||!longRows.size?initial:initial.map(row=>{
+            const other=longRows.get(filter+':'+row.t);
+            return other?{...row,factor:ceilDiv(row.factor*other,scale)}:row;
+          });
           const mixed=byFilter.get(required+':'+filter)||[];
           const all=[...standard,...mixed].sort((a,b)=>a.factor<b.factor?-1:a.factor>b.factor?1:0);
           if(new Set(all.map(row=>row.t)).size!==all.length)throw Error('Duplicate active center');

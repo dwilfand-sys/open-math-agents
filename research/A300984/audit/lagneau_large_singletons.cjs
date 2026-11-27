@@ -24,7 +24,7 @@ function root(q,m) {
 function bound(lower,upper,blockSize=65536) {
   if (!Number.isSafeInteger(lower) || !Number.isSafeInteger(upper) ||
       !Number.isSafeInteger(blockSize) || blockSize<=0 || lower<5 ||
-      lower>=upper || upper>10**12) throw new RangeError('Invalid sieve bounds');
+      lower>=upper || upper>10**13) throw new RangeError('Invalid sieve bounds');
   const maxFactor = Math.ceil(Math.sqrt(2*upper));
   if (maxFactor*maxFactor<2*upper) throw new Error('Insufficient trial factors');
   // The entire production interval is above the trial factors. For a small

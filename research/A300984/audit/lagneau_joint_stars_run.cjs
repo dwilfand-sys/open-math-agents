@@ -69,6 +69,7 @@ const rows = starName ? readStars(starName) : [];
 const {jointStars} = require('./lagneau_joint_star_bound.cjs');
 const [mandatoryName,multiName,negExtended,positiveExtended]=process.argv.slice(12);
 const quantile=process.argv[16]==='quantile'?require('./lagneau_joint_quantile.cjs').connect():undefined;
+const readLong=name=>readStars(name).map(r=>({...r,lower:1_000_000_000,upper:3_000_000_000}));
 const multiple=require('./lagneau_multiple_slopes_graph.cjs');
 const mTable=mandatoryName && mandatoryName!=='-' ? multiple.read(mandatoryName,100_000_000,1_000_000_000) : null;
 const mandatory=mTable?(mask,small)=>{
@@ -77,9 +78,9 @@ const mandatory=mTable?(mask,small)=>{
   return mTable[key];
 }:undefined;
 const neg = jointStars(rows,readStars(layerName,true),pairFilter,false,
-  {rows:readStars(negExtended,false,true),mandatory,quantile});
+  {rows:readStars(negExtended,false,true),longRows:readLong(process.argv[17]),mandatory,quantile});
 const gatedBoth = jointStars(readStars(positiveStarName),readStars(positiveLayerName,true),neg,true,
-  {rows:readStars(positiveExtended,false,true),quantile});
+  {rows:readStars(positiveExtended,false,true),longRows:readLong(process.argv[18]),quantile});
 const disjoint=multiName && multiName!=='-' ? multiple.extend(multiple.read(multiName,1_000_000_000,10_000_000_000),gatedBoth) : gatedBoth;
 const filtered = positiveTailGraph(positive,disjoint);
 const result = combine(factors, base.maxDivisor, filtered);

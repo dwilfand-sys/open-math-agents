@@ -7,7 +7,7 @@ using System.Numerics;
 public class CunninghamConditionalStars
 {
     const int Chunk=262144;
-    static int Lower=14000000, Upper=1000000000;
+    static long Lower=14000000, Upper=1000000000;
     const long Scale=1000000000000000;
     static int[] Small={5,11,17,23,29,41,47,53,59,71};
     static int[] primes;
@@ -57,15 +57,15 @@ public class CunninghamConditionalStars
         int cap=int.Parse(args[0]);
         bool positive=args.Length>1 && args[1]=="positive";
         int centerMin=args.Length>2?int.Parse(args[2]):73;
-        if(args.Length>3) Lower=int.Parse(args[3]);
-        if(args.Length>4) Upper=int.Parse(args[4]);
+        if(args.Length>3) Lower=long.Parse(args[3]);
+        if(args.Length>4) Upper=long.Parse(args[4]);
         int multiplier=args.Length>5?int.Parse(args[5]):1;
         if(multiplier<=0 || multiplier>73 || multiplier%2==0 || multiplier%3==0) throw new ArgumentException();
-        if(Lower<=0 || Upper<=Lower || cap<=centerMin) throw new ArgumentException();
+        if(Lower<=0 || Upper<=Lower || Upper>10000000000L || cap<=centerMin) throw new ArgumentException();
         int residue=positive?1:5;
         if(positive) Small=new int[]{13,43,61,67,73};
-        FirstK=(Lower-residue)/6+1;
-        EndK=(Upper-residue)/6+1;
+        FirstK=checked((int)((Lower-residue)/6+1));
+        EndK=checked((int)((Upper-residue)/6+1));
         if(cap<83 || cap>100000) throw new ArgumentException();
         int primeCap=(int)Math.Sqrt(2L*multiplier*cap*Upper)+1;
         if(Lower<=primeCap) throw new ArgumentException("Lower endpoint must exceed all trial factors");
