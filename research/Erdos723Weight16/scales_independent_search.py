@@ -11,9 +11,12 @@ from scales_forced_doubles import two_cases
 def solve(blocks, fixed, first_limit=None, split_log=None):
     stats = Counter()
     solutions = []
-    dom = {a: bits(i for i, block in enumerate(opts) if all(
-        compatible(a, block, (j, bits(m))) for j, m in fixed))
-        for a, opts in enumerate(blocks.blocks)}
+    if hasattr(blocks, 'initial'):
+        dom = dict(enumerate(blocks.initial(fixed)))
+    else:
+        dom = {a: bits(i for i, block in enumerate(opts) if all(
+            compatible(a, block, (j, bits(m))) for j, m in fixed))
+            for a, opts in enumerate(blocks.blocks)}
 
     def visit(domains, chosen):
         stats[len(chosen)] += 1
