@@ -47,3 +47,25 @@ $$
 for every reduced class $a$ modulo $Q$. The hypothesis $Q\ge10^5$ holds throughout this problem. In fact $160B^2=0.576\,Q(\log Q)^6>Q>\varphi(Q)$. It follows that $\theta(x;Q,a)>0$, so there is a prime $r\le x$ in the required class. Therefore $\log N>B$ always implies a timely witness. In particular a candidate with $\Omega(N)>B/\log q$ is covered, since $N\ge q^{\Omega(N)}$. This bound contains only the given prime $q$ and explicit numerical constants.
 
 [Michael A. Bennett, Greg Martin, Kevin O'Bryant and Andrew Rechnitzer, *Explicit bounds for primes in arithmetic progressions*, Corollary 6.17](https://personal.math.ubc.ca/~gerg/papers/downloads/EBPAP.pdf)
+
+## Reduction to a restricted range of semiprimes using Dirichlet GRH
+
+Corollary 1.2 of Lamzouri, Li and Soundararajan states that, assuming GRH for Dirichlet $L$-functions, the least prime in any reduced residue class modulo $Q>3$ is at most $(\varphi(Q)\log Q)^2$. Alpöge's November 2026 formalization supplies Dirichlet GRH, including the primitive character case. Sutherland's independent verification reports that the canonical statement comparison and kernel checks passed. The application of the 2015 corollary to this recurrence is an ordinary mathematical argument.
+
+[Lamzouri, Li and Soundararajan, *Conditional bounds for the least quadratic non-residue and related problems*, Corollary 1.2](https://arxiv.org/abs/1309.3595) · [2017 corrigendum](https://doi.org/10.1090/mcom/3261) · [Andrew Sutherland, verification of the November 2026 GRH formalization](https://math.mit.edu/~drew/grh/)
+
+Here $\varphi(3q)=2(q-1)$, so the least prime in the required class satisfies
+
+$$
+r\le 4(q-1)^2\log^2(3q)<q^3.
+$$
+
+For the strict inequality, $f(t)=\sqrt{t}-2\log(3t)$ is increasing for $t>16$, since $f'(t)=(\sqrt t-4)/(2t)$. Moreover $f(10^6)>0$, since $3\cdot10^6<2^{22}<e^{22}$.
+
+If $\Omega(N)\ge3$, then $N\ge q^3>r$, so this witness suffices for every such case. Any remaining $N$ has the form $qs$ with primes $q\le s$. Since $N\equiv2\pmod3$, the two primes are distinct and occupy opposite nonzero classes modulo 3. If $qs>4(q-1)^2\log^2(3q)$ the witness again suffices. Thus every remaining instance has
+
+$$
+q<s<4q\log^2(3q),\qquad p=qs+2\text{ prime}.
+$$
+
+The finite sieve above also gives $q>10^7$ in this residual family. The existence of a timely witness for every pair in this range is open.
