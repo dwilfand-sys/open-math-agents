@@ -141,26 +141,34 @@ private theorem multiplesRow_marks (fuel d k : ℕ) (hd : 0 < d)
         simp [multiplesRow, hstop, Nat.testBit_or, Nat.testBit_shiftLeft,
           hge, hsub, hrec]
 
-/-- Rows for every possible square divisor `d²`, where `2 ≤ d ≤ count+1`. -/
+/-- Rows for the squares of primes at most `count+1`. Every positive
+nonsquarefree integer has at least one such prime-square witness. -/
 private def squareDivisorMask : ℕ → ℕ
   | 0 => 1
-  | count+1 => squareDivisorMask count ||| multiplesRow 19 ((count+2)^2)
+  | count+1 =>
+    if (count+2).Prime then
+      squareDivisorMask count ||| multiplesRow 19 ((count+2)^2)
+    else squareDivisorMask count
 
 private theorem squareDivisorMask_marks (count d k : ℕ)
-    (hd : 2 ≤ d) (hcount : d ≤ count+1) (hbound : d^2*k ≤ 365000) :
+    (hd : d.Prime) (hcount : d ≤ count+1) (hbound : d^2*k ≤ 365000) :
     (squareDivisorMask count).testBit (d^2*k) = true := by
+  have hd2 := hd.two_le
   induction count with
   | zero => omega
   | succ count ih =>
-    rw [squareDivisorMask, Nat.testBit_or]
     by_cases h : d = count+2
     · subst d
+      rw [squareDivisorMask, if_pos hd, Nat.testBit_or]
       have hpos : 0 < (count+2)^2 := by positivity
       have hmult : k ≤ (count+2)^2*k := by
         simpa using Nat.mul_le_mul_right k (show 1 ≤ (count+2)^2 by omega)
       have hsize : k < 2^19 := by norm_num; omega
       rw [multiplesRow_marks 19 _ k hpos hsize hbound, Bool.or_true]
-    · rw [ih (by omega), Bool.true_or]
+    · have hold := ih (by omega : d ≤ count+1)
+      by_cases hprime : (count+2).Prime
+      · simp only [squareDivisorMask, if_pos hprime, Nat.testBit_or, hold, Bool.true_or]
+      · simpa only [squareDivisorMask, if_neg hprime] using hold
 
 private theorem nonsquarefree_marked {n : ℕ} (hn : 0 < n)
     (hmax : n ≤ 365000) (hbad : ¬ Squarefree n) :
@@ -176,7 +184,7 @@ private theorem nonsquarefree_marked {n : ℕ} (hn : 0 < n)
     norm_num at h605
     omega
   obtain ⟨k, rfl⟩ := hd
-  exact squareDivisorMask_marks 603 p k hp.two_le hmaxp hmax
+  exact squareDivisorMask_marks 603 p k hp hmaxp hmax
 
 /-- Intersect the masks for the first `k` positive squares. The low bits in
 each translation account for the requirement that the remainder be positive. -/
@@ -1399,6 +1407,30 @@ def fastSift (ps : List ℕ) (x d : ℕ) : ℤ :=
   | [] => ((x/d : ℕ) : ℤ)
   | p::rest => if x < d then 0 else fastSift rest x d - fastSift rest x (d*p)
 
+/-- The same sieve indexed by the remaining interval length. -/
+def qSift : List Nat → Nat → Int
+  | [], y => (y : Int)
+  | p :: ps, y =>
+      if y = 0 then 0 else qSift ps y - qSift ps (y / p)
+
+theorem fastSift_eq_qSift (ps : List Nat) (x : Nat) :
+    ∀ d : Nat, 0 < d → (∀ p ∈ ps, 0 < p) →
+      fastSift ps x d = qSift ps (x / d) := by
+  induction ps with
+  | nil =>
+      intro d _ _
+      rfl
+  | cons p ps ih =>
+      intro d hd hpos
+      have hp : 0 < p := hpos p (by simp)
+      have htail : ∀ q ∈ ps, 0 < q := fun q hq => hpos q (by simp [hq])
+      by_cases h : x < d
+      · simp [fastSift, qSift, h, Nat.div_eq_of_lt h]
+      · have hdx : d ≤ x := by omega
+        have hy : x / d ≠ 0 := (Nat.div_pos hdx hd).ne'
+        simp only [fastSift, if_neg h, qSift, if_neg hy, ih d hd htail,
+          ih (d * p) (Nat.mul_pos hd hp) htail, Nat.div_div_eq_div_mul]
+
 private theorem sift_empty_interval (ps : List ℕ) (x d : ℕ) (h : x < d)
     (hp : ∀ p ∈ ps, 0 < p) : sift ps (fun t => ((x/t : ℕ) : ℚ)) d = 0 := by
   induction ps generalizing d with
@@ -1477,6 +1509,76 @@ def primeDeltas (j : ℕ) : ℕ :=
   ∑ p ∈ (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime), 2*j/(p^2)
 
 def costUpper (j : ℕ) : ℤ := fastSift wheel (2*j+1) 1 + 24 + primeDeltas j
+
+/- A suffix of this wheel contains all primes no greater than its first
+   member. At sufficiently small positive quotients the only survivor is 1.
+   The finite property is checked once, then used throughout the recurrence. -/
+private def wheelPrefixTest : List ℕ → Bool
+  | [] => true
+  | p :: ps =>
+    ((List.range p).all fun j => decide (qSift (p :: ps) (j+1) = 1)) &&
+      wheelPrefixTest ps
+
+private def shortQSift : List ℕ → ℕ → ℤ
+  | [], y => (y : ℤ)
+  | p :: ps, y =>
+    if y = 0 then 0 else
+    if y ≤ p then 1 else shortQSift ps y - shortQSift ps (y / p)
+
+private theorem qSift_short_eq (ps : List ℕ) :
+    wheelPrefixTest ps = true → ∀ y : ℕ, qSift ps y = shortQSift ps y := by
+  induction ps with
+  | nil => intro _ y; rfl
+  | cons p ps ih =>
+    intro ok y
+    have hparts : (∀ j : ℕ, j < p → qSift (p :: ps) (j+1) = 1) ∧
+        wheelPrefixTest ps = true := by
+      simpa [wheelPrefixTest] using ok
+    by_cases hz : y = 0
+    · subst y
+      simp [qSift, shortQSift]
+    by_cases hle : y ≤ p
+    · have hc := hparts.1 (y-1) (by omega)
+      rw [show y-1+1 = y by omega] at hc
+      simpa only [shortQSift, if_neg hz, if_pos hle] using hc
+    · simp only [qSift, shortQSift, if_neg hz, if_neg hle,
+        ih hparts.2 y, ih hparts.2 (y/p)]
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelPrefixTest_ok : wheelPrefixTest wheel = true := by decide +kernel
+
+private theorem wheel_positive : ∀ p ∈ wheel, 0 < p := by decide
+
+private theorem costUpper_short (j : ℕ) :
+    costUpper j = shortQSift wheel (2*j+1) + 24 + primeDeltas j := by
+  unfold costUpper
+  rw [fastSift_eq_qSift wheel (2*j+1) 1 (by decide) wheel_positive, Nat.div_one,
+    qSift_short_eq wheel wheelPrefixTest_ok]
+
+private def deltaPrimeTable : List ℕ := [
+  3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
+  59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127,
+  131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199,
+  211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283,
+  293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383,
+  389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467,
+  479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577,
+  587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661,
+  673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769,
+  773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877,
+  881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983,
+  991, 997, 1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087,
+  1091, 1093, 1097, 1103, 1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193,
+  1201, 1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279, 1283, 1289, 1291, 1297,
+  1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373, 1381, 1399, 1409]
+
+/-- Compute the bounded prime set once, independently of the interval endpoint. -/
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem deltaPrimeTable_ok :
+    (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime) = deltaPrimeTable.toFinset := by
+  decide +kernel
 
 theorem cost_upper (j : ℕ) (hlo : 300 ≤ j) (hhi : j ≤ 1000000) :
     ((∑ p ∈ (Finset.range (2*j+2)).filter (fun p => 2 < p ∧ p.Prime),
@@ -1645,474 +1747,553 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow300 : verifiedRow (300, 307, 227) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow308 : verifiedRow (308, 314, 231) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow315 : verifiedRow (315, 323, 238) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow324 : verifiedRow (324, 332, 244) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow333 : verifiedRow (333, 341, 251) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow342 : verifiedRow (342, 355, 259) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow356 : verifiedRow (356, 368, 269) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow369 : verifiedRow (369, 385, 280) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow386 : verifiedRow (386, 409, 293) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow410 : verifiedRow (410, 430, 312) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow431 : verifiedRow (431, 454, 327) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow455 : verifiedRow (455, 484, 347) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow485 : verifiedRow (485, 517, 371) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow518 : verifiedRow (518, 550, 396) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow551 : verifiedRow (551, 592, 422) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow593 : verifiedRow (593, 643, 454) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow644 : verifiedRow (644, 710, 494) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow711 : verifiedRow (711, 782, 546) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow783 : verifiedRow (783, 865, 605) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow866 : verifiedRow (866, 964, 669) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow965 : verifiedRow (965, 1082, 747) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1083 : verifiedRow (1083, 1228, 842) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1229 : verifiedRow (1229, 1400, 957) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1401 : verifiedRow (1401, 1624, 1093) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1625 : verifiedRow (1625, 1885, 1268) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1886 : verifiedRow (1886, 2213, 1477) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow2214 : verifiedRow (2214, 2501, 1658) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow2502 : verifiedRow (2502, 2810, 1852) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow2811 : verifiedRow (2811, 3175, 2085) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow3176 : verifiedRow (3176, 3613, 2359) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow3614 : verifiedRow (3614, 4153, 2693) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow4154 : verifiedRow (4154, 4805, 3100) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow4806 : verifiedRow (4806, 5602, 3595) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow5603 : verifiedRow (5603, 6574, 4198) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow6575 : verifiedRow (6575, 7745, 4933) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow7746 : verifiedRow (7746, 9163, 5819) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow9164 : verifiedRow (9164, 10868, 6888) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow10869 : verifiedRow (10869, 12905, 8173) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow12906 : verifiedRow (12906, 15340, 9709) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow15341 : verifiedRow (15341, 18230, 11541) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow18231 : verifiedRow (18231, 21628, 13710) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow21629 : verifiedRow (21629, 25645, 16264) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow25646 : verifiedRow (25646, 30356, 19280) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow30357 : verifiedRow (30357, 35902, 22818) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow35903 : verifiedRow (35903, 42385, 26976) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow42386 : verifiedRow (42386, 47546, 30284) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow47547 : verifiedRow (47547, 53065, 33821) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow53066 : verifiedRow (53066, 59170, 37742) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow59171 : verifiedRow (59171, 65906, 42074) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow65907 : verifiedRow (65907, 73363, 46859) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow73364 : verifiedRow (73364, 81562, 52146) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow81563 : verifiedRow (81563, 90625, 57967) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow90626 : verifiedRow (90626, 100606, 64397) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow100607 : verifiedRow (100607, 111608, 71479) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow111609 : verifiedRow (111609, 123731, 79287) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow123732 : verifiedRow (123732, 137092, 87888) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow137093 : verifiedRow (137093, 151816, 97368) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow151817 : verifiedRow (151817, 168016, 107812) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow168017 : verifiedRow (168017, 185867, 119305) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow185868 : verifiedRow (185868, 205514, 131967) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow205515 : verifiedRow (205515, 227137, 145904) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow227138 : verifiedRow (227138, 250933, 161241) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow250934 : verifiedRow (250934, 277159, 178125) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow277160 : verifiedRow (277160, 306017, 196728) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow306018 : verifiedRow (306018, 337817, 217203) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow337818 : verifiedRow (337818, 372854, 239765) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow372855 : verifiedRow (372855, 411418, 264618) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow411419 : verifiedRow (411419, 453940, 291986) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow453941 : verifiedRow (453941, 500809, 322156) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow500810 : verifiedRow (500810, 552482, 355415) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow552483 : verifiedRow (552483, 609460, 392084) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow609461 : verifiedRow (609461, 672335, 432525) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow672336 : verifiedRow (672336, 741674, 477145) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow741675 : verifiedRow (741675, 808306, 519980) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow808307 : verifiedRow (808307, 851143, 547552) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow851144 : verifiedRow (851144, 896314, 576584) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow896315 : verifiedRow (896315, 936791, 602620) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow936792 : verifiedRow (936792, 979100, 629835) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow979101 : verifiedRow (979101, 1000000, 643264) := by
   unfold verifiedRow profileChecks
+  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
   decide +kernel
 
 private theorem checks : ∀ c ∈ rows, 300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
