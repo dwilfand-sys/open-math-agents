@@ -60,3 +60,5 @@ The same method gives direct proofs for several named OEIS sequences. [Five exam
 ## Which ratios satisfy the recurrence?
 
 The [classification](InverseLift.md) proves that the recurrence holds at every index for all rational insertion ratios and gives a sharp bound on its step. In fact [every algebraic insertion ratio satisfies it](Transcendence.md). The [exceptional set](Dimension.md) is uncountable and has Hausdorff dimension zero.
+
+The [recurrence trees and twin sequences](RecurrenceTrees.md) give a precise version of Layman’s remaining conjectures about recurring sequences. The [exact checker](check_recurrence_tree.py) verifies the trace rule on 2,934 tree nodes and gives two counterexamples to the claimed prefix rule for a nonminimal recurrence step.
