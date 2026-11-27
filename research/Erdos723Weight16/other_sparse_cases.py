@@ -1,7 +1,8 @@
 """Inside searches and explicit missing-partner tests for other Carter words."""
 import argparse
 import json
-from itertools import combinations, product
+from functools import cache
+from itertools import combinations, islice, product
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -42,8 +43,16 @@ class MissingPartners:
             self.all |= b
             for pair in combinations(m,2):
                 self.where[pair] |= b
+        @cache
+        def point_info(m):
+            pairs=tuple(combinations(members(m),2))
+            excluded=0
+            for pair in pairs:
+                excluded |= self.where[pair]
+            return pairs,~excluded
+        self.point_info=point_info
 
-    def test(self,g,assign):
+    def test(self,g,assign,first_only=False):
         points = set()
         for a,i in assign:
             doubles,singles = g.blocks[a][i]
@@ -51,14 +60,14 @@ class MissingPartners:
             points.update(((a,),m) for m in singles)
         assert len(points)==44
         used = set()
-        for _,m in points:
-            for pair in combinations(members(m),2):
-                assert pair not in used
-                used.add(pair)
         mask = self.all
-        for pair in used:
-            mask &= ~self.where[pair]
-        missing = [p for p,possible in self.where.items() if p not in used and not possible & mask]
+        for _,m in points:
+            pairs,allowed=self.point_info(m)
+            assert used.isdisjoint(pairs)
+            used.update(pairs)
+            mask &= allowed
+        absent=(p for p,possible in self.where.items() if p not in used and not possible & mask)
+        missing=list(islice(absent,1) if first_only else absent)
         return mask.bit_count(),missing
 
 
@@ -110,7 +119,7 @@ if __name__ == '__main__':
             vals,stats=solve(g,seed)
         results=[]
         for val in vals:
-            n,miss=check.test(g,val)
+            n,miss=check.test(g,val,first_only=True)
             results.append({'blocks':val,'hidden_options':n,'missing_pair':miss[0] if miss else None})
         out[index]={'seed':seed,'orbit_size':osize,'nodes_by_depth':dict(stats),'inside':results}
         print(index, 'inside',len(vals),'nodes',sum(stats.values()),'not refuted',sum(not r['missing_pair'] for r in results),flush=True)
