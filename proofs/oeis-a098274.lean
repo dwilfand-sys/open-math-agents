@@ -1419,7 +1419,7 @@ private theorem complete_sum (p s : ℕ) (hp : p.Prime) (hp5 : 5 ≤ p)
   have hv : (v : ZMod (p^s)) = 3 := by simp [v]
   let S := ∑ x : ZMod (p^s), weight (p^s) x
   have hperm : (∑ x : ZMod (p^s), weight (p^s) ((u : ZMod (p^s)) * x)) = S :=
-    u.mulLeft.sum_comp (weight (p^s))
+    Equiv.sum_comp u.mulLeft (weight (p^s))
   have hmul : (2 : ZMod (p^s))^2 * S = S := calc
     _ = (u : ZMod (p^s))^2 *
         ∑ x : ZMod (p^s), weight (p^s) ((u : ZMod (p^s)) * x) := by rw [hperm, hu]
@@ -1458,7 +1458,14 @@ theorem inverse_squares_range (p s start : ℕ) (hp : p.Prime) (hp5 : 5 ≤ p)
       (Fin.sum_univ_eq_sum_range _ _).symm
     _ = ∑ x : ZMod (p^s), weight (p^s) x := by
       let e := (residueEquiv (p^s)).trans (Equiv.addLeft (start : ZMod (p^s)))
-      simpa only [Nat.cast_add] using e.sum_comp (weight (p^s))
+      calc
+        _ = ∑ j : Fin (p^s), weight (p^s) (e j) := by
+          apply Finset.sum_congr rfl
+          intro j _
+          change weight (p^s) ((start+j.val : ℕ) : ZMod (p^s)) =
+            weight (p^s) ((start : ZMod (p^s)) + (j.val : ZMod (p^s)))
+          rw [Nat.cast_add]
+        _ = _ := Equiv.sum_comp e (weight (p^s))
     _ = 0 := complete_sum p s hp hp5
 
 /-- The same congruence with the original integer as the summation index. -/
@@ -1935,7 +1942,9 @@ private theorem scale_entry (b : Bool) (p A j : ℕ) (hp : p.Prime)
     rw [hc, ← Nat.mul_sub_left_distrib] at hu
     simp only [Nat.cast_mul] at hu
     have hl := shift_weight A j hA
-    apply mul_left_cancel₀ (show (p:ℚ)*(A:ℚ) ≠ 0 by positivity)
+    have hpQ : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
+    have hAQ : (A : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.ne_of_gt hA)
+    apply mul_left_cancel₀ (mul_ne_zero hpQ hAQ)
     linear_combination hu - (p:ℚ) * ratio p j (A-j) * hl
 
 private theorem product_close {p e : ℕ} (hp : p.Prime) {x y : ℚ}
@@ -2106,19 +2115,31 @@ theorem off_grid (p r N : ℕ) (b : Bool) (hp : p.Prime) (hp5 : 5 ≤ p)
   have vanish : (N:U)^2 * X = 0 := by
     obtain ⟨m,hm⟩ := hdiv
     have hmU : (N:U) = (p:U)^r * (m:U) := by
-      simpa only [Nat.cast_mul,Nat.cast_pow] using congrArg (fun n : ℕ => (n:U)) hm
+      calc
+        (N:U) = ((p^r*m : ℕ) : U) := congrArg (fun n : ℕ => (n:U)) hm
+        _ = (p:U)^r * (m:U) := by rw [Nat.cast_mul, Nat.cast_pow]
     have hzero : (p:U)^(3*r)=0 := by
       simpa only [Nat.cast_pow] using (ZMod.natCast_eq_zero_iff (p^(3*r)) (p^(3*r))).mpr dvd_rfl
+    have cubePower (x : U) : x^(3*r) = x^r*x^r*x^r := by
+      calc
+        x^(3*r) = x^((r+r)+r) := congrArg (fun e : ℕ => x^e) (show 3*r=(r+r)+r by omega)
+        _ = x^r*x^r*x^r := by rw [pow_add, pow_add]
     calc
       (N:U)^2 * X = (p:U)^(3*r) * ((m:U)^2*z) := by
-        rw [hmU,hz,show 3*r=(r+r)+r by omega,pow_add,pow_add]
+        rw [hmU, hz, cubePower (p:U)]
         ring
       _ = 0 := by rw [hzero,zero_mul]
   have hterm (j : ℕ) (hj : 0 < j) (hjN : j ≤ N) (hjp : ¬p ∣ j) :
       (c:U) * (term b N j : U) = (N:U)^2 * F j := by
     have he := congrArg (fun a : ℕ => (a:U)) (term_clear b N j hN hj hjN)
     change (((c * j^2) * term b N j : ℕ) : U) = ((N^2 * weight b N j : ℕ) : U) at he
-    push_cast at he
+    have heU : (c:U) * (j:U)^2 * (term b N j:U) =
+        (N:U)^2 * (weight b N j:U) := by
+      calc
+        _ = (((c * j^2) * term b N j : ℕ) : U) := by
+          rw [Nat.cast_mul, Nat.cast_mul, Nat.cast_pow]
+        _ = ((N^2 * weight b N j : ℕ) : U) := he
+        _ = _ := by rw [Nat.cast_mul, Nat.cast_pow]
     have hjunit : IsUnit (j:U) :=
       (ZMod.isUnit_iff_coprime j (p^(3*r))).mpr (hp.coprime_pow_of_not_dvd hjp)
     calc
@@ -2126,7 +2147,10 @@ theorem off_grid (p r N : ℕ) (b : Bool) (hp : p.Prime) (hp5 : 5 ≤ p)
           ((c:U) * (term b N j:U)) * ((j:U)*(j:U)⁻¹)^2 := by
             rw [ZMod.mul_inv_of_unit _ hjunit, one_pow, mul_one]
       _ = ((c:U) * (j:U)^2 * (term b N j:U)) * ((j:U)⁻¹)^2 := by ring
-      _ = (N:U)^2 * F j := by rw [he]; simp only [F,unitInvSq,if_neg hjp]; ring
+      _ = (N:U)^2 * F j := by
+        rw [heU]
+        simp only [F, unitInvSq, if_neg hjp]
+        ring
   have hF0 : F 0 = 0 := by simp [F, unitInvSq]
   have hfull : (∑ j ∈ range (N+1), F j) = X := by
     simpa only [X, hF0, add_zero, zero_add] using Finset.sum_range_succ' F N
