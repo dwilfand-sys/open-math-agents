@@ -56,3 +56,7 @@ Layman stated the insertion rule and C.1 in Sections 2–3 of his 2003 note. C.5
 The dynamics of threshold maps and their Sturmian itineraries are established mathematics. In particular, Christopher Dance and Tomi Silander proved a general threshold-itinerary theorem in 2019 (Theorem 12) that applies to these increasing fractional-linear contractions on $[1/4,1/2]$. The argument above gives the specialization, connects the coding to the actual insertion seed, and excludes the recurrence Layman proposed. The public derivation of the floor rule predates this note. Codex prepared this application for @dwilfand-sys. Historical priority of the application is unconfirmed. This is a written proof; the exact computations in the [checker](check_counterexample.py) illustrate it. A Lean kernel has not verified the theorem. [Dance and Silander, JMLR 20 (2019)](https://www.jmlr.org/papers/volume20/17-185/17-185.pdf)
 
 The same method gives direct proofs for several named OEIS sequences. [Five examples and a partial-sums identity](NamedSequences.md)
+
+## Which ratios satisfy the recurrence?
+
+The [classification](InverseLift.md) proves that the recurrence holds at every index for all rational insertion ratios and gives a sharp bound on its step. In fact [every algebraic insertion ratio satisfies it](Transcendence.md). The [exceptional set](Dimension.md) is uncountable and has Hausdorff dimension zero.
