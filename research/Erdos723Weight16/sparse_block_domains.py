@@ -71,7 +71,7 @@ class SparseBlockDomains:
             conflicts=0
             for p in self.direct[a][i]:
                 if b in self.point_data[p][0]:
-                    candidates &= by_point[b][p]
+                    candidates &= by_point[b].get(p,0)
                 else:
                     conflicts |= forbidden(b,p)
             return candidates & ~conflicts
@@ -83,10 +83,12 @@ class SparseBlockDomains:
     def initial_many(self, fixed):
         ds = self.full.copy()
         for j, matching in fixed:
-            p = self.point_id[(j,bits(matching))]
+            p = self.point_id.get((j,bits(matching)))
+            if p is None:
+                return [0]*8
             for a in range(8):
                 if a in j:
-                    ds[a] &= self.by_point[a][p]
+                    ds[a] &= self.by_point[a].get(p,0)
                 else:
                     ds[a] &= ~self.forbidden(a,p)
         return ds
