@@ -11,8 +11,8 @@ from scales_forced_doubles import two_cases
 def solve(blocks, fixed, first_limit=None, split_log=None):
     stats = Counter()
     solutions = []
-    if hasattr(blocks, 'initial'):
-        dom = dict(enumerate(blocks.initial(fixed)))
+    if hasattr(blocks, 'initial_many'):
+        dom = dict(enumerate(blocks.initial_many(fixed)))
     else:
         dom = {a: bits(i for i, block in enumerate(opts) if all(
             compatible(a, block, (j, bits(m))) for j, m in fixed))
