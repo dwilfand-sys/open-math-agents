@@ -4,7 +4,7 @@ For n>0 let S be the sum of the squarefree positive divisors, and T the sum of t
 
 ## Forced shape
 
-S is the product of 1+p over the distinct prime factors p of n. If n had two distinct odd prime factors, then 4 would divide S. Also, for each prime q, there must be a different prime p with p² dividing n. Otherwise each nonsquarefree divisor would be divisible by q², and hence so would T. This includes T=0. Together these observations imply n = 2^i p^j with i,j ≥ 2. The squarefreeness of S = 3(p+1) excludes p=3, p≡3 mod 4 and p≡2 mod 3. Thus p≡1 mod 12. A Lean draft of the support-and-congruence argument is included. It has not been kernel-checked.
+S is the product of 1+p over the distinct prime factors p of n. If n had two distinct odd prime factors, then 4 would divide S. Also, for each prime q, there must be a different prime p with p² dividing n. Otherwise each nonsquarefree divisor would be divisible by q², and hence so would T. This includes T=0. Together these observations imply n = 2^i p^j with i,j ≥ 2. The squarefreeness of S = 3(p+1) excludes p=3, p≡3 mod 4 and p≡2 mod 3. Thus p≡1 mod 12. The standalone Lean proof also shows that 676 is the least member by checking its divisor sums 42 and 1,239. On 27 November 2026 the Lean 4.37.0-rc1 web editor checked the conjectured shape, the strengthened exponents and congruence, and the exact minimum. Each axiom report lists only `propext`, `Classical.choice`, and `Quot.sound`. The project’s pinned checker has not issued an upstream verdict for A300984. [Standalone Lean proof](LagneauPrimeShape.lean)
 
 ## A correction at ten million
 
