@@ -77,9 +77,21 @@ def main():
         aligned += aligned_here
     exact_high = sum(comb(6, j)**3 * comb(7, j) for j in range(7))
     assert (exact_high - 1) % 343 == 0 and (exact_high - 1) % 2401 != 0
+    family_checks = 0
+    for degree in range(2, 14, 2):
+        for p, m in ((5, 1), (5, 5), (5, 25), (7, 2), (7, 7), (11, 2)):
+            modulus = p ** (3 * valuation(p * m, p))
+            def family(index):
+                return sum(pow(v, degree - 1, modulus) * b % modulus
+                           for v, b in zip(row(index - 1), row(index)))
+            assert (family(p * m) - family(m)) % modulus == 0
+            family_checks += 1
+    for degree in range(1, 30, 2):
+        assert sum(comb(4, j)**(degree-1) * comb(5, j) for j in range(5)) % 25 == 6
     print(f"{len(cases)} distinct towers, {count} prefix and weight checks, "
           f"{aligned} aligned ratio transfers. "
-          f"The first 7-adic difference is {exact_high - 1} with valuation exactly three.")
+          f"The first 7-adic difference is {exact_high - 1} with valuation exactly three. "
+          f"Checked {family_checks} even-family transfers and all odd powers up to 29 at p=5.")
 
 
 if __name__ == "__main__":

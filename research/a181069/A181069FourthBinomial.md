@@ -96,6 +96,24 @@ The endpoint term is divisible by \(p^r\) by (2). For each interior term (2) sup
 \]
 By (1), (4) and (8), \(2a(N)\equiv2a(M)\pmod{p^{3r}}\). Inverting 2 proves the theorem.
 
+## Which row powers satisfy the uniform cubic congruence?
+
+For any integer \(d\ge1\), define
+\[
+a_d(N)=\sum_{j=0}^{N-1}\binom{N-1}{j}^{d-1}\binom Nj.
+\]
+Then the cubic congruence above holds for all primes \(p\ge5\) and all positive levels **exactly when \(d\) is even**.
+
+Suppose \(d\) is even. Upon reflection, the interior summand in \(2a_d(N)\) is \(T_d=B(U^{d-1}+V^{d-1})\). Because \(d-1\) is odd, \(U+V=B\) divides \(U^{d-1}+V^{d-1}\) over the integers. Hence \(B^2\mid T_d\). The ratio between the two aligned summands is \(R^d\), in the sense of the exact identity \(T_{d,\mathrm{upper}}=R^d T_{d,\mathrm{lower}}\). The same valuation argument as in (4) applies.
+
+At a unit index, put \(x=N/j\). The summand equals \(U^d x(1+(x-1)^{d-1})\). Since \(d-1\) is odd, this polynomial in \(x\) is \((d-1)x^2\) modulo \(x^3\). Thus the counterpart of (5) is \((d-1)N^2U^d/j^2\) modulo \(p^{3r}\). Equations (6) and (7) still apply with weights \(\binom{N-1}{j-1}^d\), since \(d\) is even and the adjacent ratio is \((1-N/j)^d\). This proves the result for every even \(d\ge2\), including \(d=2\) where \(a_2(N)=\tfrac12\binom{2N}{N}\).
+
+For any odd \(d\), at \(N=5\) the three facts \(\binom4j\equiv(-1)^j\bmod5\), \(5\mid\binom5j\) for \(1\le j\le4\), and \(2\mid d-1\) give
+\[
+a_d(5)\equiv \sum_{j=0}^4\binom5j=31\not\equiv1=a_d(1)\pmod{25}.
+\]
+Thus every odd \(d\), including \(d=1\), fails even the proposed quadratic modulus at this single prime and level. The odd sibling \(a_3\) is listed as [OEIS A181067](https://oeis.org/A181067).
+
 ## Sources and prior results
 
 - Osburn, Sahu and Straub, *Supercongruences for sporadic sequences*, Lemmas 2.1–2.3, give Jacobsthal scaling, the reciprocal-unit sum and the gain from powers of a lower-level binomial factor. Their proof of Theorem 1.2 also uses cancellation over blocks of unit reciprocals for a different family. Here the symmetry in (1) and the adjacent-weight summation in (5)–(7) treat Hanna's shifted fourth-power sum. [Author manuscript](https://researchrepository.ucd.ie/server/api/core/bitstreams/7a77d4a0-e176-4bc7-8cb8-acd091420042/content).
