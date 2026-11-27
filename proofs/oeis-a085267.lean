@@ -67,7 +67,7 @@ private lemma prime_block (n : ℕ) (hn : 5 < n) :
 theorem primeCountWheel (J : ℕ) (hJ : 10 ≤ J) :
     15 * ((Finset.range (2*J+2)).filter (fun p => 2 < p ∧ Nat.Prime p)).card ≤ 8*J+34 := by
   induction J using Nat.strong_induction_on with
-  | ind J ih =>
+  | h J ih =>
     by_cases hs : J < 25
     · have base : ∀ j : Fin 25, 10 ≤ j.val →
           15 * ((Finset.range (2*j.val+2)).filter
@@ -1332,6 +1332,43 @@ def fastSift (ps : List ℕ) (x d : ℕ) : ℤ :=
   | [] => ((x/d : ℕ) : ℤ)
   | p::rest => if x < d then 0 else fastSift rest x d - fastSift rest x (d*p)
 
+/-- The same sieve indexed by the remaining interval length. -/
+def qSift : List Nat → Nat → Int
+  | [], y => (y : Int)
+  | p :: ps, y =>
+      if y = 0 then 0 else qSift ps y - qSift ps (y / p)
+
+theorem fastSift_eq_qSift (ps : List Nat) (x : Nat) :
+    ∀ d : Nat, 0 < d → (∀ p ∈ ps, 0 < p) →
+      fastSift ps x d = qSift ps (x / d) := by
+  induction ps with
+  | nil =>
+      intro d _ _
+      rfl
+  | cons p ps ih =>
+      intro d hd hpos
+      have hp : 0 < p := hpos p (by simp)
+      have htail : ∀ q ∈ ps, 0 < q := fun q hq => hpos q (by simp [hq])
+      by_cases h : x < d
+      · simp [fastSift, qSift, h, Nat.div_eq_of_lt h]
+      · have hdx : d ≤ x := by omega
+        have hy : x / d ≠ 0 := (Nat.div_pos hdx hd).ne'
+        simp only [fastSift, if_neg h, qSift, if_neg hy, ih d hd htail,
+          ih (d * p) (Nat.mul_pos hd hp) htail, Nat.div_div_eq_div_mul]
+
+theorem qSift_zero (ps : List Nat) : qSift ps 0 = 0 := by
+  cases ps <;> rfl
+
+/-- Use previously proved child values to certify one parent without expanding the children. -/
+theorem qSift_step_of_eq {p y : Nat} {ps : List Nat} {a b : Int}
+    (hy : y ≠ 0) (ha : qSift ps y = a) (hb : qSift ps (y / p) = b) :
+    qSift (p :: ps) y = a - b := by
+  rw [qSift, if_neg hy, ha, hb]
+
+/- For the moderate rows one can certify each small (wheel suffix, quotient) pair once.
+   Build parent equalities with qSift_step_of_eq, then rewrite the row's wheel value
+   before decide +kernel. The proof of each parent refers to its two child theorems. -/
+
 private theorem sift_empty_interval (ps : List ℕ) (x d : ℕ) (h : x < d)
     (hp : ∀ p ∈ ps, 0 < p) : sift ps (fun t => ((x/t : ℕ) : ℚ)) d = 0 := by
   induction ps generalizing d with
@@ -1410,6 +1447,76 @@ def primeDeltas (j : ℕ) : ℕ :=
   ∑ p ∈ (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime), 2*j/(p^2)
 
 def costUpper (j : ℕ) : ℤ := fastSift wheel (2*j+1) 1 + 24 + primeDeltas j
+
+/- A suffix of this wheel contains all primes no greater than its first
+   member. At sufficiently small positive quotients the only survivor is 1.
+   The finite property is checked once, then used throughout the recurrence. -/
+private def wheelPrefixTest : List ℕ → Bool
+  | [] => true
+  | p :: ps =>
+    ((List.range p).all fun j => decide (qSift (p :: ps) (j+1) = 1)) &&
+      wheelPrefixTest ps
+
+private def shortQSift : List ℕ → ℕ → ℤ
+  | [], y => (y : ℤ)
+  | p :: ps, y =>
+    if y = 0 then 0 else
+    if y ≤ p then 1 else shortQSift ps y - shortQSift ps (y / p)
+
+private theorem qSift_short_eq (ps : List ℕ) :
+    wheelPrefixTest ps = true → ∀ y : ℕ, qSift ps y = shortQSift ps y := by
+  induction ps with
+  | nil => intro _ y; rfl
+  | cons p ps ih =>
+    intro ok y
+    have hparts : (∀ j : ℕ, j < p → qSift (p :: ps) (j+1) = 1) ∧
+        wheelPrefixTest ps = true := by
+      simpa [wheelPrefixTest] using ok
+    by_cases hz : y = 0
+    · subst y
+      simp [qSift, shortQSift]
+    by_cases hle : y ≤ p
+    · have hc := hparts.1 (y-1) (by omega)
+      rw [show y-1+1 = y by omega] at hc
+      simpa only [shortQSift, if_neg hz, if_pos hle] using hc
+    · simp only [qSift, shortQSift, if_neg hz, if_neg hle,
+        ih hparts.2 y, ih hparts.2 (y/p)]
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelPrefixTest_ok : wheelPrefixTest wheel = true := by decide +kernel
+
+private theorem wheel_positive : ∀ p ∈ wheel, 0 < p := by decide
+
+private theorem costUpper_short (j : ℕ) :
+    costUpper j = shortQSift wheel (2*j+1) + 24 + primeDeltas j := by
+  unfold costUpper
+  rw [fastSift_eq_qSift wheel (2*j+1) 1 (by decide) wheel_positive, Nat.div_one,
+    qSift_short_eq wheel wheelPrefixTest_ok]
+
+private def deltaPrimeTable : List ℕ := [
+  3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
+  59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127,
+  131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199,
+  211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283,
+  293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383,
+  389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467,
+  479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577,
+  587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661,
+  673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769,
+  773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877,
+  881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983,
+  991, 997, 1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087,
+  1091, 1093, 1097, 1103, 1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193,
+  1201, 1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279, 1283, 1289, 1291, 1297,
+  1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373, 1381, 1399, 1409]
+
+/-- Compute the bounded prime set once, independently of the interval endpoint. -/
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem deltaPrimeTable_ok :
+    (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime) = deltaPrimeTable.toFinset := by
+  decide +kernel
 
 theorem cost_upper (j : ℕ) (hlo : 300 ≤ j) (hhi : j ≤ 1000000) :
     ((∑ p ∈ (Finset.range (2*j+2)).filter (fun p => 2 < p ∧ p.Prime),
@@ -1546,6 +1653,137 @@ private def profileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
       (c:ℚ) - (refund hi A:ℚ) + (1 + initialError (A.card+t.val)) <
         (lo:ℚ)*largeRho A*(18/19:ℚ)^t.val
 
+/- The A085267 profile requires one additional unit of margin. -/
+private def largestProfileRank (D cap : ℕ) : ℕ :=
+  if D * 19^4 ≤ cap then 4 else
+  if D * 19^3 ≤ cap then 3 else
+  if D * 19^2 ≤ cap then 2 else
+  if D * 19 ≤ cap then 1 else 0
+
+private theorem admissible_le_largest {D cap t : ℕ} (ht : t < 5)
+    (h : D * 19^t ≤ cap) : t ≤ largestProfileRank D cap := by
+  interval_cases t <;> try simp only [pow_one] at h
+  all_goals
+    unfold largestProfileRank <;> split_ifs <;> omega
+
+private def endpointProfileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
+  ∀ A ∈ smallPrimes.powerset, (∏ p ∈ A, p) ≤ 2*hi+2 →
+    let m := largestProfileRank (∏ p ∈ A, p) (2*hi+2)
+    (c : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
+      (lo : ℚ) * largeRho A * (18/19 : ℚ)^m
+
+private theorem initialError_nondecreasing {i j : ℕ} (h : i ≤ j) :
+    initialError i ≤ initialError j := by
+  have step (u : ℕ) : initialError u ≤ initialError (u+1) := by
+    cases u with
+    | zero => norm_num [initialError]
+    | succ u =>
+      have hpow : 0 ≤ (2 : ℚ)^u := by positivity
+      have hd : (2 : ℚ)^u ≤ 2^u * 2 := by linarith
+      simpa [initialError, pow_succ] using hd
+  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
+  clear h
+  induction d with
+  | zero => simp
+  | succ d ih => exact ih.trans (step (i+d))
+
+private theorem profile_decay {i j : ℕ} (h : i ≤ j) :
+    (18/19 : ℚ)^j ≤ (18/19 : ℚ)^i := by
+  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
+  clear h
+  induction d with
+  | zero => simp
+  | succ d ih =>
+    rw [Nat.add_succ, pow_succ]
+    calc
+      _ ≤ (18/19 : ℚ)^(i+d) * 1 :=
+        mul_le_mul_of_nonneg_left (by norm_num) (by positivity)
+      _ ≤ (18/19 : ℚ)^i := by simpa using ih
+
+private theorem profileChecks_of_endpoints {lo hi : ℕ} {c : ℤ}
+    (he : endpointProfileChecks lo hi (c+1)) : profileChecks lo hi c := by
+  intro A hA t hadm
+  let D := ∏ p ∈ A, p
+  let m := largestProfileRank D (2*hi+2)
+  have hprod : D ≤ 2*hi+2 := by
+    have hp : 1 ≤ (19 : ℕ)^t.val := by positivity
+    have hmul := Nat.mul_le_mul_left D hp
+    have hbase : D ≤ D * 19^t.val := by simpa only [Nat.mul_one] using hmul
+    exact hbase.trans hadm
+  have hle : t.val ≤ m := admissible_le_largest t.isLt hadm
+  have hlast := he A hA hprod
+  change ((c+1 : ℤ) : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
+    (lo : ℚ) * largeRho A * (18/19 : ℚ)^m at hlast
+  rw [Int.cast_add, Int.cast_one] at hlast
+  have known : ∀ p ∈ smallPrimes, 2 < p := by decide
+  have hrho : 0 ≤ largeRho A := by
+    unfold largeRho
+    apply Finset.prod_nonneg
+    intro p hp
+    have hbig := known p (Finset.mem_powerset.mp hA hp)
+    have hone : (1 : ℚ) ≤ p := by exact_mod_cast (show 1 ≤ p by omega)
+    exact sub_nonneg.mpr ((div_le_one (by linarith : (0 : ℚ) < p)).mpr hone)
+  have herr := initialError_nondecreasing (Nat.add_le_add_left hle A.card)
+  have hright := mul_le_mul_of_nonneg_left (profile_decay hle)
+    (mul_nonneg (show (0 : ℚ) ≤ (lo : ℚ) by positivity) hrho)
+  change (c : ℚ) - (refund hi A : ℚ) + (1 + initialError (A.card + t.val)) <
+    (lo : ℚ) * largeRho A * (18/19 : ℚ)^t.val
+  linarith only [hlast, herr, hright]
+
+private def wholeError (r : ℕ) : ℕ := if r = 0 then 0 else 2^(r-1)
+
+private lemma initialError_asNat (r : ℕ) :
+    initialError r = (wholeError r : ℚ) := by
+  by_cases h : r = 0 <;> simp [initialError, wholeError, h]
+
+private def integralEndpointChecks (lo hi : ℕ) (c : ℤ) : Prop :=
+  ∀ A ∈ smallPrimes.powerset, (∏ p ∈ A, p) ≤ 2*hi+2 →
+    let D := ∏ p ∈ A, p
+    let P := ∏ p ∈ A, (p-1)
+    let m := largestProfileRank D (2*hi+2)
+    (c - (refund hi A : ℤ) + (wholeError (A.card+m) : ℤ)) * (D : ℤ) * (19 : ℤ)^m <
+      (lo : ℤ) * (P : ℤ) * (18 : ℤ)^m
+
+private theorem endpoints_of_integer {lo hi : ℕ} {c : ℤ}
+    (he : integralEndpointChecks lo hi c) : endpointProfileChecks lo hi c := by
+  intro A hA hfit
+  let D := ∏ p ∈ A, p
+  let P := ∏ p ∈ A, (p-1)
+  let m := largestProfileRank D (2*hi+2)
+  have hint := he A hA hfit
+  change (c - (refund hi A : ℤ) + (wholeError (A.card+m) : ℤ)) * (D : ℤ) * (19 : ℤ)^m <
+    (lo : ℤ) * (P : ℤ) * (18 : ℤ)^m at hint
+  have hrat : ((c : ℚ) - (refund hi A : ℚ) + (wholeError (A.card+m) : ℚ)) *
+      (D : ℚ) * (19 : ℚ)^m < (lo : ℚ) * (P : ℚ) * (18 : ℚ)^m := by
+    exact_mod_cast hint
+  have known : ∀ p ∈ smallPrimes, 2 < p := by decide
+  have hs (p : ℕ) (hp : p ∈ A) : 2 < p := known p (Finset.mem_powerset.mp hA hp)
+  have hDnat : 0 < D := Finset.prod_pos (fun p hp => by have := hs p hp; omega)
+  have hD : (0 : ℚ) < D := by exact_mod_cast hDnat
+  have hρ : largeRho A * (D : ℚ) = (P : ℚ) := by
+    dsimp only [largeRho, D, P]
+    simp only [Nat.cast_prod]
+    rw [← Finset.prod_mul_distrib]
+    apply Finset.prod_congr rfl
+    intro p hp
+    have hpos := hs p hp
+    have hn : (p : ℚ) ≠ 0 := by exact_mod_cast (show p ≠ 0 by omega)
+    rw [Nat.cast_sub (show 1 ≤ p by omega), Nat.cast_one]
+    field_simp [hn] <;> ring
+  have hpower : (18/19 : ℚ)^m * (19 : ℚ)^m = (18 : ℚ)^m := by
+    rw [← mul_pow]
+    norm_num
+  change (c : ℚ) - (refund hi A : ℚ) + initialError (A.card+m) <
+    (lo : ℚ) * largeRho A * (18/19 : ℚ)^m
+  apply (mul_lt_mul_iff_of_pos_right (mul_pos hD (by positivity : (0 : ℚ) < 19^m))).mp
+  calc
+    _ = ((c : ℚ) - (refund hi A : ℚ) + (wholeError (A.card+m) : ℚ)) *
+        (D : ℚ) * (19 : ℚ)^m := by rw [initialError_asNat]; ring
+    _ < _ := hrat
+    _ = (lo : ℚ) * (largeRho A * (D : ℚ)) * ((18/19 : ℚ)^m * (19 : ℚ)^m) := by
+      rw [hρ, hpower]
+    _ = _ := by ring
+
 private def covers (fromN : ℕ) : List (ℕ × ℕ × ℤ) → Prop
   | [] => 1000000 < fromN
   | row::rest => row.1 ≤ fromN ∧ fromN ≤ row.2.1+1 ∧ covers (row.2.1+1) rest
@@ -1575,9 +1813,12 @@ private theorem checks_row_300 :
     300 ≤ (300 : ℕ) ∧ 305 ≤ (1000000 : ℕ) ∧
       profileChecks 300 305 225 ∧ costUpper 305 ≤ 225 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1585,9 +1826,12 @@ private theorem checks_row_306 :
     300 ≤ (306 : ℕ) ∧ 310 ≤ (1000000 : ℕ) ∧
       profileChecks 306 310 229 ∧ costUpper 310 ≤ 229 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1595,9 +1839,12 @@ private theorem checks_row_311 :
     300 ≤ (311 : ℕ) ∧ 319 ≤ (1000000 : ℕ) ∧
       profileChecks 311 319 234 ∧ costUpper 319 ≤ 234 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1605,9 +1852,12 @@ private theorem checks_row_320 :
     300 ≤ (320 : ℕ) ∧ 328 ≤ (1000000 : ℕ) ∧
       profileChecks 320 328 241 ∧ costUpper 328 ≤ 241 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1615,9 +1865,12 @@ private theorem checks_row_329 :
     300 ≤ (329 : ℕ) ∧ 337 ≤ (1000000 : ℕ) ∧
       profileChecks 329 337 246 ∧ costUpper 337 ≤ 246 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1625,9 +1878,12 @@ private theorem checks_row_338 :
     300 ≤ (338 : ℕ) ∧ 346 ≤ (1000000 : ℕ) ∧
       profileChecks 338 346 254 ∧ costUpper 346 ≤ 254 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1635,9 +1891,12 @@ private theorem checks_row_347 :
     300 ≤ (347 : ℕ) ∧ 359 ≤ (1000000 : ℕ) ∧
       profileChecks 347 359 261 ∧ costUpper 359 ≤ 261 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1645,9 +1904,12 @@ private theorem checks_row_360 :
     300 ≤ (360 : ℕ) ∧ 373 ≤ (1000000 : ℕ) ∧
       profileChecks 360 373 272 ∧ costUpper 373 ≤ 272 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1655,9 +1917,12 @@ private theorem checks_row_374 :
     300 ≤ (374 : ℕ) ∧ 391 ≤ (1000000 : ℕ) ∧
       profileChecks 374 391 283 ∧ costUpper 391 ≤ 283 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1665,9 +1930,12 @@ private theorem checks_row_392 :
     300 ≤ (392 : ℕ) ∧ 412 ≤ (1000000 : ℕ) ∧
       profileChecks 392 412 296 ∧ costUpper 412 ≤ 296 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1675,9 +1943,12 @@ private theorem checks_row_413 :
     300 ≤ (413 : ℕ) ∧ 431 ≤ (1000000 : ℕ) ∧
       profileChecks 413 431 313 ∧ costUpper 431 ≤ 313 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1685,9 +1956,12 @@ private theorem checks_row_432 :
     300 ≤ (432 : ℕ) ∧ 454 ≤ (1000000 : ℕ) ∧
       profileChecks 432 454 327 ∧ costUpper 454 ≤ 327 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1695,9 +1969,12 @@ private theorem checks_row_455 :
     300 ≤ (455 : ℕ) ∧ 482 ≤ (1000000 : ℕ) ∧
       profileChecks 455 482 345 ∧ costUpper 482 ≤ 345 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1705,9 +1982,12 @@ private theorem checks_row_483 :
     300 ≤ (483 : ℕ) ∧ 514 ≤ (1000000 : ℕ) ∧
       profileChecks 483 514 368 ∧ costUpper 514 ≤ 368 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1715,9 +1995,12 @@ private theorem checks_row_515 :
     300 ≤ (515 : ℕ) ∧ 547 ≤ (1000000 : ℕ) ∧
       profileChecks 515 547 393 ∧ costUpper 547 ≤ 393 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1725,9 +2008,12 @@ private theorem checks_row_548 :
     300 ≤ (548 : ℕ) ∧ 589 ≤ (1000000 : ℕ) ∧
       profileChecks 548 589 419 ∧ costUpper 589 ≤ 419 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1735,9 +2021,12 @@ private theorem checks_row_590 :
     300 ≤ (590 : ℕ) ∧ 638 ≤ (1000000 : ℕ) ∧
       profileChecks 590 638 451 ∧ costUpper 638 ≤ 451 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1745,9 +2034,12 @@ private theorem checks_row_639 :
     300 ≤ (639 : ℕ) ∧ 701 ≤ (1000000 : ℕ) ∧
       profileChecks 639 701 491 ∧ costUpper 701 ≤ 491 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1755,9 +2047,12 @@ private theorem checks_row_702 :
     300 ≤ (702 : ℕ) ∧ 770 ≤ (1000000 : ℕ) ∧
       profileChecks 702 770 539 ∧ costUpper 770 ≤ 539 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1765,9 +2060,12 @@ private theorem checks_row_771 :
     300 ≤ (771 : ℕ) ∧ 847 ≤ (1000000 : ℕ) ∧
       profileChecks 771 847 593 ∧ costUpper 847 ≤ 593 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1775,9 +2073,12 @@ private theorem checks_row_848 :
     300 ≤ (848 : ℕ) ∧ 938 ≤ (1000000 : ℕ) ∧
       profileChecks 848 938 654 ∧ costUpper 938 ≤ 654 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1785,9 +2086,12 @@ private theorem checks_row_939 :
     300 ≤ (939 : ℕ) ∧ 1052 ≤ (1000000 : ℕ) ∧
       profileChecks 939 1052 726 ∧ costUpper 1052 ≤ 726 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1795,9 +2099,12 @@ private theorem checks_row_1053 :
     300 ≤ (1053 : ℕ) ∧ 1187 ≤ (1000000 : ℕ) ∧
       profileChecks 1053 1187 814 ∧ costUpper 1187 ≤ 814 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1805,9 +2112,12 @@ private theorem checks_row_1188 :
     300 ≤ (1188 : ℕ) ∧ 1352 ≤ (1000000 : ℕ) ∧
       profileChecks 1188 1352 923 ∧ costUpper 1352 ≤ 923 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1815,9 +2125,12 @@ private theorem checks_row_1353 :
     300 ≤ (1353 : ℕ) ∧ 1558 ≤ (1000000 : ℕ) ∧
       profileChecks 1353 1558 1053 ∧ costUpper 1558 ≤ 1053 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1825,9 +2138,12 @@ private theorem checks_row_1559 :
     300 ≤ (1559 : ℕ) ∧ 1807 ≤ (1000000 : ℕ) ∧
       profileChecks 1559 1807 1215 ∧ costUpper 1807 ≤ 1215 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1835,9 +2151,12 @@ private theorem checks_row_1808 :
     300 ≤ (1808 : ℕ) ∧ 2114 ≤ (1000000 : ℕ) ∧
       profileChecks 1808 2114 1413 ∧ costUpper 2114 ≤ 1413 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1845,9 +2164,12 @@ private theorem checks_row_2115 :
     300 ≤ (2115 : ℕ) ∧ 2501 ≤ (1000000 : ℕ) ∧
       profileChecks 2115 2501 1658 ∧ costUpper 2501 ≤ 1658 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1855,9 +2177,12 @@ private theorem checks_row_2502 :
     300 ≤ (2502 : ℕ) ∧ 2808 ≤ (1000000 : ℕ) ∧
       profileChecks 2502 2808 1851 ∧ costUpper 2808 ≤ 1851 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1865,9 +2190,12 @@ private theorem checks_row_2809 :
     300 ≤ (2809 : ℕ) ∧ 3172 ≤ (1000000 : ℕ) ∧
       profileChecks 2809 3172 2082 ∧ costUpper 3172 ≤ 2082 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1875,9 +2203,12 @@ private theorem checks_row_3173 :
     300 ≤ (3173 : ℕ) ∧ 3609 ≤ (1000000 : ℕ) ∧
       profileChecks 3173 3609 2356 ∧ costUpper 3609 ≤ 2356 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1885,9 +2216,12 @@ private theorem checks_row_3610 :
     300 ≤ (3610 : ℕ) ∧ 4147 ≤ (1000000 : ℕ) ∧
       profileChecks 3610 4147 2689 ∧ costUpper 4147 ≤ 2689 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1895,9 +2229,12 @@ private theorem checks_row_4148 :
     300 ≤ (4148 : ℕ) ∧ 4796 ≤ (1000000 : ℕ) ∧
       profileChecks 4148 4796 3094 ∧ costUpper 4796 ≤ 3094 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1905,9 +2242,12 @@ private theorem checks_row_4797 :
     300 ≤ (4797 : ℕ) ∧ 5587 ≤ (1000000 : ℕ) ∧
       profileChecks 4797 5587 3587 ∧ costUpper 5587 ≤ 3587 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1915,9 +2255,12 @@ private theorem checks_row_5588 :
     300 ≤ (5588 : ℕ) ∧ 6550 ≤ (1000000 : ℕ) ∧
       profileChecks 5588 6550 4186 ∧ costUpper 6550 ≤ 4186 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1925,9 +2268,12 @@ private theorem checks_row_6551 :
     300 ≤ (6551 : ℕ) ∧ 7717 ≤ (1000000 : ℕ) ∧
       profileChecks 6551 7717 4913 ∧ costUpper 7717 ≤ 4913 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1935,9 +2281,12 @@ private theorem checks_row_7718 :
     300 ≤ (7718 : ℕ) ∧ 9127 ≤ (1000000 : ℕ) ∧
       profileChecks 7718 9127 5796 ∧ costUpper 9127 ≤ 5796 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1945,9 +2294,12 @@ private theorem checks_row_9128 :
     300 ≤ (9128 : ℕ) ∧ 10826 ≤ (1000000 : ℕ) ∧
       profileChecks 9128 10826 6860 ∧ costUpper 10826 ≤ 6860 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1955,9 +2307,12 @@ private theorem checks_row_10827 :
     300 ≤ (10827 : ℕ) ∧ 12856 ≤ (1000000 : ℕ) ∧
       profileChecks 10827 12856 8141 ∧ costUpper 12856 ≤ 8141 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1965,9 +2320,12 @@ private theorem checks_row_12857 :
     300 ≤ (12857 : ℕ) ∧ 15277 ≤ (1000000 : ℕ) ∧
       profileChecks 12857 15277 9669 ∧ costUpper 15277 ≤ 9669 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1975,9 +2333,12 @@ private theorem checks_row_15278 :
     300 ≤ (15278 : ℕ) ∧ 18145 ≤ (1000000 : ℕ) ∧
       profileChecks 15278 18145 11490 ∧ costUpper 18145 ≤ 11490 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1985,9 +2346,12 @@ private theorem checks_row_18146 :
     300 ≤ (18146 : ℕ) ∧ 21509 ≤ (1000000 : ℕ) ∧
       profileChecks 18146 21509 13642 ∧ costUpper 21509 ≤ 13642 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -1995,9 +2359,12 @@ private theorem checks_row_21510 :
     300 ≤ (21510 : ℕ) ∧ 25501 ≤ (1000000 : ℕ) ∧
       profileChecks 21510 25501 16174 ∧ costUpper 25501 ≤ 16174 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2005,9 +2372,12 @@ private theorem checks_row_25502 :
     300 ≤ (25502 : ℕ) ∧ 30187 ≤ (1000000 : ℕ) ∧
       profileChecks 25502 30187 19170 ∧ costUpper 30187 ≤ 19170 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2015,9 +2385,12 @@ private theorem checks_row_30188 :
     300 ≤ (30188 : ℕ) ∧ 35691 ≤ (1000000 : ℕ) ∧
       profileChecks 30188 35691 22687 ∧ costUpper 35691 ≤ 22687 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2025,9 +2398,12 @@ private theorem checks_row_35692 :
     300 ≤ (35692 : ℕ) ∧ 42133 ≤ (1000000 : ℕ) ∧
       profileChecks 35692 42133 26816 ∧ costUpper 42133 ≤ 26816 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2035,9 +2411,12 @@ private theorem checks_row_42134 :
     300 ≤ (42134 : ℕ) ∧ 47422 ≤ (1000000 : ℕ) ∧
       profileChecks 42134 47422 30206 ∧ costUpper 47422 ≤ 30206 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2045,9 +2424,12 @@ private theorem checks_row_47423 :
     300 ≤ (47423 : ℕ) ∧ 52933 ≤ (1000000 : ℕ) ∧
       profileChecks 47423 52933 33733 ∧ costUpper 52933 ≤ 33733 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2055,9 +2437,12 @@ private theorem checks_row_52934 :
     300 ≤ (52934 : ℕ) ∧ 59017 ≤ (1000000 : ℕ) ∧
       profileChecks 52934 59017 37645 ∧ costUpper 59017 ≤ 37645 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2065,9 +2450,12 @@ private theorem checks_row_59018 :
     300 ≤ (59018 : ℕ) ∧ 65747 ≤ (1000000 : ℕ) ∧
       profileChecks 59018 65747 41966 ∧ costUpper 65747 ≤ 41966 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2075,9 +2463,12 @@ private theorem checks_row_65748 :
     300 ≤ (65748 : ℕ) ∧ 73183 ≤ (1000000 : ℕ) ∧
       profileChecks 65748 73183 46743 ∧ costUpper 73183 ≤ 46743 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2085,9 +2476,12 @@ private theorem checks_row_73184 :
     300 ≤ (73184 : ℕ) ∧ 81368 ≤ (1000000 : ℕ) ∧
       profileChecks 73184 81368 52018 ∧ costUpper 81368 ≤ 52018 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2095,9 +2489,12 @@ private theorem checks_row_81369 :
     300 ≤ (81369 : ℕ) ∧ 90412 ≤ (1000000 : ℕ) ∧
       profileChecks 81369 90412 57829 ∧ costUpper 90412 ≤ 57829 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2105,9 +2502,12 @@ private theorem checks_row_90413 :
     300 ≤ (90413 : ℕ) ∧ 100372 ≤ (1000000 : ℕ) ∧
       profileChecks 90413 100372 64244 ∧ costUpper 100372 ≤ 64244 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2115,9 +2515,12 @@ private theorem checks_row_100373 :
     300 ≤ (100373 : ℕ) ∧ 111355 ≤ (1000000 : ℕ) ∧
       profileChecks 100373 111355 71314 ∧ costUpper 111355 ≤ 71314 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2125,9 +2528,12 @@ private theorem checks_row_111356 :
     300 ≤ (111356 : ℕ) ∧ 123461 ≤ (1000000 : ℕ) ∧
       profileChecks 111356 123461 79107 ∧ costUpper 123461 ≤ 79107 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2135,9 +2541,12 @@ private theorem checks_row_123462 :
     300 ≤ (123462 : ℕ) ∧ 136790 ≤ (1000000 : ℕ) ∧
       profileChecks 123462 136790 87694 ∧ costUpper 136790 ≤ 87694 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2145,9 +2554,12 @@ private theorem checks_row_136791 :
     300 ≤ (136791 : ℕ) ∧ 151490 ≤ (1000000 : ℕ) ∧
       profileChecks 136791 151490 97154 ∧ costUpper 151490 ≤ 97154 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2155,9 +2567,12 @@ private theorem checks_row_151491 :
     300 ≤ (151491 : ℕ) ∧ 167648 ≤ (1000000 : ℕ) ∧
       profileChecks 151491 167648 107578 ∧ costUpper 167648 ≤ 107578 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2165,9 +2580,12 @@ private theorem checks_row_167649 :
     300 ≤ (167649 : ℕ) ∧ 185462 ≤ (1000000 : ℕ) ∧
       profileChecks 167649 185462 119043 ∧ costUpper 185462 ≤ 119043 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2175,9 +2593,12 @@ private theorem checks_row_185463 :
     300 ≤ (185463 : ℕ) ∧ 205073 ≤ (1000000 : ℕ) ∧
       profileChecks 185463 205073 131680 ∧ costUpper 205073 ≤ 131680 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2185,9 +2606,12 @@ private theorem checks_row_205074 :
     300 ≤ (205074 : ℕ) ∧ 226637 ≤ (1000000 : ℕ) ∧
       profileChecks 205074 226637 145588 ∧ costUpper 226637 ≤ 145588 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2195,9 +2619,12 @@ private theorem checks_row_226638 :
     300 ≤ (226638 : ℕ) ∧ 250388 ≤ (1000000 : ℕ) ∧
       profileChecks 226638 250388 160887 ∧ costUpper 250388 ≤ 160887 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2205,9 +2632,12 @@ private theorem checks_row_250389 :
     300 ≤ (250389 : ℕ) ∧ 276548 ≤ (1000000 : ℕ) ∧
       profileChecks 250389 276548 177736 ∧ costUpper 276548 ≤ 177736 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2215,9 +2645,12 @@ private theorem checks_row_276549 :
     300 ≤ (276549 : ℕ) ∧ 305347 ≤ (1000000 : ℕ) ∧
       profileChecks 276549 305347 196294 ∧ costUpper 305347 ≤ 196294 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2225,9 +2658,12 @@ private theorem checks_row_305348 :
     300 ≤ (305348 : ℕ) ∧ 337067 ≤ (1000000 : ℕ) ∧
       profileChecks 305348 337067 216724 ∧ costUpper 337067 ≤ 216724 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2235,9 +2671,12 @@ private theorem checks_row_337068 :
     300 ≤ (337068 : ℕ) ∧ 372019 ≤ (1000000 : ℕ) ∧
       profileChecks 337068 372019 239230 ∧ costUpper 372019 ≤ 239230 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2245,9 +2684,12 @@ private theorem checks_row_372020 :
     300 ≤ (372020 : ℕ) ∧ 410518 ≤ (1000000 : ℕ) ∧
       profileChecks 372020 410518 264028 ∧ costUpper 410518 ≤ 264028 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2255,9 +2697,12 @@ private theorem checks_row_410519 :
     300 ≤ (410519 : ℕ) ∧ 452948 ≤ (1000000 : ℕ) ∧
       profileChecks 410519 452948 291344 ∧ costUpper 452948 ≤ 291344 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2265,9 +2710,12 @@ private theorem checks_row_452949 :
     300 ≤ (452949 : ℕ) ∧ 499724 ≤ (1000000 : ℕ) ∧
       profileChecks 452949 499724 321452 ∧ costUpper 499724 ≤ 321452 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2275,9 +2723,12 @@ private theorem checks_row_499725 :
     300 ≤ (499725 : ℕ) ∧ 551285 ≤ (1000000 : ℕ) ∧
       profileChecks 499725 551285 354645 ∧ costUpper 551285 ≤ 354645 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2285,9 +2736,12 @@ private theorem checks_row_551286 :
     300 ≤ (551286 : ℕ) ∧ 608135 ≤ (1000000 : ℕ) ∧
       profileChecks 551286 608135 391232 ∧ costUpper 608135 ≤ 391232 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2295,9 +2749,12 @@ private theorem checks_row_608136 :
     300 ≤ (608136 : ℕ) ∧ 670852 ≤ (1000000 : ℕ) ∧
       profileChecks 608136 670852 431581 ∧ costUpper 670852 ≤ 431581 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2305,9 +2762,12 @@ private theorem checks_row_670853 :
     300 ≤ (670853 : ℕ) ∧ 740049 ≤ (1000000 : ℕ) ∧
       profileChecks 670853 740049 476093 ∧ costUpper 740049 ≤ 476093 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2315,9 +2775,12 @@ private theorem checks_row_740050 :
     300 ≤ (740050 : ℕ) ∧ 808306 ≤ (1000000 : ℕ) ∧
       profileChecks 740050 808306 519980 ∧ costUpper 808306 ≤ 519980 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2325,9 +2788,12 @@ private theorem checks_row_808307 :
     300 ≤ (808307 : ℕ) ∧ 851143 ≤ (1000000 : ℕ) ∧
       profileChecks 808307 851143 547552 ∧ costUpper 851143 ≤ 547552 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2335,9 +2801,12 @@ private theorem checks_row_851144 :
     300 ≤ (851144 : ℕ) ∧ 896309 ≤ (1000000 : ℕ) ∧
       profileChecks 851144 896309 576581 ∧ costUpper 896309 ≤ 576581 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2345,9 +2814,12 @@ private theorem checks_row_896310 :
     300 ≤ (896310 : ℕ) ∧ 936787 ≤ (1000000 : ℕ) ∧
       profileChecks 896310 936787 602616 ∧ costUpper 936787 ≤ 602616 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2355,9 +2827,12 @@ private theorem checks_row_936788 :
     300 ≤ (936788 : ℕ) ∧ 979091 ≤ (1000000 : ℕ) ∧
       profileChecks 936788 979091 629830 ∧ costUpper 979091 ≤ 629830 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -2365,9 +2840,12 @@ private theorem checks_row_979092 :
     300 ≤ (979092 : ℕ) ∧ 1000000 ≤ (1000000 : ℕ) ∧
       profileChecks 979092 1000000 643264 ∧ costUpper 1000000 ≤ 643264 := by
   refine ⟨by decide, by decide, ?_, ?_⟩
-  · unfold profileChecks
+  · apply profileChecks_of_endpoints
+    apply endpoints_of_integer
+    unfold integralEndpointChecks
     decide +kernel
-  · decide +kernel
+  · rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
+    decide +kernel
 
 set_option maxRecDepth 2000000 in
 set_option maxHeartbeats 0 in
@@ -3009,7 +3487,7 @@ private lemma rank_from_sixtyone (m : ℕ) (hm : 61 ≤ m) :
     have hok := two_from_sixtytwo (n:=m+1) (by omega)
     have hstep : termsThrough (m+1) = termsThrough m + 1 := by
       unfold termsThrough
-      rw [Finset.range_succ (m+1)]
+      rw [Finset.range_add_one (n := m+1)]
       simp [Finset.filter_insert, hok]
     omega
 
