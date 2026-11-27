@@ -80,7 +80,7 @@ class SparseBlockDomains:
         self.by_point = by_point
         self.forbidden = forbidden
 
-    def initial(self, fixed):
+    def initial_many(self, fixed):
         ds = self.full.copy()
         for j, matching in fixed:
             p = self.point_id[(j,bits(matching))]
