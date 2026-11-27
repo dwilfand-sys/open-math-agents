@@ -14,7 +14,7 @@ An interior gives all 44 exterior points incident to at least one four-secant. I
 
 ## Reproduction
 
-Run from this directory. The search and its independent verifier use the Python standard library. The raw JSON files and the compressed word-2 records use the same integer block indices; `sparse_records.py` verifies compression by an exact round trip. 
+Run from this directory. The search and its independent verifier use the Python standard library. The raw JSON files and the compressed word-2 records use the same integer block indices. The compression script verifies an exact round trip.
 
 ```sh
 python other_sparse_cases.py --case 1 --output Case1SparseSearch.json
@@ -27,5 +27,19 @@ python verify_sparse_enumeration.py 1 Case1SparseSearch.json
 ```
 
 The last command re-enumerates all eight blocks by conditioning on two colours at a time, using compatibility indexed directly by the 80 incident lines. For word 1 it recovers all 258 stored interiors. `--compact` renumbers the domains separately at each seed, preserving the original indices in the output.
+
+The direct missing-pair checks tested 142,652 possible meetings for word 1, 1,318,667 for word 2 and 118,401 for word 3. Running the two-colour enumeration with `--compact` recovered all 219 word-3 interiors independently. Applying each full graph automorphism to the literal 44-point interiors gives the following orbit counts. The number of distinct restored labelings exactly agrees with the independent sum of seed-orbit weights in the first table.
+
+| Index | Graph automorphisms | Full-group interior orbits | Distribution by orbit size |
+|---:|---:|---:|---|
+| 1 | 12 | 190 | 1 of size 4, 189 of size 12 |
+| 2 | 16 | 622 | 4 of size 2, 1 of size 4, 23 of size 8, 594 of size 16 |
+| 3 | 4 | 163 | 4 of size 2, 159 of size 4 |
+
+```sh
+python sparse_full_orbits.py 1 Case1SparseSearch.json
+python sparse_full_orbits.py 2 Case2SparseRecords.json
+python sparse_full_orbits.py 3 Case3SparseSearch.json
+```
 
 Carter introduced the weight-16 starting configurations. Lam, Thiel and Swiercz used computational searches on these configurations, and Bright and coauthors published SAT certificates. The current Lean project's incidence reduction and graph indexing are due to @avivorly. [Background and starting cases](https://uwaterloo.ca/mathcheck/w16) · [Bright et al., IJCAI 2020](https://www.ijcai.org/proceedings/2020/203) · [Sparse reduction](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/3941) · [Scales child](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/4185)
