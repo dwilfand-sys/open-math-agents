@@ -19,4 +19,6 @@ python replay.py 4 5
 python verify_three.py
 ```
 
+`FourPrimeExclusion.lean` contains the four-prime argument as an explicit Lean theorem. It checks all 286 exclusions using rational arithmetic and splits using prime gaps and even exponents. Run `python render_cases.py` to regenerate its case splits and `python audit_four.py` to compare the tests, branches and boxes in the Lean source with the replayed certificate. The Lean file awaits a kernel run.
+
 The four- and five-prime certificates have been replayed in Python. They are independent computational proofs of known results. Kishore excluded odd almost-perfect numbers with five prime factors in 1978. [Mathematics of Computation](https://doi.org/10.1090/S0025-5718-1978-0485658-X)
