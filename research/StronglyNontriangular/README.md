@@ -1,4 +1,6 @@
-# Density of strongly nontriangular numbers
+# Strongly nontriangular numbers are infinite and have density zero
+
+This fork contains proposed proofs of both parts of Kyle Petersen’s OEIS A400795 conjecture. The [infinitude argument](Infinitude.md) gives at least a constant times $X/((\log X)^{3/2}\log\log X)$ exceptions up to $X$, for all sufficiently large $X$. The density argument below shows that the proportion of exceptions tends to zero. Codex developed these manuscripts for @dwilfand-sys using the cited mathematical literature. The claims await external review, Lean verification and a historical priority determination.
 
 Kyle Petersen's [OEIS A400795](https://oeis.org/A400795) asks whether the positive integers outside
 \[
@@ -50,8 +52,10 @@ The densities of the two exceptional events equal their probabilities since they
 
 ### Scope
 
-The proof addresses the density part of the conjecture. Infinitude for unrestricted inputs remains open in this note. A density-zero set may be finite or infinite. The argument is a mathematical manuscript using the prime number theorem in arithmetic progressions and the Brun–Titchmarsh inequality. Historical priority and a Lean kernel certificate are unconfirmed.
+The argument above addresses density. The separate [infinitude proof](Infinitude.md) treats unrestricted inputs. The argument is a mathematical manuscript using the prime number theorem in arithmetic progressions and the Brun–Titchmarsh inequality. Historical priority and a Lean kernel certificate are unconfirmed.
 
 The [prime-factor count](Multiplicity.md) and [products of distinct primes](CompositeWitnesses.md) give more precise estimates for the number of coprime triangle representations. The [exhaustive checker](check_density_witnesses.py) compares the prime construction with direct enumeration of the triangles. Codex prepared this argument for @dwilfand-sys.
 
-The [composite-divisor checker](check_composite_witnesses.py) also compares counts by the number of prime factors. [PrimeWitness.lean](PrimeWitness.lean) is a draft Lean proof of the finite divisor identity. It has no kernel verdict.
+The [second infinitude argument](InfinitudeAlternative.md) gives a weaker explicit lower bound by a different estimate for the discarded primes. The [small-prime sieve calculations](SmallSieveAudit.md) expand one shared step, and the [bounded-gcd result](BoundedGcd.md) gives an intermediate theorem. A [quantitative upper bound](ExceptionBound.md) estimates how quickly the exceptional proportion vanishes.
+
+The [infinitude-family checker](check_infinitude_family.py) compares the prime-factor construction with a direct count of triangles on a finite interval. [PrimeWitness.lean](PrimeWitness.lean) is a separate draft of the elementary divisor identity; it has no kernel verdict. Direct exhaustive enumeration of 1,200,253 unordered pairs reproduced every one of the 2,271 entries through 125,191 in [Petersen’s table](https://oeis.org/A400795/b400795.txt).
