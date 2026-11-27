@@ -63,16 +63,23 @@ class MissingPartners:
 
 if __name__ == '__main__':
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--case', type=int, choices=[1,3],default=1)
+    ap.add_argument('--case', type=int, choices=[0,1,2,3,5],default=1)
+    ap.add_argument('--lazy', action='store_true', help='compute compatibility bitsets on demand')
+    ap.add_argument('--row-cache', type=int, default=65000)
     ap.add_argument('--start',type=int,default=0)
     ap.add_argument('--stop',type=int)
     ap.add_argument('--output',type=Path)
     args=ap.parse_args()
     c=StartingCase(WORDS[args.case])
-    selected={1:((4,5),(4,6),(5,6)),3:((2,4),(3,5),(4,7),(5,6))}[args.case]
+    selected={0:((0,1),(4,5)), 1:((4,5),(4,6),(5,6)), 2:((0,1),(4,5)),
+              3:((2,4),(3,5),(4,7),(5,6)), 5:((0,1),(2,3),(4,5),(6,7))}[args.case]
     seeds, raw=seed_orbits(c,selected)
     print('word',hex(c.word),'compatible seeds',raw,'orbits',len(seeds),flush=True)
-    g=BlockGraph(c)
+    if args.lazy:
+        from sparse_block_domains import SparseBlockDomains
+        g=SparseBlockDomains(c, cache_rows=args.row_cache)
+    else:
+        g=BlockGraph(c)
     check=MissingPartners(c)
     out={}
     for index,(seed,osize) in enumerate(seeds):
