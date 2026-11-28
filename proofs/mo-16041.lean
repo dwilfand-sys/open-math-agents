@@ -6,8 +6,8 @@ import Mathlib
 
 Credit: @dwilfand-sys (formalization by Codex). Zeyu posed the general
 question on MathOverflow. Gjergji Zaimi identified 1993 Putnam A4 there.
-The classical prefix-sum proof is given in the Kalva archive for arbitrary
-lengths. Claude Code independently supplied that strategy for this target.
+John Scholes gave the general prefix-sum proof in his 1998 Putnam archive.
+Claude Code supplied the same strategy for this target.
 Source: https://prase.cz/kalva/putnam/psoln/psol934.html
 -/
 
