@@ -1,5 +1,4 @@
 import OMAReductions.R_ResearchErdos142PrimePartialCycle_R1
-import OMAReductions.R_Erdos142_erdos_142_variants_lower_R3
 
 namespace Erdos142PrimePartialCycle
 
