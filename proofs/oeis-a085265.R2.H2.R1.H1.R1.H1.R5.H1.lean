@@ -25,7 +25,7 @@ theorem mask_active {J : ℕ} {A : Finset ℕ} (hJ : 300 ≤ J)
 theorem cost {J : ℕ} {S A : Finset ℕ} {α R : ℚ} (haS : A ⊆ S)
     (ha : A ⊆ active J) (hc : ((oddPrimes (2*J+1)).card : ℚ) ≤ α*(J:ℚ))
     (hr : recip (active J) ≤ R) :
-    ((∑ p ∈ oddPrimes (2*J+1) \ S, 2*J/(p^2)+1 : ℕ) : ℚ) ≤
+    ((∑ p ∈ oddPrimes (2*J+1) \ S, (2*J/(p^2)+1) : ℕ) : ℚ) ≤
       (J:ℚ)*(α+2*(R-recip A))-(A.card:ℚ) := by
   let P := oddPrimes (2*J+1)
   let E := P \ S
@@ -67,7 +67,7 @@ theorem cost {J : ℕ} {S A : Finset ℕ} {α R : ℚ} (haS : A ⊆ S)
         exact_mod_cast Nat.div_mul_le_self (2*J) (p^2)
       _ = 2*(J:ℚ)*recip B := (Finset.mul_sum ..).symm
       _ ≤ _ := mul_le_mul_of_nonneg_left (by linarith only [rsum]) (by positivity)
-  change ((∑ p ∈ E, 2*J/(p^2)+1 : ℕ) : ℚ) ≤ _
+  change ((∑ p ∈ E, (2*J/(p^2)+1) : ℕ) : ℚ) ≤ _
   rw [sum_add_distrib]
   simp only [sum_const, nsmul_eq_mul, mul_one, Nat.cast_add]
   calc
@@ -145,7 +145,7 @@ private theorem odd_reciprocal_tail_aux (count : ℕ) (P : Finset ℕ)
       (fun q hq => hP q (hsub hq)) hnext
     rw [← Finset.add_sum_erase P (fun q => 1/(q : ℚ)^2) hp]
     calc
-      _ ≤ 1/(p : ℚ)^2 + 1/(2*(((p+1 : ℕ) : ℚ))) := add_le_add_left htail _
+      _ ≤ 1/(p : ℚ)^2 + 1/(2*(((p+1 : ℕ) : ℚ))) := add_le_add le_rfl htail
       _ ≤ _ := by simpa only [Nat.cast_add, Nat.cast_one] using
         odd_reciprocal_step hT (hcut p hp)
 
@@ -179,7 +179,7 @@ end A085265.SameJ
 theorem OMA.solution : OMA.R_oeis_a085265_R2_H2_R1_H1_R1_H1_R5.H1 := by
   intro J S A α R hJ hc
   obtain ⟨ha,hm,hc,hr⟩ := hc
-  apply A085265.SameJ.cost ha (A085265.SameJ.mask_active hJ hm) hc
+  apply A085265.SameJ.cost (α := α) (R := R) ha (A085265.SameJ.mask_active hJ hm) hc
   rcases hr with ⟨h,rfl⟩ | ⟨h,rfl⟩ | ⟨h,rfl⟩ | ⟨h,rfl⟩ | ⟨h,rfl⟩ | rfl
   · exact A085265.SameJ.active_recip_420 h
   · exact A085265.SameJ.active_recip_599 h
