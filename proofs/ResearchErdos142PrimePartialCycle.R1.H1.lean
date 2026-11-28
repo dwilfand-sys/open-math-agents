@@ -32,7 +32,8 @@ private lemma decode_mem {A : Finset ℕ} {p t z N : ℕ} (hp : 1 < p)
         Nat.add_mul_div_left _ _ (by omega)]
       have : (e - 1) / p = 0 := Nat.div_eq_of_lt (by omega)
       omega
-    simpa [hcalc] using hx
+    rw [hcalc, show x - 1 + 1 = x by omega]
+    exact hx
   · have hxp : 0 < x := by
       by_contra! h
       have : x = 0 := by omega
@@ -41,13 +42,15 @@ private lemma decode_mem {A : Finset ℕ} {p t z N : ℕ} (hp : 1 < p)
       omega
     have hcalc : (p * x - 1) / p = x - 1 := by
       have hmul : p * x = p * (x - 1) + p := by
-        rw [show x = (x - 1) + 1 by omega]
-        ring
+        calc
+          p * x = p * ((x - 1) + 1) := by congr 1 <;> omega
+          _ = p * (x - 1) + p := by ring
       rw [show p * x - 1 = (p - 1) + p * (x - 1) by omega,
         Nat.add_mul_div_left _ _ (by omega)]
       have : (p - 1) / p = 0 := Nat.div_eq_of_lt (by omega)
       omega
-    simpa [hcalc] using hx
+    rw [hcalc, show x - 1 + 1 = x by omega]
+    exact hx
 
 private lemma multiple_source {A : Finset ℕ} {p t z : ℕ}
     (hz : z ∈ partialCycle A p t) (hzero : z % p = 0) :
@@ -85,6 +88,7 @@ theorem partialCycle_free {A : Finset ℕ} {k p t N : ℕ}
       · have := (mem_Ico.mp hq).1
         omega
       · have hxpos := (mem_Icc.mp (hA hx)).1
+        have hmulpos : 0 < p * x := Nat.mul_pos (by omega) hxpos
         omega
     have hprod : i * (p * e) = p * (i * e) := by ring
     have hcalc : (a + i * (p * e) - 1) / p + 1 = (a - 1) / p + 1 + i * e := by
