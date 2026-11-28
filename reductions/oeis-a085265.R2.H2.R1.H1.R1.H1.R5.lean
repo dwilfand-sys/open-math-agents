@@ -31,6 +31,6 @@ set_option maxHeartbeats 1500000 in
 theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H1 := by
   intro cost witness J S hlo hhi hS hprod
   obtain ⟨A,α,R,ha,margin⟩ := witness J S hlo hhi hS hprod
-  exact (add_le_add_right (cost J S A α R hlo ha) _).trans_lt margin
+  exact (add_le_add (cost J S A α R hlo ha) (le_refl (if S.card=0 then 0 else (2:ℚ)^(S.card-1)))).trans_lt margin
 
 end OMA.R_oeis_a085265_R2_H2_R1_H1_R1_H1_R5
