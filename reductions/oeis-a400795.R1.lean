@@ -82,6 +82,7 @@ theorem main : H1 → H2 → H3 → H4 → type_of% @OMA.S_oeis_a400795.main := 
     · intro N
       exact div_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _)
     · intro N
-      exact div_le_div_of_nonneg_right (by exact_mod_cast hcard N) (Nat.cast_nonneg _)
+      have hc : (initialCount N : ℝ) ≤ (miss N : ℝ) := Nat.cast_le.mpr (hcard N)
+      exact div_le_div_of_nonneg_right hc (Nat.cast_nonneg N)
 
 end OMA.R_oeis_a400795_R1
