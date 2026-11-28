@@ -281,6 +281,9 @@ theorem cost_upper (j : ℕ) (hlo : 300 ≤ j) (hhi : j ≤ 1000000) :
   change ((∑ p ∈ P, (2*j/(p^2)+1) : ℕ):ℤ) ≤ _
   rw [Finset.sum_add_distrib]
   simp only [Finset.sum_const, nsmul_eq_mul, mul_one, Nat.cast_add]
+  change ((∑ p ∈ P, 2*j/(p^2) : ℕ) : ℤ) + (P.card : ℤ) ≤ costUpper j
+  have hf : ((∑ p ∈ P, 2*j/(p^2) : ℕ) : ℤ) ≤ (primeDeltas j : ℤ) := by
+    exact_mod_cast hfloor
   unfold costUpper
   omega
 
