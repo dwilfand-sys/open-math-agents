@@ -28,7 +28,10 @@ def H2 : Prop :=
 theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1_H1_R1_H1_R1_H1_R1.H2 := by
   intro first others
   dsimp only [OMA.R_oeis_a085265_R2_H2_R1_H1_R1_H1_R1_H1_R1.H2]
-  apply List.forall_mem_cons.mpr
-  exact ⟨⟨by decide, by decide, first⟩, others⟩
+  intro c hc
+  rcases List.mem_cons.mp hc with h | h
+  · subst c
+    exact ⟨by decide, by decide, first⟩
+  · exact others c h
 
 end OMA.R_oeis_a085265_R2_H2_R1_H1_R1_H1_R1_H1_R1_H2_R1
