@@ -303,6 +303,7 @@ private theorem qSift_fold (ps : List ℕ) (y : ℕ) :
     · simp [qSift,hy,qSift_zero']
     · simp [qSift,hy]
 
+/-- At the first endpoint, J = 307, the complete integer wheel bound is 227. -/
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem firstCost : costUpper 307 ≤ 227 := by
