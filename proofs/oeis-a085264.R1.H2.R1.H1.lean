@@ -1831,11 +1831,11 @@ theorem cost {J : ℕ} {S A : Finset ℕ} {α R : ℚ} (haS : A ⊆ S)
       _ = 2*(J:ℚ)*recip B := (Finset.mul_sum ..).symm
       _ ≤ _ := mul_le_mul_of_nonneg_left (by linarith only [rsum]) (by positivity)
   change ((∑ p ∈ E, (2*J/(p^2)+1) : ℕ) : ℚ) ≤ _
-  rw [sum_add_distrib]
-  simp only [sum_const, nsmul_eq_mul, mul_one, Nat.cast_add]
+  have card_weight : (∑ _p ∈ E, (1 : ℕ)) = E.card := by simp
+  rw [sum_add_distrib, card_weight, Nat.cast_add]
   calc
     _ ≤ 2*(J:ℚ)*(R-recip A) + (α*(J:ℚ)-(A.card:ℚ)) :=
-      add_le_add hf (by linarith only [csum])
+      add_le_add hf (le_sub_iff_add_le.mpr csum)
     _ = _ := by ring
 
 private theorem active_recip_of_hi {J H T : ℕ} (hJ : J ≤ H) (hT : 2*H < (T+1)^2) :
