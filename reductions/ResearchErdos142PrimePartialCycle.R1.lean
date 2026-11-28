@@ -27,4 +27,7 @@ def H3 : Prop :=
   ∀ (A : Finset ℕ) (p : ℕ), 0 < p →
     ∃ t : Fin p, A.card ≤ p * (A.filter fun x => x % p = t.val).card
 
+def H4 : Prop :=
+  ∀ (p : ℕ), p.Prime → completeResidues p
+
 end OMA.R_ResearchErdos142PrimePartialCycle_R1
