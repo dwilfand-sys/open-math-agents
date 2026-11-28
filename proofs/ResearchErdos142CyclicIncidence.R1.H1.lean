@@ -152,6 +152,100 @@ theorem offGrid (p t l : ℕ) [NeZero p] (hp : p.Prime) (d : ZMod (p^t*p^l))
   have eq := congrArg (fun n : ℕ => (n : ZMod (p^t*p^l))) hd
   simpa only [ZMod.natCast_zmod_val,Nat.cast_mul] using eq
 
+/-- Different sites in the same grid coset can never share a window. -/
+theorem onGrid {q L : ℕ} [NeZero q] [NeZero L] [NeZero (q*L)]
+    (u : (ZMod (q*L))ˣ) (d a : ZMod (q*L)) (nonzero : d≠0) (on : L∣d.val) :
+    hit a * hit (a+(u:ZMod (q*L))*d)=0 := by
+  classical
+  let y := a+(u:ZMod (q*L))*d
+  by_cases ha : a.val<L
+  · by_cases hy : y.val<L
+    · exfalso
+      apply nonzero
+      let red := ZMod.castHom (show L∣q*L from dvd_mul_left L q) (ZMod L)
+      have rep (v : ZMod (q*L)) : red v=(v.val:ZMod L) := by
+        calc
+          _ = red (v.val : ZMod (q*L)) := by rw [ZMod.natCast_zmod_val]
+          _ = _ := map_natCast red _
+      have rd : red d=0 := (rep d).trans ((ZMod.natCast_eq_zero_iff _ _).2 on)
+      have ry : red y=red a := by simp only [y,map_add,map_mul,rd,mul_zero,add_zero]
+      have same : y.val=a.val := by
+        rw [rep y,rep a] at ry
+        have he := (ZMod.natCast_eq_natCast_iff' _ _ _).mp ry
+        simpa only [Nat.mod_eq_of_lt hy,Nat.mod_eq_of_lt ha] using he
+      have equal : y=a := by
+        calc
+          y=(y.val:ZMod (q*L)) := (ZMod.natCast_zmod_val _).symm
+          _=(a.val:ZMod (q*L)) := congrArg _ same
+          _=a := ZMod.natCast_zmod_val _
+      have z : (u:ZMod (q*L))*d=0 := by
+        apply add_left_cancel (a:=a)
+        simpa [y] using equal
+      calc
+        d=↑(u⁻¹)*((u:ZMod (q*L))*d) := by simp [←mul_assoc]
+        _=0 := by rw [z,mul_zero]
+    · change hit a * hit y=0
+      simp [hit,hy]
+  · simp [hit,ha]
+
+/-- The two-site incidence kernel of the actual cyclic windows, for all differences. -/
+theorem pairIncidence (p t l : ℕ) [NeZero p] (hp : p.Prime)
+    (d : ZMod (p^t*p^l)) :
+    ((p^t:ℕ):ℤ)^2 * (∑a : ZMod (p^t*p^l), ∑u : ZMod (p^t*p^l),
+      unitWeight u * hit a * hit (a+u*d)) =
+      ((p^t*p^l:ℕ):ℤ) * (∑u : ZMod (p^t*p^l), unitWeight u) *
+        (if d=0 then ((p^t:ℕ):ℤ) else if p^l∣d.val then 0 else 1) := by
+  classical
+  by_cases diagonal : d=0
+  · subst d
+    simp only [mul_zero,add_zero,if_pos rfl]
+    have idem (a u : ZMod (p^t*p^l)) :
+        unitWeight u * hit a * hit a=unitWeight u * hit a := by
+      unfold hit
+      split <;> simp
+    simp_rw [idem,←Finset.sum_mul]
+    rw [←Finset.mul_sum]
+    have area := translateSum (fun a : ZMod (p^t*p^l) => hit a) (fun _ => 1)
+      (fun j : ZMod (p^t) => Equiv.addRight ((j.val:ZMod (p^t*p^l))*((p^l:ℕ):ZMod (p^t*p^l))))
+      (fun a => bins a)
+    have area' : ((p^t:ℕ):ℤ)*(∑a : ZMod (p^t*p^l),hit a)=((p^t*p^l:ℕ):ℤ) := by
+      simpa using area
+    rw [←area']
+    ring
+  · by_cases grid : p^l∣d.val
+    · have vanish (a u : ZMod (p^t*p^l)) : unitWeight u*hit a*hit (a+u*d)=0 := by
+        by_cases unit : IsUnit u
+        · obtain ⟨v,rfl⟩ := unit
+          rw [mul_assoc,onGrid v d a diagonal grid,mul_zero]
+        · simp [unitWeight,unit]
+      simp [diagonal,grid,vanish]
+    · simpa [diagonal,grid] using (offGrid p t l hp d grid).2
+
+/-- Joint incidence for arbitrary affine images of two sites, translated
+by the same origin and multiplied by the same unit. -/
+theorem affinePair (p t l : ℕ) [NeZero p] (hp : p.Prime)
+    (x y : ZMod (p^t*p^l)) :
+    ((p^t:ℕ):ℤ)^2 * (∑a : ZMod (p^t*p^l), ∑u : ZMod (p^t*p^l),
+      unitWeight u * hit (a+u*x) * hit (a+u*y)) =
+      ((p^t*p^l:ℕ):ℤ) * (∑u : ZMod (p^t*p^l), unitWeight u) *
+        (if y-x=0 then ((p^t:ℕ):ℤ) else if p^l∣(y-x).val then 0 else 1) := by
+  classical
+  let f (u a : ZMod (p^t*p^l)) := unitWeight u*hit a*hit (a+u*(y-x))
+  have shift (u : ZMod (p^t*p^l)) :
+      (∑a : ZMod (p^t*p^l), unitWeight u*hit (a+u*x)*hit (a+u*y))=∑a,f u a := by
+    calc
+      _ = ∑a,f u ((Equiv.addRight (u*x)) a) := by
+        apply Finset.sum_congr rfl
+        intro a _
+        have h : a+u*y=(a+u*x)+u*(y-x) := by ring
+        change unitWeight u*hit (a+u*x)*hit (a+u*y)=
+          unitWeight u*hit (a+u*x)*hit ((a+u*x)+u*(y-x))
+        rw [h]
+      _ = _ := Equiv.sum_comp _ _
+  calc
+    _ = ((p^t:ℕ):ℤ)^2 * (∑ u,∑ a,f u a) := by rw [Finset.sum_comm]; simp_rw [shift]
+    _ = _ := by rw [Finset.sum_comm]; exact pairIncidence p t l hp (y-x)
+
 end CyclicIncidence
 
 theorem OMA.solution : OMA.R_ResearchErdos142CyclicIncidence_R1.H1 := CyclicIncidence.complete
