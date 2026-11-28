@@ -1,7 +1,6 @@
 import OMAReductions.R_Erdos142_erdos_142_variants_lower_R3
 
-/- Fork-only specification of the AP-freeness core of the prime partial-cycle
-   construction for Erdős 142. -/
+/- Fork-only specification of the prime partial-cycle construction for Erdős 142. -/
 namespace OMA.R_ResearchErdos142PrimePartialCycle_R1
 
 open Finset Erdos142
@@ -18,5 +17,10 @@ def H1 : Prop :=
     completeResidues p → A ⊆ Icc 1 N →
     (A : Set ℕ).IsAPOfLengthFree k →
     (partialCycle A p t : Set ℕ).IsAPOfLengthFree k
+
+def H2 : Prop :=
+  ∀ {A : Finset ℕ} {p t N : ℕ}, 1 < p → A ⊆ Icc 1 N →
+    (partialCycle A p t).card =
+      (p - 1) * A.card + (A.filter fun x => x % p = t).card
 
 end OMA.R_ResearchErdos142PrimePartialCycle_R1
