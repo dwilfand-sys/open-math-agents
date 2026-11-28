@@ -24,6 +24,7 @@ theorem partialCycle_card {A : Finset ℕ} {p t N : ℕ} (hp : 1 < p)
       simpa only [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hxI.2,
         Nat.mod_eq_of_lt hyI.2] using hm
     apply Prod.ext hfirst
+    change x.1 + p * (x.2 - 1) = y.1 + p * (y.2 - 1) at hxy
     rw [hfirst] at hxy
     have hmul : p * (x.2 - 1) = p * (y.2 - 1) := Nat.add_left_cancel hxy
     have hsub : x.2 - 1 = y.2 - 1 := Nat.eq_of_mul_eq_mul_left (by omega) hmul
@@ -42,14 +43,16 @@ theorem partialCycle_card {A : Finset ℕ} {p t N : ℕ} (hp : 1 < p)
     obtain ⟨x, hx, heq⟩ := mem_image.mp hzextra
     have hqI := mem_Ico.mp hqe
     have hmod := congrArg (fun n : ℕ => n % p) heq
-    simp only [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hqI.2,
-      Nat.mul_mod, Nat.mod_self, zero_mul, zero_mod] at hmod
+    have hcoremod : (q.1 + p * (q.2 - 1)) % p = q.1 := by
+      rw [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hqI.2]
+    have hextramod : (p * x) % p = 0 := by simp
+    rw [hextramod, hcoremod] at hmod
     omega
   change (core ∪ extra).card = _
   rw [card_union_of_disjoint dis]
   change (((Ico 1 p).product A).image (fun q => q.1 + p * (q.2 - 1))).card +
       ((A.filter fun x => x % p = t).image (fun x => p * x)).card = _
-  rw [card_image_of_injOn injCore, card_image_of_injOn injExtra, card_product,
+  rw [card_image_of_injOn injCore, card_image_of_injOn injExtra, Finset.card_product,
     Nat.card_Ico]
   omega
 
