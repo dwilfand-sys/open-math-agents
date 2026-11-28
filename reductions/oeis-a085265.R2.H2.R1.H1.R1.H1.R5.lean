@@ -27,6 +27,7 @@ def H2 : Prop := ∀ (J : ℕ) (S : Finset ℕ), 300 ≤ J → J ≤ 1000000 →
       (J:ℚ)*(α+2*(R-(∑ p ∈ A, 1/(p:ℚ)^2)))-(A.card:ℚ) + (if S.card=0 then 0 else (2:ℚ)^(S.card-1)) <
       (J:ℚ)*(∏ p ∈ S, (1-1/(p:ℚ)))
 
+set_option maxHeartbeats 1500000 in
 theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H1 := by
   intro cost witness J S hlo hhi hS hprod
   obtain ⟨A,α,R,ha,margin⟩ := witness J S hlo hhi hS hprod
