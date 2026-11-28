@@ -117,7 +117,7 @@ private theorem decode {x j : ℕ} (hx : 1 ≤ x) (hj : j < 7) :
   dsimp [block]
   omega
 
-/-- The seven translates of the three-hole mask 0,7,21 mod 49.
+/- The seven translates of the three-hole mask 0,7,21 mod 49.
 The point is tested on the full finite residue classes by kernel reduction. -/
 set_option maxHeartbeats 28000000 in
 set_option maxRecDepth 150000 in
