@@ -2344,17 +2344,6 @@ namespace A085265.DyadicPrimeCount
 
 open Finset
 
-def oddPrimesUpTo (x : ℕ) : Finset ℕ :=
-  (range (x + 1)).filter (fun p => 2 < p ∧ p.Prime)
-
-def oddPrimeCount (x : ℕ) : ℕ := (oddPrimesUpTo x).card
-
-end A085265.DyadicPrimeCount
-
-namespace A085265.DyadicPrimeCount
-
-open Finset
-
 private def smallPrimeMark (v : ℕ) : ℕ := if 2 < v ∧ v.Prime then 1 else 0
 
 private def smallPrimeSegment (a : ℕ) : ℕ → ℕ
@@ -3481,30 +3470,30 @@ theorem prime_count_le {lo hi J : ℕ} {alpha recip : ℚ}
 theorem band_exists {J : ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000) :
     ∃ (lo hi : ℕ) (alpha recip : ℚ), (lo,hi,alpha,recip) ∈ bands ∧ lo ≤ J ∧ J ≤ hi := by
   by_cases until_420 : J ≤ 420
-  · exact ⟨300,420,(183/500:ℚ),(96911/500000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨300,420,(183/500:ℚ),(96911/500000:ℚ),by unfold bands; exact (List.Mem.head _),by omega,by omega⟩
   by_cases until_599 : J ≤ 599
-  · exact ⟨421,599,(9/25:ℚ),(49013/250000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨421,599,(9/25:ℚ),(49013/250000:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.head _)),by omega,by omega⟩
   by_cases until_1023 : J ≤ 1023
-  · exact ⟨600,1023,(9/25:ℚ),(98959/500000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨600,1023,(9/25:ℚ),(98959/500000:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))),by omega,by omega⟩
   by_cases until_2047 : J ≤ 2047
-  · exact ⟨1024,2047,(7/20:ℚ),(199283/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨1024,2047,(7/20:ℚ),(199283/1000000:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))),by omega,by omega⟩
   by_cases until_4095 : J ≤ 4095
-  · exact ⟨2048,4095,(73/250:ℚ),(200323/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨2048,4095,(73/250:ℚ),(200323/1000000:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))),by omega,by omega⟩
   by_cases until_8191 : J ≤ 8191
-  · exact ⟨4096,8191,(3127/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨4096,8191,(3127/10000:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))),by omega,by omega⟩
   by_cases until_16383 : J ≤ 16383
-  · exact ⟨8192,16383,(3103/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨8192,16383,(3103/10000:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))),by omega,by omega⟩
   by_cases until_32767 : J ≤ 32767
-  · exact ⟨16384,32767,(2981/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨16384,32767,(2981/10000:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))))),by omega,by omega⟩
   by_cases until_65535 : J ≤ 65535
-  · exact ⟨32768,65535,(353/1250:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨32768,65535,(353/1250:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))))),by omega,by omega⟩
   by_cases until_131071 : J ≤ 131071
-  · exact ⟨65536,131071,(2663/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨65536,131071,(2663/10000:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))))))),by omega,by omega⟩
   by_cases until_262143 : J ≤ 262143
-  · exact ⟨131072,262143,(627/2500:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨131072,262143,(627/2500:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))))))),by omega,by omega⟩
   by_cases until_524287 : J ≤ 524287
-  · exact ⟨262144,524287,(1183/5000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
-  exact ⟨524288,1000000,(559/2500:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨262144,524287,(1183/5000:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))))))))),by omega,by omega⟩
+  exact ⟨524288,1000000,(559/2500:ℚ),(41/200:ℚ),by unfold bands; exact (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))))))))),by omega,by omega⟩
 
 end A085267.SameJ
 
@@ -3575,11 +3564,11 @@ theorem cost {J : ℕ} {S A : Finset ℕ} {α R : ℚ} (haS : A ⊆ S)
       _ = 2*(J:ℚ)*recip B := (Finset.mul_sum ..).symm
       _ ≤ _ := mul_le_mul_of_nonneg_left (by linarith only [rsum]) (by positivity)
   change ((∑ p ∈ E, (2*J/(p^2)+1) : ℕ) : ℚ) ≤ _
-  rw [sum_add_distrib]
-  simp only [sum_const, nsmul_eq_mul, mul_one, Nat.cast_add]
+  have card_weight : (∑ _p ∈ E, (1 : ℕ)) = E.card := by simp
+  rw [sum_add_distrib, card_weight, Nat.cast_add]
   calc
     _ ≤ 2*(J:ℚ)*(R-recip A) + (α*(J:ℚ)-(A.card:ℚ)) :=
-      add_le_add hf (by linarith only [csum])
+      add_le_add hf (le_sub_iff_add_le.mpr csum)
     _ = _ := by ring
 
 private theorem active_recip_of_hi {J H T : ℕ} (hJ : J ≤ H) (hT : 2*H < (T+1)^2) :
