@@ -1,4 +1,4 @@
-import FormalConjectures.ErdosProblems.«142»
+import OMAReductions.R_Erdos142_erdos_142_variants_lower_R3
 
 /- Fork-only specification of the AP-freeness core of the prime partial-cycle
    construction for Erdős 142. -/
