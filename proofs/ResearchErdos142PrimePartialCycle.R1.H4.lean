@@ -1,4 +1,5 @@
 import OMAReductions.R_ResearchErdos142PrimePartialCycle_R1
+import Mathlib.Data.Int.GCD
 
 /-! A prime modulus has the complete-residue property used by the partial-cycle construction. -/
 
