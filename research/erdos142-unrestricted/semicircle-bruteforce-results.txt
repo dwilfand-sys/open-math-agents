@@ -1,0 +1,1 @@
+AGREED through 500; normalized triples 10385375; unit tests 26921951; direct arc triples 17545

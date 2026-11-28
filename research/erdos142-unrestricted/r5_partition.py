@@ -30,6 +30,22 @@ for j in range(1,N):
   lower=max(0,a.target-cap[N-j])
   s.add_atmost([-v for v in xs[:j]],j-lower)
   s.add_atmost([-v for v in xs[-j:]],j-lower)
+# Lower bounds for every AP subwindow from a disjoint partition of its
+# complement. Other residue classes and the two ends of this residue class
+# each have the ordinary table upper bound. No external search result is used.
+for length in range(117,N+1):cap[length]=cap[length-1]+1
+complement_cuts=0
+for d in range(1,(N-1)//4+1):
+ rows=[list(range(r,N+1,d)) for r in range(1,d+1)]
+ total_upper=sum(cap[len(row)] for row in rows)
+ for row in rows:
+  L=len(row);other_upper=total_upper-cap[L]
+  for lo in range(L):
+   for hi in range(lo+1,L+1):
+    lower=a.target-other_upper-cap[lo]-cap[L-hi]
+    if lower>0:
+     s.add_atmost([-x for x in row[lo:hi]],hi-lo-lower);complement_cuts+=1
+print(json.dumps({'event':'model','complement_cuts':complement_cuts,'seconds':time.monotonic()-t}),flush=True)
 # No symmetry condition: every assignment has exactly one of these 64 prefixes.
 split=list(range(3,9)); cubes=list(itertools.product([0,1],repeat=len(split)))
 pending=list(range(len(cubes)));closed=[];rounds=0;witness=None;last_report=t

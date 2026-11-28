@@ -110,9 +110,38 @@ that threshold.
 
 ## Verification and limits
 
+### Uniform logarithmic set of test directions
+
+The proof gives more than a triple-dependent multiplier. Write N=2^v*m,
+where m is odd, and q=ceil(log2(m)), with q=0 for m=1. Include the units
+1+N/2^s for 1<=s<v. Also include, for 0<=j<=q, the odd representative
+of 2^j modulo m in [1,2m) if v>0; for v=0 use 2^j modulo m. For m=1,
+the representative is 1. This is a set of at most ceil(log2(N))+1 units
+depending only on N, not on H.
+
+Testing the semicircle condition in these directions is equivalent to
+testing it in every unit direction for three-point sets. Indeed, the first
+family detects mixed parity at every possible stage of the power-of-two
+reduction. The second is exactly the doubling orbit at odd modulus, and
+the lifted-doubling orbit at twice odd modulus. In the odd case a nonzero
+gap deviation has size at least 1/(3m); after q doublings it cannot stay
+strictly below 1/3. In the twice-odd mixed case the nonzero shorter-arc
+coordinate has magnitude at least 1/m, so its first crossing of 1/2 also
+occurs by q. These are the stopping bounds in the preceding proof.
+
+This gives an O(log N)-direction obstruction test for three holes, rather
+than a scan of all phi(N) directions. It does not extend here to four or
+more holes. The constructive Python checker separately audits this
+uniform family as well as the triple-dependent algorithm.
+
+### Audit results
+
 - A separate exhaustive C++ checker tested every normalized triple {0,a,b}
   for every even modulus through 500, checking all units directly. It agreed
   on 10,385,375 triples and made 26,921,951 unit tests.
+  For the 17,545 triples at even moduli through 60 it also enumerated the
+  actual progression sets directly, independently checking the gap criterion
+  and the N/2 versus N/2+1 boundary.
 - An independently written Python routine implements the proof's
   constructive multiplier (doubling, parity flip, or lifted doubling),
   rather than searching all units. It passed all 551,300 normalized triples

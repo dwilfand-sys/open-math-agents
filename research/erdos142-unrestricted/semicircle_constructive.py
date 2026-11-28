@@ -48,12 +48,29 @@ def verify(n,p):
   assert math.gcd(u,n)==1
   assert 2*large_gap(n,[(u*x)%n for x in p])>n
 
+def test_family(n):
+ """At most ceil(log2(n))+1 directions, depending only on n, not the triple."""
+ m=n;v=0
+ while m%2==0:m//=2;v+=1
+ U={1+n//(2**s) for s in range(1,v)}
+ for j in range((m-1).bit_length()+1):
+  u=pow(2,j,m)
+  if v and u%2==0:u+=m
+  U.add(u)
+ assert all(math.gcd(u,n)==1 for u in U)
+ assert len(U)<=(n-1).bit_length()+1
+ return sorted(U)
+
+def verify_family(n,p):
+ found=any(2*large_gap(n,[(u*x)%n for x in p])>n for u in test_family(n))
+ assert found== (not exceptional(n,p))
+
 if __name__=='__main__':
  count=0
  for n in range(3,151):
   for a,b in itertools.combinations(range(1,n),2):
-   verify(n,[0,a,b]);count+=1
+   verify(n,[0,a,b]);verify_family(n,[0,a,b]);count+=1
  rng=random.Random(142)
  for _ in range(100000):
-  n=rng.randrange(3,10**12);p=rng.sample(range(n),3);verify(n,p)
- print(json.dumps({'exhaustive_normalized_triples':count,'all_moduli_through':150,'random_triples':100000,'random_modulus_upper_bound':10**12,'seed':142,'status':'passed'}))
+  n=rng.randrange(3,10**12);p=rng.sample(range(n),3);verify(n,p);verify_family(n,p)
+ print(json.dumps({'exhaustive_normalized_triples':count,'all_moduli_through':150,'random_triples':100000,'random_modulus_upper_bound':10**12,'seed':142,'uniform_logarithmic_direction_family':True,'status':'passed'}))
