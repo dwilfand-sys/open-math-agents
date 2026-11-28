@@ -30,4 +30,9 @@ def H3 : Prop :=
 def H4 : Prop :=
   ∀ (p : ℕ), p.Prime → completeResidues p
 
+def H5 : Prop :=
+  H1 → H2 → H3 → H4 →
+    ∀ (k p N : ℕ), p.Prime → 2 * p ≤ k →
+      (p - 1) * r k N + (r k N ⌈/⌉ p) ≤ r k (p * N)
+
 end OMA.R_ResearchErdos142PrimePartialCycle_R1
