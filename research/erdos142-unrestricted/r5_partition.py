@@ -6,6 +6,7 @@ from pysat.solvers import Solver
 p=argparse.ArgumentParser();p.add_argument('--n',type=int,default=117)
 p.add_argument('--target',type=int,default=69);p.add_argument('--seconds',type=int,default=4500)
 p.add_argument('--table',default='/tmp/r5-table.txt');p.add_argument('--out',default='work/r5-117-partition.json')
+p.add_argument('--split-bits',type=int,default=6)
 a=p.parse_args();t=time.monotonic();N=a.n
 cap={0:0,116:68}
 for line in open(a.table):
@@ -47,7 +48,8 @@ for d in range(1,(N-1)//4+1):
      s.add_atmost([-x for x in row[lo:hi]],hi-lo-lower);complement_cuts+=1
 print(json.dumps({'event':'model','complement_cuts':complement_cuts,'seconds':time.monotonic()-t}),flush=True)
 # No symmetry condition: every assignment has exactly one of these 64 prefixes.
-split=list(range(3,9)); cubes=list(itertools.product([0,1],repeat=len(split)))
+assert 0<=a.split_bits<=6
+split=list(range(3,3+a.split_bits)); cubes=list(itertools.product([0,1],repeat=len(split)))
 pending=list(range(len(cubes)));closed=[];rounds=0;witness=None;last_report=t
 def checkpoint():
  z={'n':N,'target':a.target,'status':'SAT' if witness else ('UNSAT' if not pending else 'UNKNOWN'),'split_positions':split,'closed_cubes':closed,'remaining_cubes':[{'index':i,'bits':list(cubes[i])} for i in pending],'witness':witness,'seconds':time.monotonic()-t,'stats':s.accum_stats(),'model':'native cardinality; no symmetry; OEIS through115 and r5(116)<=68'}
