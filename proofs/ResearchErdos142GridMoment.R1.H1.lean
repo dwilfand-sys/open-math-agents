@@ -130,7 +130,7 @@ private theorem sharp (q r k N C u v : ℕ) (hq : 2 ≤ q) (hsq : r*r ≤ q)
     have b := Finset.single_le_sum (f:=fun i => ∑ z,loss i z)
       (fun i _ => Finset.sum_nonneg (fun z _ => loss_nn i z)) (Finset.mem_univ i)
     have this : loss i j  ≤  S := le_trans a b
-    have z : loss i j=0 := by omega
+    have z : loss i j=0 := le_antisymm (this.trans sZero.le) (loss_nn i j)
     rcases mul_eq_zero.mp z with h|h <;> omega
   let i : Fin u := ⟨0,hu⟩
   have constant (j : ℕ) (hj : j<v) : X i ⟨j,hj⟩ = X i ⟨0,hv⟩ := by
@@ -154,7 +154,7 @@ private theorem sharp (q r k N C u v : ℕ) (hq : 2 ≤ q) (hsq : r*r ≤ q)
   have last := endpoints i ⟨0,hv⟩
   rcases last with h|h
   · rw [h,mass] at literal
-    omega
+    nlinarith only [literal,R2]
   · rw [h,mass,Nat.cast_add] at literal
     nlinarith [mul_nonneg (show 0 ≤ (q:ℤ)-2 by omega) (show 0 ≤ (r:ℤ) by omega)]
 
