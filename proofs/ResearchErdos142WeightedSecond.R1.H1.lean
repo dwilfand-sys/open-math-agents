@@ -13,6 +13,7 @@ private theorem interchange {α β : Type*} [Fintype α] [Fintype β]
 private theorem squareSum {C B : ℕ} (w : Fin C → Fin B → ℤ) :
     (∑ c, ∑ b, w c b)^2 = ∑ c, ∑ b, ∑ d, ∑ e, w c b * w d e := by
   simp only [sq,Finset.sum_mul,Finset.mul_sum]
+  simp only [mul_comm]
 
 private theorem base {C B : ℕ} (q : ℕ) (w : Fin C → Fin B → ℤ) :
     (∑ c, ∑ b, ∑ d, ∑ e, (if c≠d then (1:ℤ) else if b=e then q else 0)*w c b*w d e) =
@@ -23,13 +24,19 @@ private theorem base {C B : ℕ} (q : ℕ) (w : Fin C → Fin B → ℤ) :
       a c b d e - (if d=c then a c b d e else 0) +
       (if d=c then if e=b then (q:ℤ)*w c b^2 else 0 else 0) := by
     dsimp [a]
-    by_cases cd : c=d <;> by_cases be : b=e <;> simp_all <;> ring
+    by_cases cd : c=d
+    · subst d
+      by_cases be : b=e
+      · subst e; simp; ring
+      · simp [be,Ne.symm be]
+    · simp [cd,Ne.symm cd]
   have all : (∑ c, ∑ b, ∑ d, ∑ e, a c b d e)=(mass w)^2 :=
     (squareSum w).symm
+  have whittle (c b d) : (∑ e, if d=c then a c b d e else 0) = if d=c then ∑ e, a c b d e else 0 := by
+    by_cases dc : d=c <;> simp [dc]
   have within : (∑ c, ∑ b, ∑ d, ∑ e, if d=c then a c b d e else 0) = classesSq w := by
-    simp only [←Finset.sum_ite_irrel,Finset.sum_const_zero,Finset.sum_ite_eq',Finset.mem_univ,if_true]
-    unfold classesSq
-    simp only [a,sq,Finset.sum_mul,Finset.mul_sum]
+    simp_rw [whittle]
+    simp [classesSq,a,sq,Finset.sum_mul,Finset.mul_sum,mul_comm]
   have diagonal : (∑ c, ∑ b, ∑ d, ∑ e, if d=c then if e=b then (q:ℤ)*w c b^2 else 0 else 0) =
       (q:ℤ)*sitesSq w := by
     simp [sitesSq,Finset.mul_sum]
@@ -64,7 +71,9 @@ theorem transfer : H1 := by
     calc
       _ = ∑ j, ((q:ℤ)^2*(I j c b*I j d e))*w c b*w d e := by
         apply Finset.sum_congr rfl; intro j _; dsimp [f]; ring
-      _ = _ := by rw [←Finset.sum_mul,←Finset.sum_mul,←Finset.mul_sum,pairs]; ring
+      _ = _ := by
+        rw [←Finset.sum_mul,←Finset.sum_mul,←Finset.mul_sum,pairs]
+        by_cases cd : c=d <;> by_cases be : b=e <;> simp [cd,be] <;> ring
   calc
     _ = ∑ j, (q:ℤ)^2*(weight I w j)^2 := Finset.mul_sum ..
     _ = ∑ j, ∑ c,∑ b,∑ d,∑ e,f j c b d e := by simp_rw [expand]
