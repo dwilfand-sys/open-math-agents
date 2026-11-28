@@ -1,0 +1,1 @@
+{"n": 117, "target": 69, "status": "UNKNOWN", "split_positions": [], "closed_cubes": [], "remaining_cubes": [{"index": 0, "bits": []}], "witness": null, "seconds": 421.9537343119882, "stats": {"restarts": 4928, "conflicts": 1120095, "decisions": 1605309, "propagations": 13534737}, "model": "native cardinality; no symmetry; OEIS through115 and r5(116)<=68"}

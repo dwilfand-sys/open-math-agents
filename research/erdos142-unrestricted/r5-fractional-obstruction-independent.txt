@@ -1,0 +1,2 @@
+N=117 K=69 checks=43830 all exact inequalities passed
+N=118 K=70 checks=44640 all exact inequalities passed

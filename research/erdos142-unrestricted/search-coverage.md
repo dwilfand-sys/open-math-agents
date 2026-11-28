@@ -1,3 +1,20 @@
+# Recovery correction, 28 November 2026
+
+The process-state descriptions below are historical. The previous processes
+were interrupted: native117 checkpoint UNKNOWN at 1778.66 s; native118 full
+checkpoint UNKNOWN at 444.66 s; CP117 wrote no final verdict. No difficult
+new prefix case was excluded. This recovery completed fresh bounded 420-second
+CP and native searches; both returned UNKNOWN. CP reported 1,864,410
+branches and 718,827 conflicts; native reported 1,120,095 conflicts and
+1,605,309 decisions. No new hard case was closed.
+
+The exact fractional obstruction in fractional-obstruction.md proves that
+the ordinary all-window linear relaxation cannot settle either candidate.
+It does not invalidate the integer search models: those retain Boolean
+integrality, which the fractional construction deliberately relaxes.
+
+--- Historical search coverage ---
+
 # Exact scope of the partial searches
 
 28 November 2026. No new value of r5(117) or r5(118) is established.
