@@ -1477,7 +1477,7 @@ theorem large_range_count_of_cover {n J b g : ℕ} {S : Finset ℕ} (D : PrimeEn
   have hc : ((candidateSet D.ps J b).card:ℚ) ≤ (g:ℚ) +
       ∑ p ∈ (largePrimeSet (2*J+1)) \ S, ((hitSet n p D.ps J b).card:ℚ) := by
     exact_mod_cast hcover
-  have combined := hc.trans (add_le_add_left loss (g:ℚ))
+  have combined := hc.trans (add_le_add (le_refl (g : ℚ)) loss)
   have strict : (100:ℚ) < g := by
     by_cases h3 : 3∈S <;> simp only [h3,if_true,if_false] at combined budget <;> nlinarith
   have result : 100 < g := by exact_mod_cast strict
