@@ -131,7 +131,7 @@ theorem count_and_classify : H1 := by
     · have m := col_unique _ (onto j) (ed e).1 ord eEq hxy.symm
       exact ((ed e).2 (same _ _ (by rwa [m.1]) (by rwa [m.2]))).elim
   · left
-    push_neg at singleton
+    push Not at singleton
     intro a b
     by_contra hn
     let S := (Finset.univ : Finset (Fin (q+1))).filter (fun x => c x = c a)
@@ -143,7 +143,7 @@ theorem count_and_classify : H1 := by
     have bigS : 1 < S.card := Finset.one_lt_card.mpr
       ⟨a, (A a).2 rfl, u, (A u).2 cu, Ne.symm hu⟩
     have bigT : 1 < T.card := Finset.one_lt_card.mpr
-      ⟨b, (B b).2 (Ne.symm hn), v, (B v).2 (by rwa [cv]), Ne.symm hv⟩
+      ⟨b, (B b).2 (Ne.symm hn), v, (B v).2 (fun he => hn (he.symm.trans cv)), Ne.symm hv⟩
     have prodBound := partition_product c S T (by
       intro x hx y hy eq
       exact (B y).1 hy (eq.symm.trans ((A x).1 hx)))
