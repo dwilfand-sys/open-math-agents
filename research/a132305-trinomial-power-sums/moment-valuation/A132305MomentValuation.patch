@@ -1,0 +1,175 @@
+--- a/proofs/oeis-a132305.lean
++++ b/proofs/oeis-a132305.lean
+@@ -12,7 +12,8 @@
+ Here we clear denominators in finite products for ordinary and multiset
+ binomial coefficients. Pairing i with p*j-i transfers the lower row modulo
+ p^(2*k). The identity (1+x+x²)=(1-x³)/(1-x) then gives the trinomial
+-coefficient transfer. Raising to the fifth power removes the off-grid terms.
++coefficient transfer. The power sum gains one digit for each factor of p in its exponent, for every
++power at least two. The final specialization uses the full row and exponent valuations.
+ 
+ Sources: https://oeis.org/A132305 and
+ https://github.com/rbajaj5/a183068-supercongruence/blob/main/related-results/A132303TrinomialCubeTower.md
+@@ -628,60 +629,113 @@
+   · rintro ⟨j, hj, rfl⟩
+     exact ⟨by have := Nat.mul_le_mul_left p (show j ≤ B by omega); omega, j, rfl⟩
+ 
+-theorem moment_of_coefficient_bounds (p B k h : ℕ) (hp : 0 < p) (hh : 2 ≤ h)
+-    (upper lower : ℕ → ℕ)
+-    (scaled : ∀ j, upper (p*j) ≡ lower j [MOD p^(2*k)])
+-    (off : ∀ j, ¬ p ∣ j → p^k ∣ upper j) :
+-    (∑ i ∈ range (p*B+1), (upper i)^h) ≡
+-      ∑ j ∈ range (B+1), (lower j)^h [MOD p^(2*k)] := by
+-  let s := range (p*B+1)
+-  have clear :
+-      (∑ i ∈ s.filter (fun i => ¬ p ∣ i), (upper i)^h) ≡ 0 [MOD p^(2*k)] := by
+-    apply Nat.ModEq.sum_zero
+-    intro i hi
+-    obtain ⟨d, hd⟩ := off i (mem_filter.mp hi).2
+-    apply Nat.modEq_zero_iff_dvd.mpr
+-    refine ⟨d^2 * (upper i)^(h-2), ?_⟩
+-    have hp2 : p^(2*k) = (p^k)^2 := by
+-      rw [show 2*k = k*2 by omega, pow_mul]
+-    calc
+-      (upper i)^h = (upper i)^2 * (upper i)^(h-2) := by
+-        rw [← pow_add, show 2+(h-2) = h by omega]
+-      _ = p^(2*k) * (d^2 * (upper i)^(h-2)) := by
+-        rw [hp2, hd]
+-        ring
+-  have kept :
+-      (∑ i ∈ s.filter (fun i => p ∣ i), (upper i)^h) ≡
+-        ∑ j ∈ range (B+1), (lower j)^h [MOD p^(2*k)] := by
+-    dsimp only [s]
+-    rw [multiples_in_range p B hp, sum_image]
+-    · exact Nat.ModEq.sum (fun j _ => (scaled j).pow h)
+-    · intro j _ j' _ he
+-      exact Nat.eq_of_mul_eq_mul_left hp he
+-  rw [← sum_filter_add_sum_filter_not s (fun i => p ∣ i) (fun i => (upper i)^h)]
+-  simpa only [add_zero] using kept.add clear
+-
+-theorem fifth_of_coefficient_bounds (p n k : ℕ) (hp : p.Prime) (hk : 0 < k)
+-    (scaled : ∀ j, trinomial (n*p^k) (p*j) ≡
+-      trinomial (n*p^(k-1)) j [MOD p^(2*k)])
+-    (off : ∀ j, ¬p ∣ j → p^k ∣ trinomial (n*p^k) j) :
+-    a (n*p^k) ≡ a (n*p^(k-1)) [MOD p^(2*k)] := by
+-  unfold a
+-  have endpoint : 2*(n*p^k) = p*(2*(n*p^(k-1))) := by
++private theorem lift_power_once {p s x y : ℕ} (hs : 0 < s)
++    (h : x ≡ y [MOD p ^ s]) : x ^ p ≡ y ^ p [MOD p ^ (s + 1)] := by
++  have d : (p : ℤ) ^ s ∣ (y : ℤ) - (x : ℤ) := by
++    simpa only [Nat.cast_pow] using Nat.modEq_iff_dvd.mp h
++  have dp : (p : ℤ) ∣ (y : ℤ) - (x : ℤ) :=
++    (dvd_pow_self _ (by omega : s ≠ 0)).trans d
++  have multiple := mul_dvd_mul (dvd_geom_sum₂_self (n := p) dp) d
++  rw [geom_sum₂_mul] at multiple
++  apply Nat.modEq_iff_dvd.mpr
++  simpa only [Nat.cast_pow, pow_succ', Nat.cast_mul] using multiple
++
++private theorem lift_power {p s x y : ℕ} (hs : 0 < s) (hxy : x ≡ y [MOD p ^ s])
++    (b h : ℕ) (hb : p ^ b ∣ h) : x ^ h ≡ y ^ h [MOD p ^ (s + b)] := by
++  have iter (d : ℕ) : x ^ (p ^ d) ≡ y ^ (p ^ d) [MOD p ^ (s + d)] := by
++    induction d with
++    | zero => simpa using hxy
++    | succ d ih =>
++      simpa only [pow_succ p d, pow_mul, Nat.add_succ] using
++        (lift_power_once (s := s + d) (by omega) ih)
++  obtain ⟨t, rfl⟩ := hb
++  simpa only [pow_mul] using (iter b).pow t
++
++private theorem off_grid_exponent {p k b h : ℕ} (hp : 3 ≤ p) (hk : 0 < k)
++    (hh : 2 ≤ h) (hd : p ^ b ∣ h) : 2*k + b ≤ k*h := by
++  have grow (j : ℕ) : j+3 ≤ p^(j+1) := by
++    induction j with
++    | zero => simpa using hp
++    | succ j ih =>
++      have bound := Nat.mul_le_mul ih (show 2 ≤ p by omega)
++      rw [pow_succ p (j+1)]
++      omega
++  have hbh : 2+b ≤ h := by
++    cases b with
++    | zero => omega
++    | succ j =>
++      have := (grow j).trans (Nat.le_of_dvd (by omega) hd)
++      omega
++  have hmul := Nat.mul_le_mul_left k hbh
++  have kb : b ≤ k*b := by simpa using Nat.mul_le_mul_right b (show 1 ≤ k by omega)
++  nlinarith only [hmul, kb]
++
++/-- The complete h-th power sum of the trinomial row, including both endpoints. -/
++noncomputable def moment (h N : ℕ) : ℕ :=
++  ∑ j ∈ range (2*N+1), trinomial N j ^ h
++
++/-- Every factor p of the moment exponent contributes an extra digit. -/
++theorem moment_lift (p n k h b : ℕ) (hp : p.Prime) (hp5 : 5 ≤ p)
++    (hn : 0 < n) (hk : 0 < k) (hh : 2 ≤ h) (hd : p ^ b ∣ h) :
++    moment h (n*p^k) ≡ moment h (n*p^(k-1)) [MOD p^(2*k+b)] := by
++  have hN : p ^ k ∣ n * p ^ k := dvd_mul_left _ _
++  obtain ⟨scaled, off⟩ := RowBridge.row_bounds_of_binomials p n k hp hp5 hn hk
++    (fun j => BinomialPairs.binomial_scaled p k n j hp (by omega) hk hn)
++    (fun j => BinomialPairs.multichoose_scaled p k n j hp (by omega) hk hn)
++    (fun j hj => BinomialPairs.choose_off_grid p k _ j hp hN hj)
++    (fun j hj => BinomialPairs.multichoose_off_grid p k _ j hp hN hj)
++  let U := trinomial (n*p^k)
++  let V := trinomial (n*p^(k-1))
++  let B := 2*(n*p^(k-1))
++  have endpoint : 2*(n*p^k) = p*B := by
++    dsimp only [B]
+     cases k with
+     | zero => omega
+     | succ k => simp [pow_succ] <;> ring
+-  rw [endpoint]
+-  exact moment_of_coefficient_bounds p _ k 5 hp.pos (by decide) _ _ scaled off
++  unfold moment
++  rw [endpoint, ← sum_filter_add_sum_filter_not (range (p*B+1)) (fun i => p ∣ i)
++    (fun i => U i ^ h)]
++  have kept : (∑ i ∈ (range (p*B+1)).filter (fun i => p ∣ i), U i ^ h) ≡
++      ∑ j ∈ range (B+1), V j ^ h [MOD p^(2*k+b)] := by
++    rw [multiples_in_range p B hp.pos, sum_image]
++    · exact Nat.ModEq.sum (fun j _ => lift_power (by omega) (scaled j) b h hd)
++    · intro j _ j' _ he
++      exact Nat.eq_of_mul_eq_mul_left hp.pos he
++  have clear : (∑ i ∈ (range (p*B+1)).filter (fun i => ¬ p ∣ i), U i ^ h) ≡
++      0 [MOD p^(2*k+b)] := by
++    apply Nat.ModEq.sum_zero
++    intro i hi
++    apply Nat.modEq_zero_iff_dvd.mpr
++    have div := pow_dvd_pow_of_dvd (off i (mem_filter.mp hi).2) h
++    apply (pow_dvd_pow p (off_grid_exponent (by omega) hk hh hd)).trans
++    simpa only [pow_mul] using div
++  simpa only [add_zero] using kept.add clear
++
++/-- The adjacent row ratio depends on the full p-order of the upper row. -/
++theorem moment_full_valuation (p n k h : ℕ) (hp : p.Prime) (hp5 : 5 ≤ p)
++    (hn : 0 < n) (hk : 0 < k) (hh : 2 ≤ h) :
++    moment h (n*p^k) ≡ moment h (n*p^(k-1))
++      [MOD p^(2*(k+padicValNat p n)+padicValNat p h)] := by
++  let t := padicValNat p n
++  obtain ⟨m, hm⟩ : p^t ∣ n := pow_padicValNat_dvd
++  have hmpos : 0 < m := by
++    by_contra! hz
++    have : m = 0 := by omega
++    simp [this] at hm
++    omega
++  have top : n*p^k = m*p^(k+t) := by rw [hm, pow_add]; ring
++  have bot : n*p^(k-1) = m*p^(k+t-1) := by
++    rw [show k+t-1 = (k-1)+t by omega, pow_add, hm]
++    ring
++  change moment h (n*p^k) ≡ moment h (n*p^(k-1)) [MOD p^(2*(k+t)+padicValNat p h)]
++  rw [top, bot]
++  exact moment_lift p m (k+t) h (padicValNat p h) hp hp5 hmpos (by omega) hh
++    pow_padicValNat_dvd
+ 
+ end A132305
+ 
+ theorem OMA.solution : type_of% @OMA.S_oeis_a132305.main := by
+   intro p n k hp hp5 hn hk
+-  have hd : p ^ k ∣ n * p ^ k := dvd_mul_left _ _
+-  have rows := A132305.RowBridge.row_bounds_of_binomials p n k hp hp5 hn hk
+-    (fun j => A132305.BinomialPairs.binomial_scaled p k n j hp (by omega) hk hn)
+-    (fun j => A132305.BinomialPairs.multichoose_scaled p k n j hp (by omega) hk hn)
+-    (fun j hj => A132305.BinomialPairs.choose_off_grid p k _ j hp hd hj)
+-    (fun j hj => A132305.BinomialPairs.multichoose_off_grid p k _ j hp hd hj)
+-  exact A132305.fifth_of_coefficient_bounds p n k hp hk rows.1 rows.2
++  apply Nat.ModEq.of_dvd (pow_dvd_pow p (by omega :
++    2*k ≤ 2*(k+padicValNat p n)+padicValNat p 5))
++  exact A132305.moment_full_valuation p n k 5 hp hp5 hn hk (by decide)
