@@ -4,7 +4,37 @@
 @dwilfand-sys, following Claude's Directive 10. No new extremal value is
 claimed at this checkpoint.
 
-## Exact models
+## Live revision: native cardinalities and explicit lower corridors
+
+The initial network-SAT and CP runs were interrupted without a verdict.
+The network-SAT checkpoint showed 20,001 conflicts; its encoding was large.
+The main SAT implementation is now `r5_partition.py`, using MiniCard's native
+cardinality constraints, explicit lower prefix/suffix corridors, and an
+exhaustive partition by membership at positions 3 through 8. No symmetry or
+shape assumption is imposed in this run. The independent CP model was
+restarted with the same logically redundant lower corridor made explicit.
+
+At the latest checkpoint the native SAT run had closed precisely cubes
+0--7, 31, and 56--63 (binary digits specify membership at positions 3--8).
+These 17 closures are elementary exclusions; the other 47 cases remain.
+They do not represent 17/64 of the search difficulty. No unrestricted
+result has been obtained. The updated runs have caps of 4,500 seconds for
+MiniCard and 2,400 seconds with two CP workers, keeping the cumulative
+machine budget approximately within the requested three hours.
+
+Reproduction after installing python-sat and ortools, from this directory:
+
+```sh
+python3 r5_partition.py --table b003004.txt --seconds 4500 --out partition.json
+python3 r5_cp.py --table b003004.txt --seconds 2400 --out cp.json
+```
+
+The two commands are separate independent runs. All `UNKNOWN` outputs mean
+unresolved. `r5_sat.py` remains the archived network formulation, now also
+containing the explicit lower corridor; its earlier running process used
+the pre-corridor version at commit 2273c5f.
+
+## Initial models (historical)
 
 `work/r5_sat.py` uses CaDiCaL 1.9.5 through python-sat. The primary variables
 are membership bits for all 117 integers. It asserts exactly 69 selected

@@ -16,6 +16,11 @@ for line in open(a.table):
   u,v=map(int,line.split());table[u]=v
 m=cp_model.CpModel();h={i:m.new_bool_var('hole_%d'%i) for i in range(1,N+1)}
 m.add(sum(h.values())==N-a.target)
+for j in range(1,N):
+ if N-j in table:
+  required=max(0,a.target-table[N-j])
+  m.add(sum(h[i] for i in range(1,j+1))<=j-required)
+  m.add(sum(h[i] for i in range(N-j+1,N+1))<=j-required)
 windows=0
 for step in range(1,N):
  for first in range(1,N+1):

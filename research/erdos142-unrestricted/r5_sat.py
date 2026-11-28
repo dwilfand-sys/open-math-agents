@@ -46,6 +46,11 @@ for d in range(1,(n-1)//4+1):
     bound(row[lo:lo+m],u);windows+=1
 for j in range(1,min(n,116)+1):
  bound(list(range(1,j+1)),caps[j]);bound(list(range(n-j+1,n+1)),caps[j])
+for j in range(1,n):
+ if n-j in caps:
+  lower=max(0,target-caps[n-j])
+  bound([-x for x in range(1,j+1)],j-lower)
+  bound([-x for x in range(n-j+1,n+1)],j-lower)
 # Reflection breaking: lexicographically prefer x >= reverse(x).
 # e_i is EXACTLY the equality of the first i reflected pairs.
 prev=pool.id();add([[prev]])
