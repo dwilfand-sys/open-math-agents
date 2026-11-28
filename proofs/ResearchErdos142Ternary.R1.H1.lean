@@ -170,9 +170,11 @@ theorem ternary_dilation {k : ℕ} (hk : 6 ≤ k) (N : ℕ) :
     obtain ⟨hA,jlt,rest⟩ := info hj
     obtain ⟨xlo,xhi⟩ := Finset.mem_Icc.mp (ha hA)
     have dec := (decode xlo jlt).1
-    refine ⟨Finset.mem_Icc.mpr ⟨?_,?_⟩, dec ▸ hA, ?_⟩
+    refine ⟨Finset.mem_Icc.mpr ⟨?_,?_⟩, ?_, ?_⟩
     · dsimp [block]; omega
     · dsimp [block]; omega
+    · rw [dec]
+      exact hA
     · dsimp [block]
       intro divisible
       have h := rest (by omega)
