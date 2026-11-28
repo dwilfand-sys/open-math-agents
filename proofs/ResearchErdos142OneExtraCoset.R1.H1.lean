@@ -57,7 +57,6 @@ private theorem forward (p t : ℕ) (hp : p.Prime) (ht : 0<t) (k : ℕ) :
     have impossible := Fintype.card_le_of_injective pos hi
     simp at impossible
   | succ k ih =>
-    simp only [pow_succ]
     intro pos hi cov
     have hq : 0<p^t := pow_pos hp.pos _
     have hL : 0<p^k := pow_pos hp.pos _
@@ -146,7 +145,7 @@ private theorem arc_iff {q L : ℕ} (hq : 0<q) (hL : 0<L)
     rw [←Nat.mod_mul_left_div_self,modSame,show y+d=d+L*b.val by dsimp [y]; ring,
       Nat.add_mul_div_left _ _ hL,Nat.div_eq_of_lt dl,Nat.zero_add]
 
-theorem complete : H1 := by
+theorem complete : OMA.R_ResearchErdos142OneExtraCoset_R1.H1 := by
   intro p t k hp ht pos hi
   have main : covered (p^t) (p^k) pos ↔ fullCoset (p^t) (p^k) pos :=
     ⟨forward p t hp ht k pos hi,backwards (pow_pos hp.pos _) (pow_pos hp.pos _) pos⟩
