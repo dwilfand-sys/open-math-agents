@@ -150,6 +150,7 @@ private def largestProfileRank (D cap : ℕ) : ℕ :=
   if D * 19^2 ≤ cap then 2 else
   if D * 19 ≤ cap then 1 else 0
 
+set_option maxHeartbeats 2000000 in
 private theorem admissible_le_largest {D cap t : ℕ} (ht : t < 5)
     (h : D * 19^t ≤ cap) : t ≤ largestProfileRank D cap := by
   interval_cases t <;> try simp only [pow_one] at h
@@ -162,6 +163,7 @@ private def endpointProfileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
     (c : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
       (lo : ℚ) * largeRho A * (18/19 : ℚ)^m
 
+set_option maxHeartbeats 2000000 in
 private theorem initialError_nondecreasing {i j : ℕ} (h : i ≤ j) :
     initialError i ≤ initialError j := by
   have step (u : ℕ) : initialError u ≤ initialError (u+1) := by
@@ -177,6 +179,7 @@ private theorem initialError_nondecreasing {i j : ℕ} (h : i ≤ j) :
   | zero => simp
   | succ d ih => exact ih.trans (step (i+d))
 
+set_option maxHeartbeats 2000000 in
 private theorem profile_decay {i j : ℕ} (h : i ≤ j) :
     (18/19 : ℚ)^j ≤ (18/19 : ℚ)^i := by
   obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
@@ -190,13 +193,15 @@ private theorem profile_decay {i j : ℕ} (h : i ≤ j) :
         mul_le_mul_of_nonneg_left (by norm_num) (by positivity)
       _ ≤ (18/19 : ℚ)^i := by simpa using ih
 
+set_option maxHeartbeats 2000000 in
 private theorem profileChecks_of_endpoints {lo hi : ℕ} {c : ℤ}
     (he : endpointProfileChecks lo hi c) : profileChecks lo hi c := by
   intro A hA t hadm
   let D := ∏ p ∈ A, p
   let m := largestProfileRank D (2*hi+2)
   have hprod : D ≤ 2*hi+2 := by
-    have hp : 1 ≤ (19 : ℕ)^t.val := by positivity
+    have hpos : 0 < (19 : ℕ)^t.val := by positivity
+    have hp : 1 ≤ (19 : ℕ)^t.val := by omega
     have hmul := Nat.mul_le_mul_left D hp
     have hbase : D ≤ D * 19^t.val := by simpa only [Nat.mul_one] using hmul
     exact hbase.trans hadm
@@ -1019,10 +1024,10 @@ theorem moderate_sieve_budget {J : ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000)
       _ ≤ ((∑ p ∈ largePrimeSet (2*c.2.1+1), (2*c.2.1/(p^2)+1) : ℕ) : ℤ) := by
         exact_mod_cast hsum
       _ ≤ _ := htotal
-    have casted :
-        (((((∑ p ∈ largePrimeSet (2*J+1) \ S, (2*J/(p^2)+1)) +
-          refund c.2.1 A : ℕ) : ℤ) : ℚ) ≤ (c.2.2 : ℚ) := Int.cast_le.mpr hsumZ
-    simpa only [Int.cast_natCast, Nat.cast_add] using casted
+    have cast_bound (v : ℕ) (z : ℤ) (h : (v : ℤ) ≤ z) : (v : ℚ) ≤ (z : ℚ) := by
+      have hc : ((v : ℤ) : ℚ) ≤ (z : ℚ) := Int.cast_le.mpr h
+      simpa only [Int.cast_natCast] using hc
+    simpa only [Nat.cast_add] using cast_bound _ _ hsumZ
   change _ + initialError S.card < _
   rw [← card]
   exact (add_le_add hleft le_rfl).trans_lt (hcase.trans_le hright)
