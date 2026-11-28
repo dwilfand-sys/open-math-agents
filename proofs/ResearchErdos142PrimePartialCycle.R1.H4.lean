@@ -20,7 +20,7 @@ theorem prime_completeResidues {p : ℕ} (hp : p.Prime) : completeResidues p := 
     simp only [i, Nat.ModEq, Nat.mod_mod]
   have hinv : v * d ≡ 1 [MOD p] := by
     simp only [Nat.ModEq]
-    simpa [Nat.mul_comm] using hv
+    simpa [Nat.mul_comm, Nat.mod_eq_of_lt hp.one_lt] using hv
   have ha : a ≡ a % p [MOD p] := by
     simp only [Nat.ModEq, Nat.mod_mod]
   have hid : i * d ≡ (p - a % p) * 1 [MOD p] := by
@@ -33,8 +33,8 @@ theorem prime_completeResidues {p : ℕ} (hp : p.Prime) : completeResidues p := 
     have hlt := Nat.mod_lt a hp.pos
     omega
   have hz : a % p + (p - a % p) * 1 ≡ 0 [MOD p] := by
-    simp only [hsum, Nat.ModEq, Nat.mod_self, zero_mod]
-  simpa only [Nat.ModEq, zero_mod] using hs.trans hz
+    simp only [hsum, Nat.ModEq, Nat.mod_self, Nat.zero_mod]
+  simpa only [Nat.ModEq, Nat.zero_mod] using hs.trans hz
 
 end Erdos142PrimePartialCyclePrime
 
