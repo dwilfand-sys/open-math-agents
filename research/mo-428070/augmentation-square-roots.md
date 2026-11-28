@@ -8,7 +8,15 @@ e_G=|G|^{-1}\sum_{g\in G}g,\qquad u=1-e_G.
 \]
 The rational algebra \(I_G=\ker\varepsilon\) has identity \(u\), where \(\varepsilon(\sum a_g g)=\sum a_g\). The argument below also classifies all rational nonsquares in place of \(2\).
 
-## Proof for 2
+## Short proof for 2 using the trace
+
+Suppose \(x^2=2u\). Right multiplication by \(x\) makes \(I_G\) a vector space over \(K=\mathbb Q(\sqrt2)\). Every left multiplication \(L_g\) is \(K\)-linear and has finite order. Its \(K\)-linear trace is a sum of roots of unity, so it is an algebraic integer in \(K\). Every such integer belongs to \(\mathbb Z[\sqrt2]\) and has even trace down to \(\mathbb Q\). By restriction of scalars, the rational trace of \(L_g\) on \(I_G\) is therefore an even integer.
+
+Choose any \(g\ne1\). On \(\mathbb Q[G]\) the same translation permutes the basis with no fixed points, so its trace is zero. On the trivial summand \(\mathbb Qe_G\) its trace is one. Its trace on the complementary augmentation ideal is therefore \(-1\), a contradiction.
+
+The even-trace fact can also be seen directly. For an algebraic integer \(a+b\sqrt2\) with \(a,b\in\mathbb Q\), its trace \(m=2a\) and norm \(n=a^2-2b^2\) are integers. If \(m\) were odd, \(m^2-4n=8b^2\) would be an odd integer. For \(b\ne0\) its right-hand side has odd 2-adic valuation, whereas the left side has valuation zero. For \(b=0\) the right-hand side vanishes.
+
+## A determinant proof that also works for other nonsquares
 
 Suppose \(G\ne1\) and \(x^2=2u\). Applying \(\varepsilon\) gives \(\varepsilon(x)=0\). On \(I_G\), right multiplication by \(x\) squares to twice the identity. Consequently \(I_G\) is a vector space over \(\mathbb Q(\sqrt2)\). Its rational dimension is \(|G|-1\), so \(|G|\) is odd.
 
@@ -42,4 +50,4 @@ The coefficient sum of \(t_H\) is zero, so \(t_H e_H=e_H t_H=0\). The Gauss sum 
 
 The map \(\mathbb Q[G/H]\longrightarrow e_H\mathbb Q[G]\) sending \(\bar g\) to \(e_H g\) is an algebra isomorphism with identity \(e_H\). It carries the average of \(G/H\) to \(e_G\). Applying it to the inductive root gives an element \(y\) with \(y^2=p^*(e_H-e_G)\). Since \(y=e_Hy=ye_H\), both cross terms with \(t_H\) vanish. Consequently \((t_H+y)^2=p^*(1-e_G)\), as required.
 
-Codex developed the determinant argument and the generalization for @dwilfand-sys. Claude Code identified and formalized the first part of the MathOverflow question. This note is a mathematical proof on paper. Its formal verification and historical priority are open.
+Codex developed the trace proof, determinant argument and generalization for @dwilfand-sys. Claude Code identified and formalized the first part of the MathOverflow question. This note is a mathematical proof on paper. Its formal verification and historical priority are open.
