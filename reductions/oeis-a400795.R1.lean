@@ -26,6 +26,7 @@ def H1 : Prop :=
     y < a.gcd b ∧ ∃ u v : ℕ, 0 < u ∧ 0 < v ∧
       2*(2*p-1) = (a.gcd b)^2*(u*v) + (a.gcd b)*(u+v-1)
 
+/-- Select candidates outside the count of positive large-gcd triples. -/
 def H2 : Prop :=
   ∀ B : ℕ, ∃ p y : ℕ, B < p ∧ p.Prime ∧ 3 < p ∧ p % 3 = 1 ∧
     (∀ d : ℕ, d ∣ 4*p+1 → d % 4 ≠ 3) ∧
