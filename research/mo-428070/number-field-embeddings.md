@@ -26,7 +26,7 @@ Fix an identification of \(K\) with a subfield of \(\mathbb Q(\zeta_p)\). In a n
 
 If \(G=H\), this already gives (2). Otherwise, the map \(\bar g\mapsto e_Hg\) identifies \(\mathbb Q[G/H]\) with the direct summand \(e_H\mathbb Q[G]\), and takes \(e_{G/H}\) to \(e_G\). By induction, its augmentation subalgebra contains a central copy of \(K\) with identity \(e_H-e_G\). This copy is central in \(\mathbb Q[G]\), since the other direct summands annihilate it. Adding the two embeddings gives a homomorphism on account of orthogonality. Its identity is \(u_G\), and projection to the first block proves injectivity. This proves (2), which immediately gives (1).
 
-For a rational nonsquare \(c\), an element \(x\) with \(x^2=c u_G\) generates such a copy of \(\mathbb Q(\sqrt c)\). The unique quadratic subfield of \(\mathbb Q(\zeta_p)\) is \(\mathbb Q(\sqrt{(-1)^{(p-1)/2}p})\), recovering the square-class criterion. The companion note treats \(c=2\) directly by trace parity. [Trace argument and sources](mo428070-trace-and-sources.md)
+For a rational nonsquare \(c\), an element \(x\) with \(x^2=c u_G\) generates such a copy of \(\mathbb Q(\sqrt c)\). The unique quadratic subfield of \(\mathbb Q(\zeta_p)\) is \(\mathbb Q(\sqrt{(-1)^{(p-1)/2}p})\), recovering the square-class criterion. The companion note treats \(c=2\) directly by trace parity. [Trace argument and sources](trace-and-sources.md)
 
 ## Relation to published work
 
