@@ -1745,24 +1745,24 @@ theorem prime_count_le {lo hi J : ℕ} {alpha recip : ℚ}
 theorem band_exists {J : ℕ} (hlo : 1600 ≤ J) (hhi : J ≤ 1000000) :
     ∃ (lo hi : ℕ) (alpha recip : ℚ), (lo,hi,alpha,recip) ∈ bands ∧ lo ≤ J ∧ J ≤ hi := by
   by_cases until_2047 : J ≤ 2047
-  · exact ⟨1600,2047,(2950/10000:ℚ),(199283/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨1600,2047,(2950/10000:ℚ),(199283/1000000:ℚ),by unfold bands; exact List.Mem.head _,by omega,by omega⟩
   by_cases until_4095 : J ≤ 4095
-  · exact ⟨2048,4095,(2780/10000:ℚ),(200323/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨2048,4095,(2780/10000:ℚ),(200323/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.head _),by omega,by omega⟩
   by_cases until_8191 : J ≤ 8191
-  · exact ⟨4096,8191,(2700/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨4096,8191,(2700/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)),by omega,by omega⟩
   by_cases until_16383 : J ≤ 16383
-  · exact ⟨8192,16383,(2889/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨8192,16383,(2889/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))),by omega,by omega⟩
   by_cases until_32767 : J ≤ 32767
-  · exact ⟨16384,32767,(2874/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨16384,32767,(2874/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))),by omega,by omega⟩
   by_cases until_65535 : J ≤ 65535
-  · exact ⟨32768,65535,(2771/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨32768,65535,(2771/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))),by omega,by omega⟩
   by_cases until_131071 : J ≤ 131071
-  · exact ⟨65536,131071,(2636/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨65536,131071,(2636/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))),by omega,by omega⟩
   by_cases until_262143 : J ≤ 262143
-  · exact ⟨131072,262143,(2495/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨131072,262143,(2495/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))),by omega,by omega⟩
   by_cases until_524287 : J ≤ 524287
-  · exact ⟨262144,524287,(2359/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
-  exact ⟨524288,1000000,(2233/10000:ℚ),(205000/1000000:ℚ),by decide,by omega,by omega⟩
+  · exact ⟨262144,524287,(2359/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))))),by omega,by omega⟩
+  exact ⟨524288,1000000,(2233/10000:ℚ),(205000/1000000:ℚ),by unfold bands; exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))))),by omega,by omega⟩
 
 end A085264.SameJ
 
