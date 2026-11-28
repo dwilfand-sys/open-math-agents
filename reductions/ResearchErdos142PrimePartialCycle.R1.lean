@@ -23,4 +23,8 @@ def H2 : Prop :=
     (partialCycle A p t).card =
       (p - 1) * A.card + (A.filter fun x => x % p = t).card
 
+def H3 : Prop :=
+  ∀ (A : Finset ℕ) (p : ℕ), 0 < p →
+    ∃ t : Fin p, A.card ≤ p * (A.filter fun x => x % p = t.val).card
+
 end OMA.R_ResearchErdos142PrimePartialCycle_R1
