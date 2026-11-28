@@ -18,9 +18,7 @@ theorem heavy_residue (A : Finset ℕ) (p : ℕ) (hp : 0 < p) :
         · intro b hb hbr
           simp only [ite_eq_right_iff]
           intro h
-          apply hbr
-          apply Fin.ext
-          exact h.symm
+          exact (hbr (Fin.ext h.symm)).elim
         · simp
       _ = 1 := by simp [r]
   let mass := fun t : Fin p => (A.filter fun x => x % p = t.val).card
@@ -44,4 +42,3 @@ end Erdos142PrimePartialCycleAverage
 theorem OMA.solution : OMA.R_ResearchErdos142PrimePartialCycle_R1.H3 := by
   intro A p hp
   exact Erdos142PrimePartialCycleAverage.heavy_residue A p hp
-
