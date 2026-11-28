@@ -2513,6 +2513,7 @@ theorem prime_count_le {lo hi J : ℕ} {alpha recip : ℚ}
     (hband : (lo,hi,alpha,recip) ∈ bands) (hlo : lo ≤ J) (hhi : J ≤ hi) :
     (oddPrimeCount (2*J+1) : ℚ) ≤ alpha*(J:ℚ) := all_bands _ hband J hlo hhi
 
+/-- Assign the interval parameter to a consecutive entry in the finite table. -/
 theorem band_exists {J : ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000) :
     ∃ (lo hi : ℕ) (alpha recip : ℚ), (lo,hi,alpha,recip) ∈ bands ∧ lo ≤ J ∧ J ≤ hi := by
   by_cases until_420 : J ≤ 420
