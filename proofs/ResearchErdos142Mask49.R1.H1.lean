@@ -33,8 +33,8 @@ private theorem cover : ∀ b c : Fin 49, ∃ t : Fin 15,
 set_option maxHeartbeats 4000000 in
 set_option maxRecDepth 100000 in
 private theorem sound : ∀ t : Fin 15, (lineStep t).val % 7 ≠ 0 ∧
-    ∀ j : Fin 27, let x := point (lineStart t) (lineStep t) j.val
-                  x ≠ 0 ∧ safe t x = false := by
+    ∀ j : Fin 27, point (lineStart t) (lineStep t) j.val ≠ 0 ∧
+      safe t (point (lineStart t) (lineStep t) j.val) = false := by
   decide
 
 private theorem normalized (b c : Fin 49) :
