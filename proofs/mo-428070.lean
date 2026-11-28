@@ -90,7 +90,7 @@ theorem trace_leftRegular [Fintype G] (g : G) (hg : g ≠ 1) :
   classical
   let b := MonoidAlgebra.basis G ℚ
   rw [LinearMap.trace_eq_matrix_trace ℚ b]
-  change (∑ i, b.repr (leftRegular g (b i)) i) = 0
+  simp only [Matrix.trace, Matrix.diag, LinearMap.toMatrix_apply]
   apply Finset.sum_eq_zero
   intro i _
   change (MonoidAlgebra.single g (1:ℚ) * MonoidAlgebra.single i 1).coeff i = 0
@@ -146,7 +146,7 @@ private theorem single_times_group_sum [Fintype G] (g : G) :
   classical
   rw [Finset.mul_sum]
   simp only [MonoidAlgebra.single_mul_single, one_mul]
-  exact (Equiv.mulLeft g).sum_comp (fun h : G => MonoidAlgebra.single h (1 : ℚ))
+  exact Equiv.sum_comp (Equiv.mulLeft g) (fun h : G => MonoidAlgebra.single h (1 : ℚ))
 
 theorem mul_average [Fintype G] (v : GroupAlg G) :
     v * average G = (augmentation G v) • average G := by
@@ -362,6 +362,7 @@ theorem integral_trace_of_pow_eq_one (T : Module.End K V) {n : ℕ} (hn : 0 < n)
   obtain ⟨v, hv⟩ := eigen.exists_hasEigenvector
   have hxpow : x^n = 1 := by
     apply smul_left_injective (R := E) hv.2
+    change (x ^ n) • v = (1 : E) • v
     rw [← hv.pow_apply n, hpow]
     simp
   exact IsIntegral.of_pow hn (hxpow ▸ isIntegral_one)
@@ -380,7 +381,7 @@ private theorem quadratic_trace (z : K) : Algebra.trace ℚ K z = 2 * z.re := by
     apply b.repr.injective
     rw [Module.Basis.repr_self]
     ext i
-    fin_cases i <;> simp [b, QuadraticAlgebra.basis_repr_apply]
+    fin_cases i <;> simp [b, QuadraticAlgebra.basis_repr_apply] <;> rfl
   have b1 : b 1 = (⟨0,1⟩ : K) := by
     apply b.repr.injective
     rw [Module.Basis.repr_self]
