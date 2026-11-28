@@ -84,8 +84,8 @@ private theorem geometric {q L : ℕ} (hq : 2≤q) (hL : 0<L)
     have he : bin q L (L-r b) 1 (pos (w b)).val = bin q L (L-r b) 1 (pos (w c)).val := by
       rw [thresholdBin _ _ _ _ hL rle, thresholdBin _ _ _ _ hL rle,
         if_pos (show r b ≤ (pos (w b)).val%L from le_rfl), if_neg hc,
-        wdiv,wdiv,Nat.add_zero,Nat.mod_eq_of_lt c.isLt]
-      exact next.symm
+        wdiv,wdiv]
+      simpa only [Nat.add_zero,Nat.mod_eq_of_lt c.isLt] using next.symm
     have hw := hinj _ _ _ (wn b) (wn c) he
     have bc : b=c := (wb b).symm.trans ((congrArg B hw).trans (wb c))
     exact hn (by rw [bc])
@@ -137,8 +137,10 @@ theorem shear_majority : H1 := by
       ∃ j, C o j x=C o j y := by
     obtain ⟨j,hj⟩ := linearMeet hp ht ((o+(pos x).val)/L) ((o+(pos y).val)/L)
       (pos x).val (pos y).val ne
-    exact ⟨j,Fin.ext (by change bin q L o _ _ = bin q L o _ _;
-      rw [bin_shear _ _ _ _ _ hL,bin_shear _ _ _ _ _ hL]; exact hj)⟩
+    refine ⟨j, Fin.ext ?_⟩
+    change bin q L o (1+j.val*L) (pos x).val = bin q L o (1+j.val*L) (pos y).val
+    simp only [bin_shear _ _ _ _ _ hL]
+    exact hj
   by_cases mono : ∀ i k, color i=color k
   · exact Or.inl mono
   right
