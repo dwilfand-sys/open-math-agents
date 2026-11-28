@@ -446,8 +446,13 @@ private theorem trace_contradiction {V : Type*} [AddCommGroup V] [Module ℚ V]
   have hp : U ^ n = 1 := QuadraticAction.liftEnd_pow_one T hT L hc hpow
   have hi := TraceTools.integral_trace_of_pow_eq_one U hn hp
   apply TraceObstruction.integral_trace_ne_neg_one hi
-  rw [← TraceTools.trace_restrictScalars (F := ℚ) U]
-  rwa [QuadraticAction.liftEnd_restrictScalars T hT L hc]
+  calc
+    Algebra.trace ℚ QuadraticAction.K (LinearMap.trace QuadraticAction.K V U) =
+        LinearMap.trace ℚ V (U.restrictScalars ℚ) :=
+      (TraceTools.trace_restrictScalars (F := ℚ) U).symm
+    _ = LinearMap.trace ℚ V L := congrArg (LinearMap.trace ℚ V)
+      (QuadraticAction.liftEnd_restrictScalars T hT L hc)
+    _ = -1 := htrace
 
 end MO428070
 
