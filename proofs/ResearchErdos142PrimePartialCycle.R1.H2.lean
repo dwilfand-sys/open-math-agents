@@ -58,7 +58,6 @@ theorem partialCycle_card {A : Finset ℕ} {p t N : ℕ} (hp : 1 < p)
       _ = (Ico 1 p).card * A.card := Finset.card_product _ _
       _ = (p - 1) * A.card := by rw [Nat.card_Ico]
   rw [hprod]
-  omega
 
 end Erdos142PrimePartialCycleCard
 
