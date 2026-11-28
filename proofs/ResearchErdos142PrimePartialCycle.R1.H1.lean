@@ -16,7 +16,8 @@ private lemma mem_partialCycle_source {A : Finset ℕ} {p t z : ℕ}
   · obtain ⟨x, hx, rfl⟩ := mem_image.mp hz
     exact Or.inr ⟨x, (mem_filter.mp hx).1, (mem_filter.mp hx).2, rfl⟩
 
-private lemma decode_mem {A : Finset ℕ} {p t z : ℕ} (hp : 1 < p)
+private lemma decode_mem {A : Finset ℕ} {p t z N : ℕ} (hp : 1 < p)
+    (hA : A ⊆ Icc 1 N)
     (hz : z ∈ partialCycle A p t) : (z - 1) / p + 1 ∈ A := by
   rcases mem_partialCycle_source hz with ⟨e, he, x, hx, rfl⟩ | ⟨x, hx, -, rfl⟩
   · have he' := mem_Ico.mp he
@@ -24,10 +25,11 @@ private lemma decode_mem {A : Finset ℕ} {p t z : ℕ} (hp : 1 < p)
       by_contra! h
       have : x = 0 := by omega
       subst x
-      simp at hx
+      have := (mem_Icc.mp (hA hx)).1
+      omega
     have hcalc : (e + p * (x - 1) - 1) / p = x - 1 := by
-      rw [show e + p * (x - 1) - 1 = p * (x - 1) + (e - 1) by omega,
-        Nat.add_div (p * (x - 1)) (e - 1) p, Nat.mul_div_left]
+      rw [show e + p * (x - 1) - 1 = (e - 1) + p * (x - 1) by omega,
+        Nat.add_mul_div_left _ _ (by omega)]
       have : (e - 1) / p = 0 := Nat.div_eq_of_lt (by omega)
       omega
     simpa [hcalc] using hx
@@ -35,15 +37,19 @@ private lemma decode_mem {A : Finset ℕ} {p t z : ℕ} (hp : 1 < p)
       by_contra! h
       have : x = 0 := by omega
       subst x
-      simp at hx
+      have := (mem_Icc.mp (hA hx)).1
+      omega
     have hcalc : (p * x - 1) / p = x - 1 := by
-      rw [show p * x - 1 = p * (x - 1) + (p - 1) by omega,
-        Nat.add_div (p * (x - 1)) (p - 1) p, Nat.mul_div_left]
+      have hmul : p * x = p * (x - 1) + p := by
+        rw [show x = (x - 1) + 1 by omega]
+        ring
+      rw [show p * x - 1 = (p - 1) + p * (x - 1) by omega,
+        Nat.add_mul_div_left _ _ (by omega)]
       have : (p - 1) / p = 0 := Nat.div_eq_of_lt (by omega)
       omega
     simpa [hcalc] using hx
 
-private lemma multiple_source {A : Finset ℕ} {p t z : ℕ} (hp : 1 < p)
+private lemma multiple_source {A : Finset ℕ} {p t z : ℕ}
     (hz : z ∈ partialCycle A p t) (hzero : z % p = 0) :
     ∃ x ∈ A, x % p = t ∧ z = p * x := by
   rcases mem_partialCycle_source hz with hcore | hextra
@@ -69,7 +75,7 @@ theorem partialCycle_free {A : Finset ℕ} {k p t N : ℕ}
       simp at hd
     apply (apFree_iff (by omega)).mp freeA
     refine ⟨(a - 1) / p + 1, e, he, fun i hi => ?_⟩
-    have hm := decode_mem hp (hall i hi)
+    have hm := decode_mem hp hA (hall i hi)
     have ha : 0 < a := by
       by_contra! ha
       have : a = 0 := by omega
@@ -80,26 +86,36 @@ theorem partialCycle_free {A : Finset ℕ} {k p t N : ℕ}
         omega
       · have hxpos := (mem_Icc.mp (hA hx)).1
         omega
+    have hprod : i * (p * e) = p * (i * e) := by ring
     have hcalc : (a + i * (p * e) - 1) / p + 1 = (a - 1) / p + 1 + i * e := by
-      rw [show a + i * (p * e) - 1 = (a - 1) + p * (i * e) by ring_nf; omega,
-        Nat.add_mul_div_left]
+      rw [hprod, show a + p * (i * e) - 1 = (a - 1) + p * (i * e) by omega,
+        Nat.add_mul_div_left _ _ (by omega)]
       omega
     rwa [hcalc] at hm
   · obtain ⟨i, hi, hzero⟩ := complete a d hdiv
     have hip : i + p < k := by omega
-    obtain ⟨x, hx, hxt, hxval⟩ := multiple_source hp (hall i (by omega)) hzero
+    obtain ⟨x, hx, hxt, hxval⟩ := multiple_source (hall i (by omega)) hzero
     have hzero2 : (a + (i + p) * d) % p = 0 := by
-      rw [Nat.add_mul, Nat.add_mod, Nat.mul_mod, Nat.add_mod, hzero]
+      rw [show a + (i + p) * d = (a + i * d) + p * d by ring,
+        Nat.add_mod, hzero, zero_add, Nat.mul_mod]
       simp
-    obtain ⟨y, hy, hyt, hyval⟩ := multiple_source hp (hall (i + p) hip) hzero2
+    obtain ⟨y, hy, hyt, hyval⟩ := multiple_source (hall (i + p) hip) hzero2
     have hdiff : y = x + d := by
-      rw [hxval, hyval] at *
-      have : p * y = p * x + p * d := by omega
-      exact Nat.eq_add_of_mul_eq_mul_left (by omega) this
+      have hmul : p * y = p * (x + d) := by
+        calc
+          p * y = a + (i + p) * d := hyval.symm
+          _ = (a + i * d) + p * d := by ring
+          _ = p * x + p * d := by rw [hxval]
+          _ = p * (x + d) := by ring
+      exact Nat.eq_of_mul_eq_mul_left (by omega) hmul
     have hmods : (x + d) % p = x % p := by rw [← hdiff, hyt, hxt]
     have : d % p = 0 := by
-      rw [Nat.add_mod] at hmods
-      omega
+      have hc : d ≡ 0 [MOD p] := by
+        apply Nat.ModEq.add_left_cancel' x
+        change (x + d) % p = (x + 0) % p
+        simpa using hmods
+      change d % p = 0 % p at hc
+      simpa using hc
     exact hdiv this
 
 end Erdos142PrimePartialCycle
