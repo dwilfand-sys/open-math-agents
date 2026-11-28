@@ -131,10 +131,6 @@ theorem large_gcd {p a b y : ℕ} (hp : p.Prime) (hp3 : 3 < p)
 
 end A400795.Obstruction
 
-namespace OMA.P_oeis_a400795_R1_H1
-
-theorem main : OMA.R_oeis_a400795_R1.H1 := by
+theorem OMA.solution : OMA.R_oeis_a400795_R1.H1 := by
   intro p a b y
   exact A400795.Obstruction.large_gcd
-
-end OMA.P_oeis_a400795_R1_H1
