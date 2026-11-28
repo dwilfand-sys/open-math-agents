@@ -638,7 +638,7 @@ private theorem lift_power_once {p s x y : ℕ} (hs : 0 < s)
   have multiple := mul_dvd_mul (dvd_geom_sum₂_self (n := p) dp) d
   rw [geom_sum₂_mul] at multiple
   apply Nat.modEq_iff_dvd.mpr
-  simpa only [Nat.cast_pow, pow_succ', mul_comm] using multiple
+  simpa only [Nat.cast_pow, pow_succ', Nat.cast_mul] using multiple
 
 private theorem lift_power {p s x y : ℕ} (hs : 0 < s) (hxy : x ≡ y [MOD p ^ s])
     (b h : ℕ) (hb : p ^ b ∣ h) : x ^ h ≡ y ^ h [MOD p ^ (s + b)] := by
@@ -717,7 +717,7 @@ theorem moment_full_valuation (p n k h : ℕ) (hp : p.Prime) (hp5 : 5 ≤ p)
     moment h (n*p^k) ≡ moment h (n*p^(k-1))
       [MOD p^(2*(k+padicValNat p n)+padicValNat p h)] := by
   let t := padicValNat p n
-  obtain ⟨m, hm⟩ : p^t ∣ n := pow_padicValNat_dvd p n
+  obtain ⟨m, hm⟩ : p^t ∣ n := pow_padicValNat_dvd
   have hmpos : 0 < m := by
     by_contra! hz
     have : m = 0 := by omega
@@ -730,7 +730,7 @@ theorem moment_full_valuation (p n k h : ℕ) (hp : p.Prime) (hp5 : 5 ≤ p)
   change moment h (n*p^k) ≡ moment h (n*p^(k-1)) [MOD p^(2*(k+t)+padicValNat p h)]
   rw [top, bot]
   exact moment_lift p m (k+t) h (padicValNat p h) hp hp5 hmpos (by omega) hh
-    (pow_padicValNat_dvd p h)
+    pow_padicValNat_dvd
 
 end A132305
 
