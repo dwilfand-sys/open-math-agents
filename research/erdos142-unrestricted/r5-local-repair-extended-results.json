@@ -1,0 +1,118 @@
+{
+  "source": "Draconna note #200424",
+  "source_mask": "632625408446542538220931436864347870",
+  "results": [
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 4,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.9116644729947438,
+      "stats": {
+        "restarts": 510,
+        "conflicts": 201018,
+        "decisions": 1140845,
+        "propagations": 4566718
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 4,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 3.5375576180085773,
+      "stats": {
+        "branches": 538403,
+        "conflicts": 152146
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 5,
+      "method": "minicard",
+      "status": "UNKNOWN",
+      "seconds": 1.4784065050043864,
+      "stats": {
+        "restarts": 727,
+        "conflicts": 300000,
+        "decisions": 1673460,
+        "propagations": 7270842
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 5,
+      "method": "cp-sat",
+      "status": "UNKNOWN",
+      "seconds": 15.013494147991878,
+      "stats": {
+        "branches": 1538348,
+        "conflicts": 650141
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 4,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.9282131869986188,
+      "stats": {
+        "restarts": 509,
+        "conflicts": 190830,
+        "decisions": 1041394,
+        "propagations": 4333636
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 4,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 3.8890690630069003,
+      "stats": {
+        "branches": 517096,
+        "conflicts": 158209
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 5,
+      "method": "minicard",
+      "status": "UNKNOWN",
+      "seconds": 1.5003350530023454,
+      "stats": {
+        "restarts": 727,
+        "conflicts": 300002,
+        "decisions": 1638424,
+        "propagations": 7098689
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 5,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 13.896431559987832,
+      "stats": {
+        "branches": 1427302,
+        "conflicts": 610831
+      },
+      "witness": null
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "n": 118,
+    "source_mask": "632625408446542538220931436864347870",
+    "seconds": 0.8478333839884726,
+    "complete": true,
+    "cases": [
+      {
+        "n": 118,
+        "radius": 1,
+        "removal_cases": 5,
+        "removals_rejected_by_original_AP": 65,
+        "insertion_nodes": 5,
+        "feasible_leaves": 0
+      },
+      {
+        "n": 118,
+        "radius": 2,
+        "removal_cases": 335,
+        "removals_rejected_by_original_AP": 2080,
+        "insertion_nodes": 335,
+        "feasible_leaves": 0
+      },
+      {
+        "n": 118,
+        "radius": 3,
+        "removal_cases": 11060,
+        "removals_rejected_by_original_AP": 43680,
+        "insertion_nodes": 11060,
+        "feasible_leaves": 0
+      }
+    ]
+  },
+  {
+    "n": 117,
+    "source_mask": "300318409500313569994979671794261726",
+    "seconds": 0.8526674229942728,
+    "complete": true,
+    "cases": [
+      {
+        "n": 117,
+        "radius": 1,
+        "removal_cases": 5,
+        "removals_rejected_by_original_AP": 64,
+        "insertion_nodes": 5,
+        "feasible_leaves": 0
+      },
+      {
+        "n": 117,
+        "radius": 2,
+        "removal_cases": 330,
+        "removals_rejected_by_original_AP": 2016,
+        "insertion_nodes": 330,
+        "feasible_leaves": 0
+      },
+      {
+        "n": 117,
+        "radius": 3,
+        "removal_cases": 10730,
+        "removals_rejected_by_original_AP": 41664,
+        "insertion_nodes": 10731,
+        "feasible_leaves": 0
+      }
+    ]
+  }
+]

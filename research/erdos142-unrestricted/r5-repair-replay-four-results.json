@@ -1,0 +1,34 @@
+[
+  {
+    "n": 118,
+    "source_mask": "632625408446542538220931436864347870",
+    "seconds": 15.859221641992917,
+    "complete": true,
+    "cases": [
+      {
+        "n": 118,
+        "radius": 4,
+        "removal_cases": 239855,
+        "removals_rejected_by_original_AP": 677040,
+        "insertion_nodes": 239855,
+        "feasible_leaves": 0
+      }
+    ]
+  },
+  {
+    "n": 117,
+    "source_mask": "300318409500313569994979671794261726",
+    "seconds": 15.09746764600277,
+    "complete": true,
+    "cases": [
+      {
+        "n": 117,
+        "radius": 4,
+        "removal_cases": 229125,
+        "removals_rejected_by_original_AP": 635376,
+        "insertion_nodes": 229126,
+        "feasible_leaves": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,174 @@
+{
+  "source": "Draconna note #200424",
+  "source_mask": "632625408446542538220931436864347870",
+  "results": [
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 1,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.001453113989555277,
+      "stats": {
+        "restarts": 1,
+        "conflicts": 6,
+        "decisions": 6,
+        "propagations": 514
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 1,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 0.022913238004548475,
+      "stats": {
+        "branches": 0,
+        "conflicts": 0
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 2,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.005372952000470832,
+      "stats": {
+        "restarts": 7,
+        "conflicts": 974,
+        "decisions": 4694,
+        "propagations": 24924
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 2,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 0.07049206999363378,
+      "stats": {
+        "branches": 19594,
+        "conflicts": 1891
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 3,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.07214837000356056,
+      "stats": {
+        "restarts": 62,
+        "conflicts": 14489,
+        "decisions": 87227,
+        "propagations": 381322
+      },
+      "witness": null
+    },
+    {
+      "n": 118,
+      "target": 70,
+      "radius": 3,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 0.4153445989941247,
+      "stats": {
+        "branches": 96824,
+        "conflicts": 16376
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 1,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.0010209819884039462,
+      "stats": {
+        "restarts": 1,
+        "conflicts": 6,
+        "decisions": 6,
+        "propagations": 509
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 1,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 0.015414004999911413,
+      "stats": {
+        "branches": 0,
+        "conflicts": 0
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 2,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.006113540992373601,
+      "stats": {
+        "restarts": 7,
+        "conflicts": 1052,
+        "decisions": 5862,
+        "propagations": 28206
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 2,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 0.05574922799132764,
+      "stats": {
+        "branches": 17521,
+        "conflicts": 1480
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 3,
+      "method": "minicard",
+      "status": "UNSAT",
+      "seconds": 0.06911803400726058,
+      "stats": {
+        "restarts": 61,
+        "conflicts": 13992,
+        "decisions": 85895,
+        "propagations": 374253
+      },
+      "witness": null
+    },
+    {
+      "n": 117,
+      "target": 69,
+      "radius": 3,
+      "method": "cp-sat",
+      "status": "INFEASIBLE",
+      "seconds": 0.4406659429951105,
+      "stats": {
+        "branches": 104433,
+        "conflicts": 17825
+      },
+      "witness": null
+    }
+  ]
+}
