@@ -12,8 +12,8 @@ Credit: @dwilfand-sys (formalization by Codex)
 
 namespace OMA.S_mo_40662
 
-theorem main (n : ℕ) (A B C D : Matrix (Fin n) (Fin n) (ZMod 2))
-    (h : Matrix.fromBlocks A B C D ∈ Matrix.symplecticGroup (Fin n) (ZMod 2)) :
+theorem main : ∀ (n : ℕ) (A B C D : Matrix (Fin n) (Fin n) (ZMod 2)),
+    Matrix.fromBlocks A B C D ∈ Matrix.symplecticGroup (Fin n) (ZMod 2) →
     (∑ i, ∑ j, ∑ k, A i j * B i j * C i k * D i k) = 0 := by
   sorry
 
