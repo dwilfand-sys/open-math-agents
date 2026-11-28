@@ -141,107 +141,28 @@ private theorem covers_mem {k J : ℕ} {cs : List (ℕ × ℕ × ℤ)} (hk : k �
     · obtain ⟨row,hr,hl,hu⟩ := ih (by omega : c.2.1+1 ≤ J) ht
       exact ⟨row,by simp [hr],hl,hu⟩
 
-/- Insert within A085265Moderate after profileChecks and before the closed
-   row certificates. This file is a Lean source fragment. -/
-
-private def largestProfileRank (D cap : ℕ) : ℕ :=
-  if D * 19^4 ≤ cap then 4 else
-  if D * 19^3 ≤ cap then 3 else
-  if D * 19^2 ≤ cap then 2 else
-  if D * 19 ≤ cap then 1 else 0
-
-set_option maxHeartbeats 2000000 in
-private theorem admissible_le_largest {D cap t : ℕ} (ht : t < 5)
-    (h : D * 19^t ≤ cap) : t ≤ largestProfileRank D cap := by
-  interval_cases t <;> try simp only [pow_one] at h
-  all_goals
-    unfold largestProfileRank <;> split_ifs <;> omega
-
-private def endpointProfileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
-  ∀ A ∈ smallPrimes.powerset, (∏ p ∈ A, p) ≤ 2*hi+2 →
-    let m := largestProfileRank (∏ p ∈ A, p) (2*hi+2)
-    (c : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
-      (lo : ℚ) * largeRho A * (18/19 : ℚ)^m
-
-set_option maxHeartbeats 2000000 in
-private theorem initialError_nondecreasing {i j : ℕ} (h : i ≤ j) :
-    initialError i ≤ initialError j := by
-  have step (u : ℕ) : initialError u ≤ initialError (u+1) := by
-    cases u with
-    | zero => norm_num [initialError]
-    | succ u =>
-      have hpow : 0 ≤ (2 : ℚ)^u := by positivity
-      have hd : (2 : ℚ)^u ≤ 2^u * 2 := by linarith
-      simpa [initialError, pow_succ] using hd
-  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
-  clear h
-  induction d with
-  | zero => simp
-  | succ d ih => exact ih.trans (step (i+d))
-
-set_option maxHeartbeats 2000000 in
-private theorem profile_decay {i j : ℕ} (h : i ≤ j) :
-    (18/19 : ℚ)^j ≤ (18/19 : ℚ)^i := by
-  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
-  clear h
-  induction d with
-  | zero => simp
-  | succ d ih =>
-    rw [Nat.add_succ, pow_succ]
-    calc
-      _ ≤ (18/19 : ℚ)^(i+d) * 1 :=
-        mul_le_mul_of_nonneg_left (by norm_num) (by positivity)
-      _ ≤ (18/19 : ℚ)^i := by simpa using ih
-
-set_option maxHeartbeats 2000000 in
-private theorem profileChecks_of_endpoints {lo hi : ℕ} {c : ℤ}
-    (he : endpointProfileChecks lo hi c) : profileChecks lo hi c := by
-  intro A hA t hadm
-  let D := ∏ p ∈ A, p
-  let m := largestProfileRank D (2*hi+2)
-  have hprod : D ≤ 2*hi+2 := by
-    have hpos : 0 < (19 : ℕ)^t.val := by positivity
-    have hp : 1 ≤ (19 : ℕ)^t.val := by omega
-    have hmul := Nat.mul_le_mul_left D hp
-    have hbase : D ≤ D * 19^t.val := by simpa only [Nat.mul_one] using hmul
-    exact hbase.trans hadm
-  have hle : t.val ≤ m := admissible_le_largest t.isLt hadm
-  have hlast := he A hA hprod
-  change (c : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
-    (lo : ℚ) * largeRho A * (18/19 : ℚ)^m at hlast
-  have known : ∀ p ∈ smallPrimes, 2 < p := by decide
-  have hrho : 0 ≤ largeRho A := by
-    unfold largeRho
-    apply Finset.prod_nonneg
-    intro p hp
-    have hbig := known p (Finset.mem_powerset.mp hA hp)
-    have hone : (1 : ℚ) ≤ p := by exact_mod_cast (show 1 ≤ p by omega)
-    exact sub_nonneg.mpr ((div_le_one (by linarith : (0 : ℚ) < p)).mpr hone)
-  exact (add_le_add_left (initialError_nondecreasing (Nat.add_le_add_left hle A.card)) _).trans_lt
-    (hlast.trans_le (mul_le_mul_of_nonneg_left (profile_decay hle)
-      (mul_nonneg (by positivity) hrho)))
-
 private def wholeError (r : ℕ) : ℕ := if r = 0 then 0 else 2^(r-1)
 
 private lemma initialError_asNat (r : ℕ) :
     initialError r = (wholeError r : ℚ) := by
   by_cases h : r = 0 <;> simp [initialError, wholeError, h]
 
-private def integralEndpointChecks (lo hi : ℕ) (c : ℤ) : Prop :=
-  ∀ A ∈ smallPrimes.powerset, (∏ p ∈ A, p) ≤ 2*hi+2 →
+private def integralProfileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
+  ∀ A ∈ smallPrimes.powerset, ∀ t : Fin 5,
+    (∏ p ∈ A, p)*19^t.val ≤ 2*hi+2 →
     let D := ∏ p ∈ A, p
     let P := ∏ p ∈ A, (p-1)
-    let m := largestProfileRank D (2*hi+2)
+    let m := t.val
     (c - (refund hi A : ℤ) + (wholeError (A.card+m) : ℤ)) * (D : ℤ) * (19 : ℤ)^m <
       (lo : ℤ) * (P : ℤ) * (18 : ℤ)^m
 
-private theorem endpoints_of_integer {lo hi : ℕ} {c : ℤ}
-    (he : integralEndpointChecks lo hi c) : endpointProfileChecks lo hi c := by
-  intro A hA hfit
+private theorem profiles_of_integer {lo hi : ℕ} {c : ℤ}
+    (he : integralProfileChecks lo hi c) : profileChecks lo hi c := by
+  intro A hA t hfit
   let D := ∏ p ∈ A, p
   let P := ∏ p ∈ A, (p-1)
-  let m := largestProfileRank D (2*hi+2)
-  have hint := he A hA hfit
+  let m := t.val
+  have hint := he A hA t hfit
   change (c - (refund hi A : ℤ) + (wholeError (A.card+m) : ℤ)) * (D : ℤ) * (19 : ℤ)^m <
     (lo : ℤ) * (P : ℤ) * (18 : ℤ)^m at hint
   have hrat : ((c : ℚ) - (refund hi A : ℚ) + (wholeError (A.card+m) : ℚ)) *
@@ -276,563 +197,563 @@ private theorem endpoints_of_integer {lo hi : ℕ} {c : ℤ}
     _ = _ := by ring
 
 private def verifiedRow (c : ℕ × ℕ × ℤ) : Prop :=
-  300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧ integralEndpointChecks c.1 c.2.1 c.2.2
+  300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧ integralProfileChecks c.1 c.2.1 c.2.2
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow300 : verifiedRow (300, 307, 227) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow308 : verifiedRow (308, 314, 231) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow315 : verifiedRow (315, 323, 238) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow324 : verifiedRow (324, 332, 244) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow333 : verifiedRow (333, 341, 251) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow342 : verifiedRow (342, 355, 259) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow356 : verifiedRow (356, 368, 269) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow369 : verifiedRow (369, 385, 280) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow386 : verifiedRow (386, 409, 293) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow410 : verifiedRow (410, 430, 312) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow431 : verifiedRow (431, 454, 327) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow455 : verifiedRow (455, 484, 347) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow485 : verifiedRow (485, 517, 371) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow518 : verifiedRow (518, 550, 396) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow551 : verifiedRow (551, 592, 422) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow593 : verifiedRow (593, 643, 454) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow644 : verifiedRow (644, 710, 494) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow711 : verifiedRow (711, 782, 546) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow783 : verifiedRow (783, 865, 605) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow866 : verifiedRow (866, 964, 669) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow965 : verifiedRow (965, 1082, 747) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1083 : verifiedRow (1083, 1228, 842) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1229 : verifiedRow (1229, 1400, 957) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1401 : verifiedRow (1401, 1624, 1093) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1625 : verifiedRow (1625, 1885, 1268) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow1886 : verifiedRow (1886, 2213, 1477) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow2214 : verifiedRow (2214, 2501, 1658) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow2502 : verifiedRow (2502, 2810, 1852) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow2811 : verifiedRow (2811, 3175, 2085) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow3176 : verifiedRow (3176, 3613, 2359) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow3614 : verifiedRow (3614, 4153, 2693) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow4154 : verifiedRow (4154, 4805, 3100) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow4806 : verifiedRow (4806, 5602, 3595) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow5603 : verifiedRow (5603, 6574, 4198) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow6575 : verifiedRow (6575, 7745, 4933) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow7746 : verifiedRow (7746, 9163, 5819) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow9164 : verifiedRow (9164, 10868, 6888) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow10869 : verifiedRow (10869, 12905, 8173) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow12906 : verifiedRow (12906, 15340, 9709) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow15341 : verifiedRow (15341, 18230, 11541) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow18231 : verifiedRow (18231, 21628, 13710) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow21629 : verifiedRow (21629, 25645, 16264) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow25646 : verifiedRow (25646, 30356, 19280) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow30357 : verifiedRow (30357, 35902, 22818) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow35903 : verifiedRow (35903, 42385, 26976) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow42386 : verifiedRow (42386, 47546, 30284) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow47547 : verifiedRow (47547, 53065, 33821) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow53066 : verifiedRow (53066, 59170, 37742) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow59171 : verifiedRow (59171, 65906, 42074) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow65907 : verifiedRow (65907, 73363, 46859) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow73364 : verifiedRow (73364, 81562, 52146) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow81563 : verifiedRow (81563, 90625, 57967) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow90626 : verifiedRow (90626, 100606, 64397) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow100607 : verifiedRow (100607, 111608, 71479) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow111609 : verifiedRow (111609, 123731, 79287) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow123732 : verifiedRow (123732, 137092, 87888) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow137093 : verifiedRow (137093, 151816, 97368) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow151817 : verifiedRow (151817, 168016, 107812) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow168017 : verifiedRow (168017, 185867, 119305) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow185868 : verifiedRow (185868, 205514, 131967) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow205515 : verifiedRow (205515, 227137, 145904) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow227138 : verifiedRow (227138, 250933, 161241) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow250934 : verifiedRow (250934, 277159, 178125) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow277160 : verifiedRow (277160, 306017, 196728) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow306018 : verifiedRow (306018, 337817, 217203) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow337818 : verifiedRow (337818, 372854, 239765) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow372855 : verifiedRow (372855, 411418, 264618) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow411419 : verifiedRow (411419, 453940, 291986) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow453941 : verifiedRow (453941, 500809, 322156) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow500810 : verifiedRow (500810, 552482, 355415) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow552483 : verifiedRow (552483, 609460, 392084) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow609461 : verifiedRow (609461, 672335, 432525) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow672336 : verifiedRow (672336, 741674, 477145) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow741675 : verifiedRow (741675, 808306, 519980) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow808307 : verifiedRow (808307, 851143, 547552) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow851144 : verifiedRow (851144, 896314, 576584) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow896315 : verifiedRow (896315, 936791, 602620) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow936792 : verifiedRow (936792, 979100, 629835) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 private theorem moderateRow979101 : verifiedRow (979101, 1000000, 643264) := by
   refine ⟨by decide, by decide, ?_⟩
-  unfold integralEndpointChecks
+  unfold integralProfileChecks
   decide +kernel
 
 private theorem checks : ∀ c ∈ rows, 300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
-    integralEndpointChecks c.1 c.2.1 c.2.2 := by
+    integralProfileChecks c.1 c.2.1 c.2.2 := by
   change ∀ c ∈ rows, verifiedRow c
   unfold rows
   refine List.forall_mem_cons.mpr ⟨moderateRow300, ?_⟩
@@ -954,7 +875,7 @@ theorem moderate_sieve_budget {J : ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000)
   refine ⟨c,hc,?_⟩
   intro htotal
   obtain ⟨hl₀,hu₀,hiChecks⟩ := checks c hc
-  have hcases := profileChecks_of_endpoints (endpoints_of_integer hiChecks)
+  have hcases := profiles_of_integer hiChecks
   let A := S ∩ smallPrimes
   let T := S \ A
   have haS : A ⊆ S := Finset.inter_subset_left
