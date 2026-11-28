@@ -77,9 +77,172 @@ private theorem advance {n p v b : ℕ} (hf : threeFree (BitVec.ofNat 25 v))
   rw [scan, if_pos hf, List.all_eq_true] at hs
   exact hs b (List.mem_range.mpr hb)
 
-set_option maxRecDepth 1000000 in
+set_option maxRecDepth 100000 in
 set_option maxHeartbeats 0 in
-private theorem checked : scan 5 1 0 = true := by decide +kernel
+private theorem block0 : scan 4 32 0 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block1 : scan 4 32 1 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block2 : scan 4 32 2 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block3 : scan 4 32 3 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block4 : scan 4 32 4 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block5 : scan 4 32 5 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block6 : scan 4 32 6 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block7 : scan 4 32 7 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block8 : scan 4 32 8 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block9 : scan 4 32 9 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block10 : scan 4 32 10 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block11 : scan 4 32 11 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block12 : scan 4 32 12 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block13 : scan 4 32 13 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block14 : scan 4 32 14 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block15 : scan 4 32 15 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block16 : scan 4 32 16 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block17 : scan 4 32 17 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block18 : scan 4 32 18 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block19 : scan 4 32 19 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block20 : scan 4 32 20 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block21 : scan 4 32 21 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block22 : scan 4 32 22 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block23 : scan 4 32 23 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block24 : scan 4 32 24 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block25 : scan 4 32 25 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block26 : scan 4 32 26 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block27 : scan 4 32 27 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block28 : scan 4 32 28 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block29 : scan 4 32 29 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block30 : scan 4 32 30 = true := by decide +kernel
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 0 in
+private theorem block31 : scan 4 32 31 = true := by decide +kernel
+
+private theorem checked : scan 5 1 0 = true := by
+  change (List.range 32).all (fun b => scan 4 32 b) = true
+  apply List.all_eq_true.mpr
+  intro b hb
+  have hb' : b < 32 := List.mem_range.mp hb
+  interval_cases b <;> first
+    | exact block0
+    | exact block1
+    | exact block2
+    | exact block3
+    | exact block4
+    | exact block5
+    | exact block6
+    | exact block7
+    | exact block8
+    | exact block9
+    | exact block10
+    | exact block11
+    | exact block12
+    | exact block13
+    | exact block14
+    | exact block15
+    | exact block16
+    | exact block17
+    | exact block18
+    | exact block19
+    | exact block20
+    | exact block21
+    | exact block22
+    | exact block23
+    | exact block24
+    | exact block25
+    | exact block26
+    | exact block27
+    | exact block28
+    | exact block29
+    | exact block30
+    | exact block31
 
 set_option maxHeartbeats 0 in
 theorem main : OMA.R_ResearchErdos142UnitThree25_R1.H1 := by
