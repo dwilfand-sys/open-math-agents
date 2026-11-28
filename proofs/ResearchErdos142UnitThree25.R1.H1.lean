@@ -2,7 +2,7 @@ import OMAReductions.R_ResearchErdos142UnitThree25_R1
 import Mathlib
 
 /- Codex for @dwilfand-sys. Exhaust the five base-32 digits of the membership
-mask. A prefix containing a progression rules out all of its extensions.
+mask. A lowMask containing a progression rules out all of its extensions.
 Every finite computation below is reduced by the Lean kernel. -/
 namespace UnitThree25
 open OMA.R_ResearchErdos142UnitThree25_R1
@@ -30,7 +30,7 @@ private theorem trim (m z : BitVec 25) (a b : ℕ)
         (z &&& z.rotateRight a &&& z.rotateRight b) := by ac_rfl
     _ = 0 := by rw [h]; simp
 
-private theorem prefix (m : BitVec 25) (hm : threeFree m) (i : ℕ) (hi : 2^i ≤ 2^25) :
+private theorem lowMask (m : BitVec 25) (hm : threeFree m) (i : ℕ) (hi : 2^i ≤ 2^25) :
     threeFree (BitVec.ofNat 25 (m.toNat % 2^i)) := by
   let z := BitVec.ofNat 25 (2^i-1)
   have eq : BitVec.ofNat 25 (m.toNat % 2^i) = m &&& z := by
@@ -88,31 +88,31 @@ theorem main : OMA.R_ResearchErdos142UnitThree25_R1.H1 := by
   · rintro ⟨hm, hc⟩
     have s0 : scan 5 1 (m.toNat % 1) = true := by simpa using checked
     have s1a := advance (n := 4) (p := 1) (v := m.toNat % 1)
-      (b := m.toNat / 1 % 32) (prefix m hm 0 (by decide)) s0
+      (b := m.toNat / 1 % 32) (lowMask m hm 0 (by decide)) s0
       (Nat.mod_lt _ (by decide))
     have d1 : m.toNat % 1 + 1 * (m.toNat / 1 % 32) = m.toNat % 32 := by omega
     rw [d1] at s1a
     have s1 : scan 4 32 (m.toNat % 32) = true := s1a
     have s2a := advance (n := 3) (p := 32) (v := m.toNat % 32)
-      (b := m.toNat / 32 % 32) (prefix m hm 5 (by decide)) s1
+      (b := m.toNat / 32 % 32) (lowMask m hm 5 (by decide)) s1
       (Nat.mod_lt _ (by decide))
     have d2 : m.toNat % 32 + 32 * (m.toNat / 32 % 32) = m.toNat % 1024 := by omega
     rw [d2] at s2a
     have s2 : scan 3 1024 (m.toNat % 1024) = true := s2a
     have s3a := advance (n := 2) (p := 1024) (v := m.toNat % 1024)
-      (b := m.toNat / 1024 % 32) (prefix m hm 10 (by decide)) s2
+      (b := m.toNat / 1024 % 32) (lowMask m hm 10 (by decide)) s2
       (Nat.mod_lt _ (by decide))
     have d3 : m.toNat % 1024 + 1024 * (m.toNat / 1024 % 32) = m.toNat % 32768 := by omega
     rw [d3] at s3a
     have s3 : scan 2 32768 (m.toNat % 32768) = true := s3a
     have s4a := advance (n := 1) (p := 32768) (v := m.toNat % 32768)
-      (b := m.toNat / 32768 % 32) (prefix m hm 15 (by decide)) s3
+      (b := m.toNat / 32768 % 32) (lowMask m hm 15 (by decide)) s3
       (Nat.mod_lt _ (by decide))
     have d4 : m.toNat % 32768 + 32768 * (m.toNat / 32768 % 32) = m.toNat % 1048576 := by omega
     rw [d4] at s4a
     have s4 : scan 1 1048576 (m.toNat % 1048576) = true := s4a
     have s5a := advance (n := 0) (p := 1048576) (v := m.toNat % 1048576)
-      (b := m.toNat / 1048576 % 32) (prefix m hm 20 (by decide)) s4
+      (b := m.toNat / 1048576 % 32) (lowMask m hm 20 (by decide)) s4
       (Nat.mod_lt _ (by decide))
     have d5 : m.toNat % 1048576 + 1048576 * (m.toNat / 1048576 % 32) = m.toNat % 33554432 := by omega
     rw [d5] at s5a
