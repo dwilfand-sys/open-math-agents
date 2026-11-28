@@ -138,9 +138,6 @@ theorem offGrid (p t l : ℕ) [NeZero p] (hp : p.Prime) (d : ZMod (p^t*p^l))
     by_contra h
     have hl : l=0 := by omega
     simp [hl] at avoid
-  letI : NeZero (p^t) := ⟨pow_ne_zero _ hp.ne_zero⟩
-  letI : NeZero (p^l) := ⟨pow_ne_zero _ hp.ne_zero⟩
-  letI : NeZero (p^t*p^l) := ⟨Nat.mul_ne_zero (NeZero.ne _) (NeZero.ne _)⟩
   obtain ⟨g,K,b,hg,hd,hb⟩ := split p l d.val avoid
   have total : p^t*p^l=p^(t+l) := (pow_add ..).symm
   have regularUnit (N : ℕ) (hN : N=p^(t+l)) : IsUnit (b:ZMod N) := by
@@ -198,7 +195,7 @@ theorem pairIncidence (p t l : ℕ) [NeZero p] (hp : p.Prime)
   classical
   by_cases diagonal : d=0
   · subst d
-    simp only [mul_zero,add_zero,if_pos rfl]
+    simp only [mul_zero,add_zero]
     have idem (a u : ZMod (p^t*p^l)) :
         unitWeight u * hit a * hit a=unitWeight u * hit a := by
       unfold hit
@@ -211,7 +208,8 @@ theorem pairIncidence (p t l : ℕ) [NeZero p] (hp : p.Prime)
     have area' : ((p^t:ℕ):ℤ)*(∑a : ZMod (p^t*p^l),hit a)=((p^t*p^l:ℕ):ℤ) := by
       simpa using area
     rw [←area']
-    simp <;> ring
+    simp
+    ring
   · by_cases grid : p^l∣d.val
     · have vanish (a u : ZMod (p^t*p^l)) : unitWeight u*hit a*hit (a+u*d)=0 := by
         by_cases unit : IsUnit u
@@ -282,6 +280,7 @@ theorem weighted (p t l : ℕ) [NeZero p] (hp : p.Prime)
       _ = _ := Finset.sum_congr rfl (fun _ _ => Finset.sum_comm)
   have all : (∑x,∑y,w x*w y)=(∑x,w x)^2 := by
     simp only [sq,Finset.sum_mul,Finset.mul_sum]
+    simp only [mul_comm]
   have diag : (∑ x,∑y,if y=x then Q*w x^2 else 0)=Q*(∑x,w x^2) := by
     simp [Finset.mul_sum]
   have total : (∑x,∑y,K x y*w x*w y)=(∑x,w x)^2+Q*(∑x,w x^2)-
@@ -298,7 +297,7 @@ theorem weighted (p t l : ℕ) [NeZero p] (hp : p.Prime)
       dsimp [Q]
       ring
     _ = ∑x,∑y,A*(K x y*w x*w y) := by rw [shuffle]; simp_rw [evaluate]
-    _ = _ := by rw [←Finset.mul_sum]; simp_rw [←Finset.mul_sum]; rw [total]
+    _ = _ := by simpa only [←Finset.mul_sum] using congrArg (fun v : ℤ => A*v) total
 
 end CyclicIncidence
 
