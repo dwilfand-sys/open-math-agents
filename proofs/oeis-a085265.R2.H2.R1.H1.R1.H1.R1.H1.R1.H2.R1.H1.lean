@@ -139,7 +139,7 @@ private theorem periodicQSift_correct (ps : List ℕ) :
     | nil => simp [cacheValid]
     | cons row tail =>
       intro hv y
-      have ht : cacheValid ps tail = true := (Bool.and_eq_true.mp hv).2
+      have ht : cacheValid ps tail = true := (Bool.and_eq_true_iff.mp hv).2
       have hlow := (cachedQSift_correct (p :: ps) (row :: tail) hv).1
       by_cases hfour : p = 7 ∧ ps = [5,3,2]
       · simp only [periodicQSift, if_pos hfour]
@@ -234,9 +234,228 @@ private def wheelCaches : List ℕ := [
   wheelCache59, wheelCache53, wheelCache47, wheelCache43, wheelCache41, wheelCache37, wheelCache31, wheelCache29, wheelCache23,
   wheelCache19, wheelCache17, wheelCache13, wheelCache11, wheelCache7, wheelCache5, wheelCache3, wheelCache2]
 
+private def rowOK (p row : ℕ) (ts : List ℕ) : Bool :=
+  (List.range 257).all fun y => decide
+    (suffixValue (row :: ts) y =
+      if y = 0 then (0 : ℤ) else suffixValue ts y - suffixValue ts (y / p))
+
+private theorem cacheValid_cons {p row : ℕ} {ps ts : List ℕ}
+    (ha : rowOK p row ts = true) (ht : cacheValid ps ts = true) :
+    cacheValid (p :: ps) (row :: ts) = true := by
+  change (rowOK p row ts && cacheValid ps ts) = true
+  exact Bool.and_eq_true_iff.mpr ⟨ha, ht⟩
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
-private theorem wheelCaches_ok : cacheValid wheel wheelCaches = true := by decide +kernel
+private theorem wheelRow101 (rest : List ℕ) :
+    rowOK 101 wheelCache101 (wheelCache97 :: rest) = true := by
+  change rowOK 101 wheelCache101 [wheelCache97] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow97 (rest : List ℕ) :
+    rowOK 97 wheelCache97 (wheelCache89 :: rest) = true := by
+  change rowOK 97 wheelCache97 [wheelCache89] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow89 (rest : List ℕ) :
+    rowOK 89 wheelCache89 (wheelCache83 :: rest) = true := by
+  change rowOK 89 wheelCache89 [wheelCache83] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow83 (rest : List ℕ) :
+    rowOK 83 wheelCache83 (wheelCache79 :: rest) = true := by
+  change rowOK 83 wheelCache83 [wheelCache79] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow79 (rest : List ℕ) :
+    rowOK 79 wheelCache79 (wheelCache73 :: rest) = true := by
+  change rowOK 79 wheelCache79 [wheelCache73] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow73 (rest : List ℕ) :
+    rowOK 73 wheelCache73 (wheelCache71 :: rest) = true := by
+  change rowOK 73 wheelCache73 [wheelCache71] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow71 (rest : List ℕ) :
+    rowOK 71 wheelCache71 (wheelCache67 :: rest) = true := by
+  change rowOK 71 wheelCache71 [wheelCache67] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow67 (rest : List ℕ) :
+    rowOK 67 wheelCache67 (wheelCache61 :: rest) = true := by
+  change rowOK 67 wheelCache67 [wheelCache61] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow61 (rest : List ℕ) :
+    rowOK 61 wheelCache61 (wheelCache59 :: rest) = true := by
+  change rowOK 61 wheelCache61 [wheelCache59] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow59 (rest : List ℕ) :
+    rowOK 59 wheelCache59 (wheelCache53 :: rest) = true := by
+  change rowOK 59 wheelCache59 [wheelCache53] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow53 (rest : List ℕ) :
+    rowOK 53 wheelCache53 (wheelCache47 :: rest) = true := by
+  change rowOK 53 wheelCache53 [wheelCache47] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow47 (rest : List ℕ) :
+    rowOK 47 wheelCache47 (wheelCache43 :: rest) = true := by
+  change rowOK 47 wheelCache47 [wheelCache43] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow43 (rest : List ℕ) :
+    rowOK 43 wheelCache43 (wheelCache41 :: rest) = true := by
+  change rowOK 43 wheelCache43 [wheelCache41] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow41 (rest : List ℕ) :
+    rowOK 41 wheelCache41 (wheelCache37 :: rest) = true := by
+  change rowOK 41 wheelCache41 [wheelCache37] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow37 (rest : List ℕ) :
+    rowOK 37 wheelCache37 (wheelCache31 :: rest) = true := by
+  change rowOK 37 wheelCache37 [wheelCache31] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow31 (rest : List ℕ) :
+    rowOK 31 wheelCache31 (wheelCache29 :: rest) = true := by
+  change rowOK 31 wheelCache31 [wheelCache29] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow29 (rest : List ℕ) :
+    rowOK 29 wheelCache29 (wheelCache23 :: rest) = true := by
+  change rowOK 29 wheelCache29 [wheelCache23] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow23 (rest : List ℕ) :
+    rowOK 23 wheelCache23 (wheelCache19 :: rest) = true := by
+  change rowOK 23 wheelCache23 [wheelCache19] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow19 (rest : List ℕ) :
+    rowOK 19 wheelCache19 (wheelCache17 :: rest) = true := by
+  change rowOK 19 wheelCache19 [wheelCache17] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow17 (rest : List ℕ) :
+    rowOK 17 wheelCache17 (wheelCache13 :: rest) = true := by
+  change rowOK 17 wheelCache17 [wheelCache13] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow13 (rest : List ℕ) :
+    rowOK 13 wheelCache13 (wheelCache11 :: rest) = true := by
+  change rowOK 13 wheelCache13 [wheelCache11] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow11 (rest : List ℕ) :
+    rowOK 11 wheelCache11 (wheelCache7 :: rest) = true := by
+  change rowOK 11 wheelCache11 [wheelCache7] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow7 (rest : List ℕ) :
+    rowOK 7 wheelCache7 (wheelCache5 :: rest) = true := by
+  change rowOK 7 wheelCache7 [wheelCache5] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow5 (rest : List ℕ) :
+    rowOK 5 wheelCache5 (wheelCache3 :: rest) = true := by
+  change rowOK 5 wheelCache5 [wheelCache3] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow3 (rest : List ℕ) :
+    rowOK 3 wheelCache3 (wheelCache2 :: rest) = true := by
+  change rowOK 3 wheelCache3 [wheelCache2] = true
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem wheelRow2 :
+    rowOK 2 wheelCache2 [] = true := by
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+private theorem wheelCaches_ok : cacheValid wheel wheelCaches = true := by
+  unfold wheel wheelCaches
+  refine cacheValid_cons (wheelRow101 _) ?_
+  refine cacheValid_cons (wheelRow97 _) ?_
+  refine cacheValid_cons (wheelRow89 _) ?_
+  refine cacheValid_cons (wheelRow83 _) ?_
+  refine cacheValid_cons (wheelRow79 _) ?_
+  refine cacheValid_cons (wheelRow73 _) ?_
+  refine cacheValid_cons (wheelRow71 _) ?_
+  refine cacheValid_cons (wheelRow67 _) ?_
+  refine cacheValid_cons (wheelRow61 _) ?_
+  refine cacheValid_cons (wheelRow59 _) ?_
+  refine cacheValid_cons (wheelRow53 _) ?_
+  refine cacheValid_cons (wheelRow47 _) ?_
+  refine cacheValid_cons (wheelRow43 _) ?_
+  refine cacheValid_cons (wheelRow41 _) ?_
+  refine cacheValid_cons (wheelRow37 _) ?_
+  refine cacheValid_cons (wheelRow31 _) ?_
+  refine cacheValid_cons (wheelRow29 _) ?_
+  refine cacheValid_cons (wheelRow23 _) ?_
+  refine cacheValid_cons (wheelRow19 _) ?_
+  refine cacheValid_cons (wheelRow17 _) ?_
+  refine cacheValid_cons (wheelRow13 _) ?_
+  refine cacheValid_cons (wheelRow11 _) ?_
+  refine cacheValid_cons (wheelRow7 _) ?_
+  refine cacheValid_cons (wheelRow5 _) ?_
+  refine cacheValid_cons (wheelRow3 _) ?_
+  refine cacheValid_cons wheelRow2 ?_
+  rfl
 
 private theorem costUpper_cached (j : ℕ) :
     costUpper j = periodicQSift wheel wheelCaches (2*j+1) + 24 + primeDeltas j := by
