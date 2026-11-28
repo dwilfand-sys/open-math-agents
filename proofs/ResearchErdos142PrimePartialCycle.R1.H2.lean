@@ -52,8 +52,12 @@ theorem partialCycle_card {A : Finset ℕ} {p t N : ℕ} (hp : 1 < p)
   rw [card_union_of_disjoint dis]
   change (((Ico 1 p).product A).image (fun q => q.1 + p * (q.2 - 1))).card +
       ((A.filter fun x => x % p = t).image (fun x => p * x)).card = _
-  rw [card_image_of_injOn injCore, card_image_of_injOn injExtra, Finset.card_product,
-    Nat.card_Ico]
+  rw [card_image_of_injOn injCore, card_image_of_injOn injExtra]
+  have hprod : ((Ico 1 p).product A).card = (p - 1) * A.card := by
+    calc
+      _ = (Ico 1 p).card * A.card := Finset.card_product _ _
+      _ = (p - 1) * A.card := by rw [Nat.card_Ico]
+  rw [hprod]
   omega
 
 end Erdos142PrimePartialCycleCard
