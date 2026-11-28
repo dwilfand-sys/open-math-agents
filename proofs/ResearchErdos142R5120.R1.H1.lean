@@ -1,6 +1,6 @@
 import OMAReductions.R_ResearchErdos142R5120_R1
 
-/- Finite interval witnesses by Codex for dwilfand-sys, found by mod-5 fiber
+/-! Finite interval witnesses by Codex for dwilfand-sys, found by mod-5 fiber
    searches. The progression conversion follows @Deldor14. -/
 namespace FiveWitness
 
@@ -34,16 +34,20 @@ private theorem lower {N m c : ℕ} (hn : N ≤ 120) (hc : (W N m).card = c)
       have first : a ∈ W N m := by simpa using allmem 0 (by decide)
       obtain ⟨lo,up⟩ := Finset.mem_Icc.mp (hs first)
       have last := (Finset.mem_Icc.mp (hs (allmem 4 (by decide)))).2
-      obtain ⟨i,no⟩ := miss ⟨a, by omega⟩ ⟨d, by omega⟩ (by omega)
+      have hd : 0 < d := by omega
+      obtain ⟨i,no⟩ := miss ⟨a, by omega⟩ ⟨d, by omega⟩ hd
       have yes : m.testBit (a+i.val*d) = true := (Finset.mem_filter.mp (allmem i.val i.isLt)).2
       change m.testBit (a+i.val*d) = false at no
       rw [yes] at no
       contradiction
+  let sizes : Set ℕ := {Finset.card A | (A) (_ : A ⊆ Finset.Icc 1 N)
+    (_ : (A : Set ℕ).IsAPOfLengthFree 5)}
+  have hb : BddAbove sizes := by
+    refine ⟨(Finset.Icc 1 N).card, ?_⟩
+    rintro v ⟨S, hS, _, rfl⟩
+    exact Finset.card_le_card hS
   rw [← hc]
-  apply le_csSup _ ⟨W N m,hs,hf,rfl⟩
-  refine ⟨(Finset.Icc 1 N).card, ?_⟩
-  rintro v ⟨S, hS, _, rfl⟩
-  exact Finset.card_le_card hS
+  exact le_csSup hb ⟨W N m,hs,hf,rfl⟩
 
 set_option maxHeartbeats 4000000 in
 set_option maxRecDepth 100000 in
