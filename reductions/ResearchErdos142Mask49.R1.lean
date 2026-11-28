@@ -5,7 +5,7 @@ import FormalConjectures.ErdosProblems.«142»
    The lower statement covers even repeated choices of the three holes. -/
 namespace OMA.R_ResearchErdos142Mask49_R1
 
-def point (a d : Fin 49) (j : ℕ) : Fin 49 := a + (j : Fin 49) * d
+def point (a d : Fin 49) (j : ℕ) : Fin 49 := a + (⟨j % 49, Nat.mod_lt _ (by decide)⟩ : Fin 49) * d
 
 def H1 : Prop :=
   (∀ a d : Fin 49, d.val % 7 ≠ 0 → ∃ j : Fin 28,
