@@ -8,11 +8,14 @@ open Finset Erdos142 OMA.R_ResearchErdos142PrimePartialCycle_R1
   OMA.R_Erdos142_erdos_142_variants_lower_R3
 
 theorem recurrence
-    (h1 : H1) (h2 : H2) (h3 : H3) (h4 : H4)
+    (h1 : OMA.R_ResearchErdos142PrimePartialCycle_R1.H1)
+    (h2 : OMA.R_ResearchErdos142PrimePartialCycle_R1.H2)
+    (h3 : OMA.R_ResearchErdos142PrimePartialCycle_R1.H3)
+    (h4 : OMA.R_ResearchErdos142PrimePartialCycle_R1.H4)
     {k p N : ℕ} (prime : p.Prime) (hk : 2 * p ≤ k) :
     (p - 1) * r k N + (r k N ⌈/⌉ p) ≤ r k (p * N) := by
   have hp1 : 1 < p := prime.one_lt
-  obtain ⟨A, hA, freeA, cardA⟩ := exists_maximizer (by omega) N
+  obtain ⟨A, hA, freeA, cardA⟩ := exists_maximizer (k := k) (by omega) N
   obtain ⟨t, ht⟩ := h3 A p prime.pos
   have freeC := h1 hp1 hk (h4 p prime) hA freeA (t := t.val)
   have subsetC : partialCycle A p t.val ⊆ Icc 1 (p * N) := by
