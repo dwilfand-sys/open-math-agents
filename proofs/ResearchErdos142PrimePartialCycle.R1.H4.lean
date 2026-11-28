@@ -13,7 +13,7 @@ theorem prime_completeResidues {p : ℕ} (hp : p.Prime) : completeResidues p := 
     intro hpd
     exact hnonzero (Nat.dvd_iff_mod_eq_zero.mp hpd)
   have hcop : d.Coprime p := (hp.coprime_iff_not_dvd.mpr hnotdvd).symm
-  obtain ⟨v, -, hv⟩ := exists_mul_mod_eq_one_of_coprime hcop hp.one_lt
+  obtain ⟨v, -, hv⟩ := Nat.exists_mul_mod_eq_one_of_coprime hcop hp.one_lt
   let i := ((p - a % p) * v) % p
   refine ⟨i, Nat.mod_lt _ hp.pos, ?_⟩
   have hi : i ≡ (p - a % p) * v [MOD p] := by
