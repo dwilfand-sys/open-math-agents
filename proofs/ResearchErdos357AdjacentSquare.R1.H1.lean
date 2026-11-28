@@ -84,7 +84,7 @@ theorem verdict : H1 := by
   have remLt := Nat.mod_lt (f 0-1) hD
   have low : f 0 ≤ ((f 0-1)/D+1)*D := by omega
   have high : ((f 0-1)/D+1)*D ≤ f N := by omega
-  have result := general f N N D ((f 0-1)/D+1) hg hc (by omega) low high room
+  have result := general f N N D ((f 0-1)/D+1) hg hc (Nat.succ_pos _) low high room
   simpa [two_mul] using result
 
 end AdjacentSquare
