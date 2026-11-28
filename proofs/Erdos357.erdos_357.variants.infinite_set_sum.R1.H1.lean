@@ -78,7 +78,7 @@ namespace Erdos357Grouping
 def block (a : ℕ → ℕ) (t k j : ℕ) : ℕ :=
   ∑ i ∈ Finset.range k, a (t + j * k + i)
 
-def mass (a : ℕ → ℕ) (t n : ℕ) : ℝ :=
+noncomputable def mass (a : ℕ → ℕ) (t n : ℕ) : ℝ :=
   ∑ i ∈ Finset.range n, (1 : ℝ) / a (t + i)
 
 private theorem mass_add (a : ℕ → ℕ) (t n m : ℕ) :
@@ -113,7 +113,7 @@ private theorem next_term_le (a : ℕ → ℕ) (ha : ∀ n, 0 < a n) (hin : Mono
         apply hin
         rw [Nat.add_mul, Nat.one_mul]
         omega
-      _ = k * z := by simp [nsmul_eq_mul]
+      _ = k * z := by simp
   have hza : (0 : ℝ) < a (t + (j + 1) * k + i) := by exact_mod_cast ha _
   have hba : (0 : ℝ) < block a t k j := by exact_mod_cast block_pos a ha t hk j
   apply (div_le_div_iff₀ hza hba).mpr
@@ -197,7 +197,7 @@ private noncomputable def makePlan (a : ℕ → ℕ) (hp : ∀ n, 0 < a n)
   by_contra! h
   have hz : pick e (t e) = 0 := by omega
   have hbad := hmass e (t e)
-  simp [hz, mass] at hbad
+  norm_num [hz, mass] at hbad
 
 variable {a : ℕ → ℕ} (p : Plan a)
 
@@ -216,8 +216,7 @@ private theorem start_ge (e : ℕ) : e ≤ start p e := by
   induction e with
   | zero => exact Nat.zero_le _
   | succ e ih =>
-    have h := start_strict p (Nat.lt_succ_self e)
-    omega
+    exact Nat.succ_le_of_lt (lt_of_le_of_lt ih (start_strict p (Nat.lt_succ_self e)))
 
 private theorem covers (j : ℕ) : ∃ e, j < start p (e + 1) := by
   exact ⟨j, lt_of_lt_of_le (Nat.lt_succ_self j) (start_ge p (j + 1))⟩
