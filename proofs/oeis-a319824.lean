@@ -12,9 +12,6 @@ interval extension and finite certificate. Claude Code independently refereed
 the mathematics and reproduced the numerical checks for David Wilfand.
 -/
 
-set_option maxRecDepth 10000
-set_option maxHeartbeats 4000000
-
 namespace A319824Proof
 open OMA.S_oeis_a319824
 
@@ -27,10 +24,14 @@ namespace A319824Proof
 
 open OMA.S_oeis_a319824
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma lift_mono (s : ℕ) : Monotone (liftRank s) := by
   intro x y h
   exact Nat.add_le_add h (Nat.div_le_div_right (Nat.sub_le_sub_right h 1))
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma rank_mono (ss : List ℕ) : Monotone (rankValue ss) := by
   induction ss with
   | nil => intro x y h; simp [rankValue]; omega
@@ -38,23 +39,33 @@ private lemma rank_mono (ss : List ℕ) : Monotone (rankValue ss) := by
     intro x y h
     exact ih (lift_mono s h)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma rank_add_step (ss : List ℕ) (s x : ℕ) :
     rankValue ss x ≤ rankValue (s :: ss) x := by
   apply rank_mono ss
   simp [liftRank]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma rank_stage_grows (k x : ℕ) :
     rankValue (steps k) x ≤ rankValue (steps (k+1)) x :=
   rank_add_step _ _ _
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma rank_stage_mono (x : ℕ) : Monotone (fun k => rankValue (steps k) x) :=
   monotone_nat_of_le_succ (fun k => rank_stage_grows k x)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 lemma lucky_mono : Monotone lucky := by
   intro a b h
   exact ((rank_mono (steps (a-2))) h).trans
     (rank_stage_mono b (Nat.sub_le_sub_right h 2))
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 lemma lucky_lower (n : ℕ) : 3*n ≤ lucky n + 3 := by
   by_cases hn : n < 3
   · interval_cases n <;> decide
@@ -66,6 +77,8 @@ private def sieveWeight : List ℕ → ℚ
   | [] => 1
   | s :: ss => (1 + 1 / ((s-1 : ℕ) : ℚ)) * sieveWeight ss
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma weight_nonneg (ss : List ℕ) : 0 ≤ sieveWeight ss := by
   induction ss with
   | nil => norm_num [sieveWeight]
@@ -73,6 +86,8 @@ private lemma weight_nonneg (ss : List ℕ) : 0 ≤ sieveWeight ss := by
     change 0 ≤ (1 + 1 / ((s-1 : ℕ) : ℚ)) * sieveWeight ss
     positivity
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma cast_lift_le (s x : ℕ) :
     (liftRank s x : ℚ) ≤ (x : ℚ) * (1 + 1 / ((s-1 : ℕ) : ℚ)) := by
   by_cases hs : s - 1 = 0
@@ -86,6 +101,8 @@ private lemma cast_lift_le (s x : ℕ) :
   simp only [liftRank, Nat.cast_add]
   linarith [show (x : ℚ) * (1 + 1 / ((s-1 : ℕ) : ℚ)) = x + x / ((s-1 : ℕ) : ℚ) by ring]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma folded_le (ss : List ℕ) (x : ℕ) :
     ((ss.foldl (fun y s => liftRank s y) x : ℕ) : ℚ) ≤ x * sieveWeight ss := by
   induction ss generalizing x with
@@ -97,6 +114,8 @@ private lemma folded_le (ss : List ℕ) (x : ℕ) :
         mul_le_mul_of_nonneg_right (cast_lift_le s x) (weight_nonneg ss)
       _ = _ := by simp [sieveWeight, mul_assoc]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma rv_le (ss : List ℕ) (x : ℕ) :
     (rankValue ss x : ℚ) ≤ x * (2 * sieveWeight ss) := by
   have hraw : rankValue ss x ≤ 2 * (ss.foldl (fun y s => liftRank s y) x) := Nat.sub_le _ _
@@ -104,6 +123,8 @@ private lemma rv_le (ss : List ℕ) (x : ℕ) :
     exact_mod_cast hraw
   linarith [folded_le ss x]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma weight_stage_step (k : ℕ) :
     (k : ℚ) * (1 + 1 / ((rankValue (steps k) (k+2) - 1 : ℕ) : ℚ))^3 ≤ (k:ℚ)+1 := by
   let s := rankValue (steps k) (k+2)
@@ -121,6 +142,8 @@ private lemma weight_stage_step (k : ℕ) :
       field_simp
       nlinarith [sq_nonneg (k:ℚ), Nat.cast_nonneg (α := ℚ) k]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private lemma weight_stage_bound (k : ℕ) (hk : 12 ≤ k) :
     8 * (2 * sieveWeight (steps k))^3 ≤ 125 * (k:ℚ) := by
   induction k, hk using Nat.le_induction with
@@ -134,6 +157,8 @@ private lemma weight_stage_bound (k : ℕ) (hk : 12 ≤ k) :
     push_cast
     nlinarith only [hmul, hstep]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 lemma lucky_upper (n : ℕ) (hn : 13 ≤ n) : 8*(lucky n)^3 ≤ 125*n^4 := by
   by_cases hsmall : n < 14
   · have h : n=13 := by omega
@@ -166,11 +191,15 @@ private def lookupLucky (i : ℕ) : ℕ := luckyDigits[i]?.getD 0
 -- The latest deletion step is stored at the front, as in the sieve definition.
 private def cachedSteps (k : ℕ) : List ℕ := ((luckyDigits.drop 2).take k).reverse
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem cached_step_rule : ∀ i : Fin 77,
     cachedSteps (i.val + 1) =
       rankValue (cachedSteps i.val) (i.val + 2) :: cachedSteps i.val := by
   decide +kernel
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem checked_steps (k : ℕ) (hk : k ≤ 77) : steps k = cachedSteps k := by
   induction k with
   | zero => rfl
@@ -178,10 +207,14 @@ private theorem checked_steps (k : ℕ) (hk : k ≤ 77) : steps k = cachedSteps 
     rw [steps, ih (by omega)]
     exact (cached_step_rule ⟨k, by omega⟩).symm
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem cached_value_rule : ∀ i : Fin 80,
     rankValue (cachedSteps (i.val - 2)) i.val = lookupLucky i.val := by
   decide +kernel
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem lucky_small (i : ℕ) (hi : i ≤ 79) : lucky i = lookupLucky i := by
   unfold lucky
   rw [checked_steps (i - 2) (by omega)]
@@ -189,9 +222,13 @@ private theorem lucky_small (i : ℕ) (hi : i ≤ 79) : lucky i = lookupLucky i 
 
 private def termAt (i : ℕ) : ℕ := lookupLucky (lookupLucky i)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem seed_index_bound : ∀ i : Fin 21, lookupLucky i.val ≤ 79 := by
   decide +kernel
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem u_small (i : ℕ) (hi : i ≤ 20) : u i = termAt i := by
   unfold u termAt
   rw [lucky_small i (by omega), lucky_small _ (seed_index_bound ⟨i, by omega⟩)]
@@ -200,15 +237,21 @@ private def checkedTotal : ℕ → ℕ
   | 0 => 0
   | i + 1 => checkedTotal i + termAt (i + 1)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem total_checked (i : ℕ) (hi : i ≤ 20) : total i = checkedTotal i := by
   induction i with
   | zero => rfl
   | succ i ih => rw [total, checkedTotal, ih (by omega), u_small _ hi]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 theorem seed_total : total 20 = 4006 := by
   rw [total_checked 20 (by decide)]
   decide +kernel
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 theorem seed_large : 373 < u 20 := by
   rw [u_small 20 (by decide)]
   decide +kernel
@@ -240,10 +283,14 @@ private def maskDigits : Array ℕ := #[
 
 private def maskAt (k : ℕ) : ℕ := maskDigits[k]?.getD 0
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem mask_rule : ∀ i : Fin 20, maskAt (i.val + 1) =
     maskAt i.val ||| (maskAt i.val <<< termAt (i.val + 1)) := by
   decide +kernel
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem mask_spec (k : ℕ) (hk : k ≤ 20) (x : ℕ) :
     (maskAt k).testBit x = true ↔ attainable k x := by
   induction k generalizing x with
@@ -265,10 +312,14 @@ private theorem mask_spec (k : ℕ) (hk : k ≤ 20) (x : ℕ) :
       · exact Or.inl h
       · exact Or.inr ⟨by omega, by simpa using h⟩
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem middle_ones :
     ((maskAt 20 >>> 374) &&& (2 ^ 3259 - 1)) = 2 ^ 3259 - 1 := by
   decide +kernel
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 theorem seed_interval : ∀ x, 374 ≤ x → x ≤ 3632 → attainable 20 x := by
   intro x hlow hhigh
   apply (mask_spec 20 (by decide) x).mp
@@ -282,6 +333,8 @@ theorem seed_interval : ∀ x, 374 ≤ x → x ≤ 3632 → attainable 20 x := b
 private def smallMissing : Finset ℕ :=
   (Finset.range 374).filter (fun x => 0 < x ∧ (maskAt 20).testBit x = false)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 theorem seed_exceptions : ∃ e : Finset ℕ, e.card = 98 ∧ IsGreatest (e : Set ℕ) 373 ∧
     ∀ x ≤ 373, x ∈ e ↔ 0 < x ∧ ¬attainable 20 x := by
   refine ⟨smallMissing, ?_, ⟨?_, ?_⟩, ?_⟩
@@ -304,16 +357,22 @@ namespace A319824Proof
 
 open OMA.S_oeis_a319824
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem indexed_mono : Monotone u := by
   intro i j h
   exact lucky_mono (lucky_mono h)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem indexed_lower (n : ℕ) : 9 * n ≤ u n + 12 := by
   have h := lucky_lower n
   have h' := lucky_lower (lucky n)
   change 9 * n ≤ lucky (lucky n) + 12
   omega
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem indexed_upper (n : ℕ) (h : 21 ≤ n) :
     5 * u n ≤ 22 * n ^ 2 := by
   have hl := lucky_lower n
@@ -344,6 +403,8 @@ private theorem indexed_upper (n : ℕ) (h : 21 ≤ n) :
   by_contra! hh
   exact (not_lt_of_ge hp) (Nat.pow_lt_pow_left hh (by decide : 9 ≠ 0))
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem total_lower {k : ℕ} (hk : 20 ≤ k) :
     9 * k ^ 2 + 4712 ≤ 2 * total k + 15 * k := by
   induction k, hk using Nat.le_induction with
@@ -353,6 +414,8 @@ private theorem total_lower {k : ℕ} (hk : 20 ≤ k) :
     rw [show total (k + 1) = total k + u (k + 1) from rfl]
     nlinarith only [hu, ih]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem tail_overlaps {k : ℕ} (hk : 20 ≤ k) :
     u (k + 1) + 747 ≤ total k := by
   have hL := total_lower hk
@@ -362,6 +425,8 @@ private theorem tail_overlaps {k : ℕ} (hk : 20 ≤ k) :
     nlinarith only [sq_nonneg (2 * (k : ℤ) - 163)]
   nlinarith only [hL, hU, hs]
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem covers_interval {k : ℕ} (hk : 20 ≤ k) :
     ∀ x, 374 ≤ x → x + 374 ≤ total k → attainable k x := by
   induction k, hk using Nat.le_induction with
@@ -378,6 +443,8 @@ private theorem covers_interval {k : ℕ} (hk : 20 ≤ k) :
     · have hb := tail_overlaps hk
       exact Or.inr ⟨x - u (k + 1), ih _ (by omega) (by omega), by omega⟩
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem total_grows {k : ℕ} (hk : 20 ≤ k) : k + 374 ≤ total k := by
   induction k, hk using Nat.le_induction with
   | base => rw [seed_total]; decide
@@ -386,16 +453,22 @@ private theorem total_grows {k : ℕ} (hk : 20 ≤ k) : k + 374 ≤ total k := b
     change k + 1 + 374 ≤ total k + u (k + 1)
     omega
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem attainable_large (x : ℕ) (hx : 374 ≤ x) : ∃ k, attainable k x := by
   have h20 : 20 ≤ x := by omega
   exact ⟨x, covers_interval h20 x hx (total_grows h20)⟩
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem to_later_prefix {j k x : ℕ} (hjk : j ≤ k)
     (hx : attainable j x) : attainable k x := by
   induction k, hjk using Nat.le_induction with
   | base => exact hx
   | succ k hk ih => exact Or.inl ih
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 private theorem small_in_seed (x k : ℕ) (hx : x ≤ 373) (ha : attainable k x) :
     attainable 20 x := by
   by_cases hk : k ≤ 20
@@ -414,6 +487,8 @@ private theorem small_in_seed (x k : ℕ) (hx : x ≤ 373) (ha : attainable k x)
         have hnext := indexed_mono (show 20 ≤ k + 1 by omega)
         omega
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 theorem proof_main : exceptions.Finite ∧ exceptions.ncard = 98 ∧
     IsGreatest exceptions 373 := by
   obtain ⟨e, hcard, hmax, he⟩ := seed_exceptions
@@ -436,5 +511,7 @@ theorem proof_main : exceptions.Finite ∧ exceptions.ncard = 98 ∧
 
 end A319824Proof
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 4000000 in
 theorem OMA.solution : type_of% @OMA.S_oeis_a319824.main := by
   exact A319824Proof.proof_main
