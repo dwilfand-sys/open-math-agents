@@ -26,6 +26,7 @@ def H2 : Prop := ∀ C : ℕ → ℕ, Monotone C →
         (∑ p ∈ A ∩ S, (2*J/(p^2)+1)) : ℕ) : ℚ) +
         (if S.card=0 then 0 else (2:ℚ)^(S.card-1)) < (J:ℚ) * ∏ p ∈ S, (1-1/(p:ℚ))
 
+set_option maxHeartbeats 1500000 in
 theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H1 := by
   intro dyad numerics J S hlo hhi hS hprod
   let ps := fun x : ℕ => (range (x+1)).filter (fun p : ℕ => 2 < p ∧ p.Prime)
@@ -36,7 +37,7 @@ theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H1 := by
     apply card_le_card
     intro p hp
     obtain ⟨hr, ho⟩ := mem_filter.mp hp
-    exact mem_filter.mpr ⟨mem_range.mpr ((mem_range.mp hr).trans_le (by omega)), ho⟩
+    exact mem_filter.mpr ⟨mem_range.mpr ((mem_range.mp hr).trans_le (Nat.succ_le_succ hxy)), ho⟩
   have hmargin := numerics (fun x => (ps x).card) mono (fun _ _ => le_rfl) dyad
     J S hlo hhi hS hprod
   have partition : (∑ p ∈ A \ S, w p) + (∑ p ∈ A ∩ S, w p) = ∑ p ∈ A, w p := by
@@ -49,9 +50,11 @@ theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H1 := by
     rw [← sum_union disj, un]
   have total : (∑ p ∈ A, w p) = (∑ p ∈ A, 2*J/(p^2)) + A.card := by
     simp [w, sum_add_distrib]
-  have low : (∑ p ∈ A \ S, w p) ≤
-      A.card + (∑ p ∈ A, 2*J/(p^2)) - (∑ p ∈ A ∩ S, w p) := by omega
+  have score : (∑ p ∈ A \ S, w p) =
+      A.card + (∑ p ∈ A, 2*J/(p^2)) - (∑ p ∈ A ∩ S, w p) := by
+    rw [Nat.add_comm A.card, ← total, ← partition, Nat.add_sub_cancel]
   change ((∑ p ∈ A \ S, w p : ℕ) : ℚ) + _ < _
-  exact lt_of_le_of_lt (add_le_add_right (by exact_mod_cast low) _) hmargin
+  rw [score]
+  exact hmargin
 
 end OMA.R_oeis_a085265_R2_H2_R1_H1_R1_H1_R3
