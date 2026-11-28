@@ -1,0 +1,43 @@
+import OMAReductions.R_ResearchErdos142PrimePartialCycle_R1
+
+/-! Finite averaging over the residue fibers of a finite set. -/
+
+namespace Erdos142PrimePartialCycleAverage
+
+open Finset OMA.R_ResearchErdos142PrimePartialCycle_R1
+
+theorem heavy_residue (A : Finset ℕ) (p : ℕ) (hp : 0 < p) :
+    ∃ t : Fin p, A.card ≤ p * (A.filter fun x => x % p = t.val).card := by
+  classical
+  have row (x : ℕ) :
+      (∑ t : Fin p, if x % p = t.val then 1 else 0 : ℕ) = 1 := by
+    let r : Fin p := ⟨x % p, Nat.mod_lt _ hp⟩
+    rw [show (1 : ℕ) = if x % p = r.val then 1 else 0 by simp [r]]
+    apply Finset.sum_eq_single r
+    · intro b hb hbr
+      simp only [ite_eq_right_iff]
+      intro h
+      apply hbr
+      apply Fin.ext
+      exact h.symm
+    · simp
+  let mass := fun t : Fin p => (A.filter fun x => x % p = t.val).card
+  have total : (∑ t : Fin p, mass t) = A.card := by
+    simp only [mass, card_filter]
+    rw [Finset.sum_comm]
+    simp [row]
+  obtain ⟨t, _, most⟩ :=
+    (Finset.univ : Finset (Fin p)).exists_max_image mass Finset.univ_nonempty
+  have bound : (∑ i : Fin p, mass i) ≤ ∑ _i : Fin p, mass t :=
+    Finset.sum_le_sum (fun i hi => most i hi)
+  rw [total] at bound
+  refine ⟨t, ?_⟩
+  simpa only [mass, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+    nsmul_eq_mul, Nat.mul_comm] using bound
+
+end Erdos142PrimePartialCycleAverage
+
+theorem OMA.solution : OMA.R_ResearchErdos142PrimePartialCycle_R1.H3 := by
+  intro A p hp
+  exact Erdos142PrimePartialCycleAverage.heavy_residue A p hp
+
