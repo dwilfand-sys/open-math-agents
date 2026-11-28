@@ -2,84 +2,121 @@ import OMAStatements.S_oeis_a085265
 import Mathlib
 
 /-!
-# A positive square plus a positive squarefree number
+A positive square plus a positive squarefree integer. Statement formalized by
+@niclorusso. Proof prepared by Codex for @dwilfand-sys. The initial range uses
+finite bit masks, the intermediate range uses certified interval estimates,
+and the infinite tail follows from a prime-square sieve. See Jiménez Urroz,
+Expositiones Mathematicae 40 (2022), 665–678, for the related result allowing
+a zero square, and Dudek and Platt, LMS Journal of Computation and Mathematics
+18 (2015), for prime squares outside the residue class 1 modulo 4.
+-/
 
-Source: https://oeis.org/A085265
-Credit: @dwilfand-sys (proof prepared by Codex). Statement by @niclorusso.
+/-!
+Finite and infinite ranges for OEIS A085265, formalized by @niclorusso.
+Proof prepared by Codex for @dwilfand-sys. This fork check isolates the
+finite certificate in the full proof. Credit: @dwilfand-sys
+-/
 
-For large inputs, select square roots of a suitable parity and remove common
-factors with the product of the odd primes whose squares divide the input.
-Ordinary prime-square obstructions occupy two residue classes. We count these
-by inclusion–exclusion and use the elementary estimate `primorial_le_four_pow`
-in the large range. Intermediate interval bounds use Legendre's finite sieve.
-The initial segment is certified by taking unions and intersections of bit masks.
+namespace A085265Sieve
 
-This proof is independent of the nonnegative-square representation theorem in
-J. Jiménez Urroz, *Every integer can be written as a square plus a squarefree*,
-Expositiones Mathematicae 40 (2022), 665–678, DOI 10.1016/j.exmath.2021.12.002.
-Dudek and Platt proved that every integer n ≥ 10 outside 1 modulo 4 is a
-prime square plus a squarefree integer, DOI 10.1112/S1461157015000297.
-The present direct sieve includes the residue class 1 modulo 4.
+theorem exclude_one_thirteen {n k : ℕ} (hk : 0 < k) (hkn : k^2 < n)
+    (hs : Squarefree (n-k^2)) : n ≠ 1 ∧ n ≠ 13 := by
+  have hk₁ : 0 < k^2 := pow_pos hk 2
+  refine ⟨by omega,?_⟩
+  rintro rfl
+  have hsmall : k < 4 := by
+    by_contra! h
+    have := Nat.pow_le_pow_left h 2
+    omega
+  have table : ∀ j : Fin 4, 0 < j.val → ¬ Squarefree (13-j.val^2) := by decide +kernel
+  exact table ⟨k,hsmall⟩ hk hs
+
+end A085265Sieve
+
+namespace OMA.R_oeis_a085265_R2
+
+def H1 : Prop := ∀ n : ℕ, 0 < n → n ≤ 365000 → n ≠ 1 → n ≠ 13 →
+  ∃ k : ℕ, 0 < k ∧ k^2 < n ∧ Squarefree (n-k^2)
+
+def H2 : Prop := ∀ n : ℕ, 365000 < n →
+  ∃ k : ℕ, 0 < k ∧ k^2 < n ∧ Squarefree (n-k^2)
+
+theorem main : H1 → H2 → type_of% @OMA.S_oeis_a085265.main := by
+  intro small large n hn
+  constructor
+  · rintro ⟨s,k,hs,hsf,hk,he⟩
+    have hdiff : n-k^2 = s := by omega
+    exact A085265Sieve.exclude_one_thirteen hk (by omega) (hdiff.symm ▸ hsf)
+  · rintro ⟨h₁,h₁₃⟩
+    have hex : ∃ k : ℕ, 0 < k ∧ k^2 < n ∧ Squarefree (n-k^2) := by
+      by_cases h : n ≤ 365000
+      · exact small n hn h h₁ h₁₃
+      · exact large n (by omega)
+    obtain ⟨k,hk,hkn,hs⟩ := hex
+    exact ⟨n-k^2,k,by omega,hs,hk,by omega⟩
+
+end OMA.R_oeis_a085265_R2
+
+/-! Split the remaining positive-square range at the start of the large sieve.
+The root statement was formalized by @niclorusso. Credit: @dwilfand-sys. -/
+
+namespace OMA.R_oeis_a085265_R2_H2_R1
+
+def H1 : Prop := ∀ n : ℕ, 365000 < n → n ≤ 4000000000000 →
+  ∃ k : ℕ, 0 < k ∧ k^2 < n ∧ Squarefree (n-k^2)
+
+def H2 : Prop := ∀ n : ℕ, 4000000000000 < n →
+  ∃ k : ℕ, 0 < k ∧ k^2 < n ∧ Squarefree (n-k^2)
+
+theorem main : H1 → H2 → OMA.R_oeis_a085265_R2.H2 := by
+  intro middle large n hn
+  by_cases h : n ≤ 4000000000000
+  · exact middle n hn h
+  · exact large n (by omega)
+
+end OMA.R_oeis_a085265_R2_H2_R1
+
+/-!
+A finite numerical sieve budget and the covering argument for the intermediate
+range of A085265. If every candidate root fails, counting excluded roots must
+give an obstruction at least as large as the lower bound on candidates.
+The numerical statement rules out that inequality without reference to n.
+Credit: @dwilfand-sys. Root statement formalized by @niclorusso.
 -/
 
 open scoped BigOperators
 
-namespace A085265Sieve
+namespace OMA.R_oeis_a085265_R2_H2_R1_H1_R1
 
-private def primeWeight (p : ℕ) : ℕ := if 2 < p ∧ p.Prime then 1 else 0
+def H1 : Prop := ∀ (J : ℕ) (S : Finset ℕ), 300 ≤ J → J ≤ 1000000 →
+    (∀ p ∈ S, 2 < p ∧ p.Prime) → (∏ p ∈ S, p) ≤ 2*J+2 →
+    ((∑ p ∈ ((Finset.range (2*J+1+1)).filter (fun p => 2 < p ∧ Nat.Prime p)) \ S,
+        (2*J/(p^2)+1) : ℕ) : ℚ) + (if S.card=0 then 0 else (2:ℚ)^(S.card-1)) < (J:ℚ) * ∏ p ∈ S, (1-1/(p:ℚ))
 
-private def wheelWeight (n : ℕ) : ℕ :=
-  if n % 2 ≠ 0 ∧ n % 3 ≠ 0 ∧ n % 5 ≠ 0 then 1 else 0
+def H2 : Prop := ∀ n : ℕ, 365000 < n → n ≤ 4000000000000 →
+    (∀ k : ℕ, 0 < k → k^2 < n → ¬ Squarefree (n-k^2)) →
+    ∃ (J : ℕ) (S : Finset ℕ), 300 ≤ J ∧ J ≤ 1000000 ∧
+      (∀ p ∈ S, 2 < p ∧ p.Prime) ∧ (∏ p ∈ S, p) ≤ 2*J+2 ∧
+      (J:ℚ) * ∏ p ∈ S, (1-1/(p:ℚ)) ≤ ((∑ p ∈ ((Finset.range (2*J+1+1)).filter (fun p => 2 < p ∧ Nat.Prime p)) \ S,
+        (2*J/(p^2)+1) : ℕ) : ℚ) + (if S.card=0 then 0 else (2:ℚ)^(S.card-1))
 
-private lemma count_eq_sum (n : ℕ) :
-    ((Finset.range n).filter fun p => 2 < p ∧ p.Prime).card =
-      ∑ p ∈ Finset.range n, primeWeight p := by
-  simpa only [primeWeight, Nat.cast_id] using
-    (Finset.sum_boole (R := ℕ) (fun p : ℕ => 2 < p ∧ p.Prime) (Finset.range n)).symm
+theorem main : H1 → H2 → OMA.R_oeis_a085265_R2_H2_R1.H1 := by
+  intro budget cover n hlo hhi
+  by_contra none
+  have fail (k : ℕ) (hk : 0 < k) (hkn : k^2 < n) : ¬ Squarefree (n-k^2) :=
+    fun hs => none ⟨k,hk,hkn,hs⟩
+  obtain ⟨J,S,hJ,hJ',hS,hprod,hcount⟩ := cover n hlo hhi fail
+  exact (not_lt_of_ge hcount) (budget J S hJ hJ' hS hprod)
 
-private lemma prime_block (n : ℕ) (hn : 5 < n) :
-    ((Finset.range (n + 30)).filter fun p => 2 < p ∧ p.Prime).card ≤
-      ((Finset.range n).filter fun p => 2 < p ∧ p.Prime).card + 8 := by
-  have count : ∀ r : Fin 30, (∑ i ∈ Finset.range 30, wheelWeight (r.val+i)) = 8 := by
-    decide +kernel
-  have hsum : (∑ i ∈ Finset.range 30, primeWeight (n+i)) ≤
-      ∑ i ∈ Finset.range 30, wheelWeight (n%30+i) := by
-    apply Finset.sum_le_sum
-    intro i _
-    by_cases h : 2 < n+i ∧ (n+i).Prime
-    · have hnd {d : ℕ} (hd : d.Prime) (hlt : d < n+i) : ¬ d ∣ n+i := by
-        intro hdvd
-        exact (ne_of_lt hlt) ((Nat.prime_dvd_prime_iff_eq hd h.2).mp hdvd)
-      have h2 := hnd Nat.prime_two (by omega)
-      have h3 := hnd Nat.prime_three (by omega)
-      have h5 := hnd (d := 5) (by decide) (by omega)
-      have hr : (n%30+i)%2 ≠ 0 ∧ (n%30+i)%3 ≠ 0 ∧ (n%30+i)%5 ≠ 0 := by omega
-      simp [primeWeight, wheelWeight, h, hr]
-    · simp [primeWeight, h]
-  have h8 := count ⟨n%30, Nat.mod_lt _ (by decide)⟩
-  change (∑ i ∈ Finset.range 30, wheelWeight (n%30+i)) = 8 at h8
-  rw [count_eq_sum, count_eq_sum, Finset.sum_range_add]
-  exact Nat.add_le_add_left (hsum.trans_eq h8) _
+end OMA.R_oeis_a085265_R2_H2_R1_H1_R1
 
-theorem primeCountWheel (J : ℕ) (hJ : 10 ≤ J) :
-    15 * ((Finset.range (2*J+2)).filter (fun p => 2 < p ∧ Nat.Prime p)).card ≤ 8*J+34 := by
-  induction J using Nat.strong_induction_on with
-  | h J ih =>
-    by_cases hs : J < 25
-    · have base : ∀ j : Fin 25, 10 ≤ j.val →
-          15 * ((Finset.range (2*j.val+2)).filter
-            (fun p => 2 < p ∧ Nat.Prime p)).card ≤ 8*j.val+34 := by decide +kernel
-      exact base ⟨J,hs⟩ hJ
-    · let k := J - 15
-      have hk : 10 ≤ k := by dsimp [k]; omega
-      have hkJ : k < J := by dsimp [k]; omega
-      have hJk : J = k + 15 := by dsimp [k]; omega
-      have head := ih k hkJ hk
-      have tail := prime_block (2*k+2) (by omega)
-      rw [show 2*J+2 = (2*k+2)+30 by omega]
-      omega
+namespace FiniteRange
 
-end A085265Sieve
+/-!
+Finite part of A085265, through 365000. The root statement was formalized by
+@niclorusso. The mask and its proof come from the full proof prepared by Codex.
+Credit: @dwilfand-sys
+-/
 
 namespace A085265Sieve
 
@@ -226,6 +263,82 @@ theorem squarefree_finite {n : ℕ} (hn : 0 < n) (hN : n ≤ 365000)
     h ⟨w, hw, hle, hlt, hs⟩)
   rw [finite_mask_certificate] at hmask
   rcases finite_mask_exceptions n hmask with h0 | he1 | he13 <;> omega
+
+end A085265Sieve
+
+theorem checked : OMA.R_oeis_a085265_R2.H1 := by
+  intro n hn hN h1 h13
+  obtain ⟨k,hk,_,hlt,hs⟩ := A085265Sieve.squarefree_finite hn hN h1 h13
+  exact ⟨k,hk,hlt,hs⟩
+
+end FiniteRange
+
+namespace LargeRange
+
+/-!
+The large range in OEIS A085265. Credit: @dwilfand-sys (proof prepared by
+Codex). Statement by @niclorusso. The direct sieve uses the elementary
+primorial bound and inclusion–exclusion for the prime-square obstructions.
+J. Jiménez Urroz proved the nonnegative-square result (DOI 10.1016/j.exmath.2021.12.002).
+Dudek and Platt cover numbers outside 1 modulo 4 (DOI 10.1112/S1461157015000297).
+-/
+
+open scoped BigOperators
+
+namespace A085265Sieve
+
+private def primeWeight (p : ℕ) : ℕ := if 2 < p ∧ p.Prime then 1 else 0
+
+private def wheelWeight (n : ℕ) : ℕ :=
+  if n % 2 ≠ 0 ∧ n % 3 ≠ 0 ∧ n % 5 ≠ 0 then 1 else 0
+
+private lemma count_eq_sum (n : ℕ) :
+    ((Finset.range n).filter fun p => 2 < p ∧ p.Prime).card =
+      ∑ p ∈ Finset.range n, primeWeight p := by
+  simpa only [primeWeight, Nat.cast_id] using
+    (Finset.sum_boole (R := ℕ) (fun p : ℕ => 2 < p ∧ p.Prime) (Finset.range n)).symm
+
+private lemma prime_block (n : ℕ) (hn : 5 < n) :
+    ((Finset.range (n + 30)).filter fun p => 2 < p ∧ p.Prime).card ≤
+      ((Finset.range n).filter fun p => 2 < p ∧ p.Prime).card + 8 := by
+  have count : ∀ r : Fin 30, (∑ i ∈ Finset.range 30, wheelWeight (r.val+i)) = 8 := by
+    decide +kernel
+  have hsum : (∑ i ∈ Finset.range 30, primeWeight (n+i)) ≤
+      ∑ i ∈ Finset.range 30, wheelWeight (n%30+i) := by
+    apply Finset.sum_le_sum
+    intro i _
+    by_cases h : 2 < n+i ∧ (n+i).Prime
+    · have hnd {d : ℕ} (hd : d.Prime) (hlt : d < n+i) : ¬ d ∣ n+i := by
+        intro hdvd
+        exact (ne_of_lt hlt) ((Nat.prime_dvd_prime_iff_eq hd h.2).mp hdvd)
+      have h2 := hnd Nat.prime_two (by omega)
+      have h3 := hnd Nat.prime_three (by omega)
+      have h5 := hnd (d := 5) (by decide) (by omega)
+      have hr : (n%30+i)%2 ≠ 0 ∧ (n%30+i)%3 ≠ 0 ∧ (n%30+i)%5 ≠ 0 := by omega
+      simp [primeWeight, wheelWeight, h, hr]
+    · simp [primeWeight, h]
+  have h8 := count ⟨n%30, Nat.mod_lt _ (by decide)⟩
+  change (∑ i ∈ Finset.range 30, wheelWeight (n%30+i)) = 8 at h8
+  rw [count_eq_sum, count_eq_sum, Finset.sum_range_add]
+  exact Nat.add_le_add_left (hsum.trans_eq h8) _
+
+theorem primeCountWheel (J : ℕ) (hJ : 10 ≤ J) :
+    15 * ((Finset.range (2*J+2)).filter (fun p => 2 < p ∧ Nat.Prime p)).card ≤ 8*J+34 := by
+  induction J using Nat.strong_induction_on with
+  | h J ih =>
+    by_cases hs : J < 25
+    · have base : ∀ j : Fin 25, 10 ≤ j.val →
+          15 * ((Finset.range (2*j.val+2)).filter
+            (fun p => 2 < p ∧ Nat.Prime p)).card ≤ 8*j.val+34 := by decide +kernel
+      exact base ⟨J,hs⟩ hJ
+    · let k := J - 15
+      have hk : 10 ≤ k := by dsimp [k]; omega
+      have hkJ : k < J := by dsimp [k]; omega
+      have hJk : J = k + 15 := by dsimp [k]; omega
+      have head := ih k hkJ hk
+      have tail := prime_block (2*k+2) (by omega)
+      rw [show 2*J+2 = (2*k+2)+30 by omega]
+      omega
 
 end A085265Sieve
 
@@ -1389,1316 +1502,9 @@ theorem oddPrimeReciprocalSum {P S : Finset ℕ} (hP : ∀ p ∈ P, 2 < p ∧ p.
 
 end A085265Sieve
 
-namespace A085265Moderate
-
-open A085265InclusionExclusion
-
-/-- Legendre's finite sieve with a cutoff when the divisor exceeds the interval. -/
-def fastSift (ps : List ℕ) (x d : ℕ) : ℤ :=
-  match ps with
-  | [] => ((x/d : ℕ) : ℤ)
-  | p::rest => if x < d then 0 else fastSift rest x d - fastSift rest x (d*p)
-
-/-- The same sieve indexed by the remaining interval length. -/
-def qSift : List Nat → Nat → Int
-  | [], y => (y : Int)
-  | p :: ps, y =>
-      if y = 0 then 0 else qSift ps y - qSift ps (y / p)
-
-theorem fastSift_eq_qSift (ps : List Nat) (x : Nat) :
-    ∀ d : Nat, 0 < d → (∀ p ∈ ps, 0 < p) →
-      fastSift ps x d = qSift ps (x / d) := by
-  induction ps with
-  | nil =>
-      intro d _ _
-      rfl
-  | cons p ps ih =>
-      intro d hd hpos
-      have hp : 0 < p := hpos p (by simp)
-      have htail : ∀ q ∈ ps, 0 < q := fun q hq => hpos q (by simp [hq])
-      by_cases h : x < d
-      · simp [fastSift, qSift, h, Nat.div_eq_of_lt h]
-      · have hdx : d ≤ x := by omega
-        have hy : x / d ≠ 0 := (Nat.div_pos hdx hd).ne'
-        simp only [fastSift, if_neg h, qSift, if_neg hy, ih d hd htail,
-          ih (d * p) (Nat.mul_pos hd hp) htail, Nat.div_div_eq_div_mul]
-
-private theorem sift_empty_interval (ps : List ℕ) (x d : ℕ) (h : x < d)
-    (hp : ∀ p ∈ ps, 0 < p) : sift ps (fun t => ((x/t : ℕ) : ℚ)) d = 0 := by
-  induction ps generalizing d with
-  | nil => simp [sift, Nat.div_eq_of_lt h]
-  | cons p rest ih =>
-    have hrest : ∀ q ∈ rest, 0 < q := fun q hq => hp q (by simp [hq])
-    have hp1 := hp p (by simp)
-    have hmul : d ≤ d*p := by simpa using Nat.mul_le_mul_left d hp1
-    rw [sift,ih d h hrest,ih (d*p) (h.trans_le hmul) hrest,sub_zero]
-
-theorem fastSift_cast (ps : List ℕ) (x d : ℕ) (hp : ∀ p ∈ ps, 0 < p) :
-    (fastSift ps x d : ℚ) = sift ps (fun t => ((x/t : ℕ):ℚ)) d := by
-  induction ps generalizing d with
-  | nil => simp only [fastSift, sift, Int.cast_natCast]
-  | cons p rest ih =>
-    have hrest : ∀ q ∈ rest, 0 < q := fun q hq => hp q (by simp [hq])
-    by_cases h : x < d
-    · simp [fastSift,h,sift_empty_interval (p::rest) x d h hp]
-    · simp [fastSift,sift,h,ih d hrest,ih (d*p) hrest]
-
-theorem rough_card (ps : List ℕ) (x : ℕ) (hp : ∀ p ∈ ps, p.Prime)
-    (hpair : ps.Pairwise Nat.Coprime) :
-    (((Finset.Ioc 0 x).filter (fun k => ps.prod.Coprime k)).card : ℤ) = fastSift ps x 1 := by
-  have counts (d : ℕ) : ((x/d : ℕ):ℚ) = ∑ k ∈ Finset.Ioc 0 x, if d ∣ k then (1:ℚ) else 0 := by
-    rw [Finset.sum_boole, Nat.Ioc_filter_dvd_card_eq_div]
-  have h : (fastSift ps x 1 : ℚ) =
-      (((Finset.Ioc 0 x).filter (fun k => ps.prod.Coprime k)).card : ℚ) := by
-    rw [fastSift_cast ps x 1 (fun p h => (hp p h).pos)]
-    simp only [counts,sift_sum]
-    simp only [sift_indicator ps _ 1 hpair hp (fun p _ => Nat.coprime_one_left p),
-      one_dvd,true_and,Finset.sum_boole]
-  exact_mod_cast h.symm
-
-def wheel : List ℕ :=
-  [101,97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2]
-
-set_option maxRecDepth 20000 in
-private theorem wheel_complete : ∀ p : Fin 102, 2 < p.val → Nat.Prime p.val →
-    p.val ∈ wheel.toFinset.erase 2 := by decide +kernel
-
-theorem odd_prime_count_upper (x : ℕ) (hx : 101 ≤ x) :
-    ((((Finset.range (x+1)).filter (fun p => 2 < p ∧ p.Prime)).card : ℤ)) ≤
-      fastSift wheel x 1 + 24 := by
-  let rough := (Finset.Ioc 0 x).filter (fun k => wheel.prod.Coprime k)
-  let known := wheel.toFinset.erase 2
-  have facts : ∀ p ∈ wheel, Nat.Prime p ∧ p ≤ 101 := by decide
-  have hp : ∀ p ∈ wheel, Nat.Prime p := fun _ h => (facts _ h).1
-  have hknown : known.card = 25 := by decide
-  have hone : 1 ∈ rough := by simp [rough,Finset.mem_Ioc] <;> omega
-  have hsub : (Finset.range (x+1)).filter (fun p => 2 < p ∧ p.Prime) ⊆
-      known ∪ rough.erase 1 := by
-    intro p h
-    obtain ⟨hx',h₂,hp'⟩ := Finset.mem_filter.mp h
-    have hpx := Finset.mem_range.mp hx'
-    by_cases hsmall : p ≤ 101
-    · exact Finset.mem_union_left _ (wheel_complete ⟨p,by omega⟩ h₂ hp')
-    · apply Finset.mem_union_right
-      apply Finset.mem_erase.mpr
-      refine ⟨by omega,Finset.mem_filter.mpr ⟨Finset.mem_Ioc.mpr ⟨by omega,by omega⟩,?_⟩⟩
-      apply Nat.coprime_list_prod_left_iff.mpr
-      intro q hq
-      apply Nat.Coprime.symm
-      apply hp'.coprime_iff_not_dvd.mpr
-      intro hdiv
-      have := Nat.le_of_dvd (hp q hq).pos hdiv
-      have := (facts q hq).2
-      omega
-  have hc := (Finset.card_le_card hsub).trans (Finset.card_union_le _ _)
-  rw [hknown,Finset.card_erase_of_mem hone] at hc
-  have hp1 := Finset.card_pos.mpr ⟨1,hone⟩
-  have hval : (rough.card : ℤ) = fastSift wheel x 1 :=
-    rough_card wheel x hp (by decide)
-  omega
-
-def primeDeltas (j : ℕ) : ℕ :=
-  ∑ p ∈ (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime), 2*j/(p^2)
-
-def costUpper (j : ℕ) : ℤ := fastSift wheel (2*j+1) 1 + 24 + primeDeltas j
-
-/- A suffix of this wheel contains all primes no greater than its first
-   member. At sufficiently small positive quotients the only survivor is 1.
-   The finite property is checked once, then used throughout the recurrence. -/
-private def wheelPrefixTest : List ℕ → Bool
-  | [] => true
-  | p :: ps =>
-    ((List.range p).all fun j => decide (qSift (p :: ps) (j+1) = 1)) &&
-      wheelPrefixTest ps
-
-private def shortQSift : List ℕ → ℕ → ℤ
-  | [], y => (y : ℤ)
-  | p :: ps, y =>
-    if y = 0 then 0 else
-    if y ≤ p then 1 else shortQSift ps y - shortQSift ps (y / p)
-
-private theorem qSift_short_eq (ps : List ℕ) :
-    wheelPrefixTest ps = true → ∀ y : ℕ, qSift ps y = shortQSift ps y := by
-  induction ps with
-  | nil => intro _ y; rfl
-  | cons p ps ih =>
-    intro ok y
-    have hparts : (∀ j : ℕ, j < p → qSift (p :: ps) (j+1) = 1) ∧
-        wheelPrefixTest ps = true := by
-      simpa [wheelPrefixTest] using ok
-    by_cases hz : y = 0
-    · subst y
-      simp [qSift, shortQSift]
-    by_cases hle : y ≤ p
-    · have hc := hparts.1 (y-1) (by omega)
-      rw [show y-1+1 = y by omega] at hc
-      simpa only [shortQSift, if_neg hz, if_pos hle] using hc
-    · simp only [qSift, shortQSift, if_neg hz, if_neg hle,
-        ih hparts.2 y, ih hparts.2 (y/p)]
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem wheelPrefixTest_ok : wheelPrefixTest wheel = true := by decide +kernel
-
-private theorem wheel_positive : ∀ p ∈ wheel, 0 < p := by decide
-
-private theorem costUpper_short (j : ℕ) :
-    costUpper j = shortQSift wheel (2*j+1) + 24 + primeDeltas j := by
-  unfold costUpper
-  rw [fastSift_eq_qSift wheel (2*j+1) 1 (by decide) wheel_positive, Nat.div_one,
-    qSift_short_eq wheel wheelPrefixTest_ok]
-
-private def deltaPrimeTable : List ℕ := [
-  3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
-  59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127,
-  131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199,
-  211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283,
-  293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383,
-  389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467,
-  479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577,
-  587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661,
-  673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769,
-  773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877,
-  881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983,
-  991, 997, 1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087,
-  1091, 1093, 1097, 1103, 1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193,
-  1201, 1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279, 1283, 1289, 1291, 1297,
-  1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373, 1381, 1399, 1409]
-
-/-- Compute the bounded prime set once, independently of the interval endpoint. -/
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem deltaPrimeTable_ok :
-    (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime) = deltaPrimeTable.toFinset := by
-  decide +kernel
-
-theorem cost_upper (j : ℕ) (hlo : 300 ≤ j) (hhi : j ≤ 1000000) :
-    ((∑ p ∈ (Finset.range (2*j+2)).filter (fun p => 2 < p ∧ p.Prime),
-      ((2*j)/(p^2)+1) : ℕ):ℤ) ≤ costUpper j := by
-  let P := (Finset.range (2*j+2)).filter (fun p => 2 < p ∧ p.Prime)
-  let Q := (Finset.range 1415).filter (fun p => 2 < p ∧ p.Prime)
-  have outside (p : ℕ) (hp : p ∈ P \ Q) : 2*j/(p^2) = 0 := by
-    obtain ⟨hmem,hn⟩ := Finset.mem_sdiff.mp hp
-    have hpp := (Finset.mem_filter.mp hmem).2
-    have hbig : 1415 ≤ p := by
-      by_contra! h
-      exact hn (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr h,hpp⟩)
-    apply Nat.div_eq_of_lt
-    have hp2 := Nat.pow_le_pow_left hbig 2
-    omega
-  have hfloor : (∑ p ∈ P, 2*j/(p^2)) ≤ primeDeltas j := by
-    have remove : (∑ p ∈ P \ Q, 2*j/(p^2)) = 0 := Finset.sum_eq_zero outside
-    have add := Finset.sum_sdiff (f := fun p => 2*j/(p^2))
-      (show P ∩ Q ⊆ P from Finset.inter_subset_left)
-    have eq : P \ (P ∩ Q) = P \ Q := by ext p; simp <;> tauto
-    rw [eq, remove, zero_add] at add
-    rw [← add]
-    apply Finset.sum_le_sum_of_subset_of_nonneg Finset.inter_subset_right
-    exact fun _ _ _ => Nat.zero_le _
-  have hcard := odd_prime_count_upper (2*j+1) (by omega)
-  change (P.card : ℤ) ≤ _ at hcard
-  change ((∑ p ∈ P, (2*j/(p^2)+1) : ℕ):ℤ) ≤ _
-  rw [Finset.sum_add_distrib]
-  simp only [Finset.sum_const, nsmul_eq_mul, mul_one, Nat.cast_add]
-  unfold costUpper
-  omega
-
-end A085265Moderate
-
-namespace A085265Moderate
-
-def rows : List (ℕ × ℕ × ℤ) := [
-  (300, 307, 227),
-  (308, 314, 231),
-  (315, 323, 238),
-  (324, 332, 244),
-  (333, 341, 251),
-  (342, 355, 259),
-  (356, 368, 269),
-  (369, 385, 280),
-  (386, 409, 293),
-  (410, 430, 312),
-  (431, 454, 327),
-  (455, 484, 347),
-  (485, 517, 371),
-  (518, 550, 396),
-  (551, 592, 422),
-  (593, 643, 454),
-  (644, 710, 494),
-  (711, 782, 546),
-  (783, 865, 605),
-  (866, 964, 669),
-  (965, 1082, 747),
-  (1083, 1228, 842),
-  (1229, 1400, 957),
-  (1401, 1624, 1093),
-  (1625, 1885, 1268),
-  (1886, 2213, 1477),
-  (2214, 2501, 1658),
-  (2502, 2810, 1852),
-  (2811, 3175, 2085),
-  (3176, 3613, 2359),
-  (3614, 4153, 2693),
-  (4154, 4805, 3100),
-  (4806, 5602, 3595),
-  (5603, 6574, 4198),
-  (6575, 7745, 4933),
-  (7746, 9163, 5819),
-  (9164, 10868, 6888),
-  (10869, 12905, 8173),
-  (12906, 15340, 9709),
-  (15341, 18230, 11541),
-  (18231, 21628, 13710),
-  (21629, 25645, 16264),
-  (25646, 30356, 19280),
-  (30357, 35902, 22818),
-  (35903, 42385, 26976),
-  (42386, 47546, 30284),
-  (47547, 53065, 33821),
-  (53066, 59170, 37742),
-  (59171, 65906, 42074),
-  (65907, 73363, 46859),
-  (73364, 81562, 52146),
-  (81563, 90625, 57967),
-  (90626, 100606, 64397),
-  (100607, 111608, 71479),
-  (111609, 123731, 79287),
-  (123732, 137092, 87888),
-  (137093, 151816, 97368),
-  (151817, 168016, 107812),
-  (168017, 185867, 119305),
-  (185868, 205514, 131967),
-  (205515, 227137, 145904),
-  (227138, 250933, 161241),
-  (250934, 277159, 178125),
-  (277160, 306017, 196728),
-  (306018, 337817, 217203),
-  (337818, 372854, 239765),
-  (372855, 411418, 264618),
-  (411419, 453940, 291986),
-  (453941, 500809, 322156),
-  (500810, 552482, 355415),
-  (552483, 609460, 392084),
-  (609461, 672335, 432525),
-  (672336, 741674, 477145),
-  (741675, 808306, 519980),
-  (808307, 851143, 547552),
-  (851144, 896314, 576584),
-  (896315, 936791, 602620),
-  (936792, 979100, 629835),
-  (979101, 1000000, 643264)]
-
-end A085265Moderate
-
-namespace A085265Moderate
-
-open A085265Sieve
-
-private def smallPrimes : Finset ℕ := {3,5,7,11,13,17}
-
-private def initialError (r : ℕ) : ℚ := if r = 0 then 0 else (2:ℚ)^(r-1)
-
-private def refund (J : ℕ) (A : Finset ℕ) : ℕ := ∑ p ∈ A, (2*J/(p^2)+1)
-
-private def profileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
-  ∀ A ∈ smallPrimes.powerset, ∀ t : Fin 5,
-    (∏ p ∈ A,p)*19^t.val ≤ 2*hi+2 →
-      (c:ℚ) - (refund hi A:ℚ) + initialError (A.card+t.val) <
-        (lo:ℚ)*largeRho A*(18/19:ℚ)^t.val
-
-private def covers (fromN : ℕ) : List (ℕ × ℕ × ℤ) → Prop
-  | [] => 1000000 < fromN
-  | row::rest => row.1 ≤ fromN ∧ fromN ≤ row.2.1+1 ∧ covers (row.2.1+1) rest
-
-private instance coversDec (k : ℕ) (cs : List (ℕ × ℕ × ℤ)) : Decidable (covers k cs) := by
-  induction cs generalizing k with
-  | nil => exact inferInstanceAs (Decidable (1000000 < k))
-  | cons c tail ih =>
-    unfold covers
-    letI := ih (c.2.1+1)
-    infer_instance
-
-private theorem covers_mem {k J : ℕ} {cs : List (ℕ × ℕ × ℤ)} (hk : k ≤ J)
-    (hj : J ≤ 1000000) (hc : covers k cs) : ∃ c ∈ cs, c.1 ≤ J ∧ J ≤ c.2.1 := by
-  induction cs generalizing k with
-  | nil => change 1000000 < k at hc; omega
-  | cons c cs ih =>
-    obtain ⟨hstart,hend,ht⟩ := hc
-    by_cases h : J ≤ c.2.1
-    · exact ⟨c,by simp,hstart.trans hk,h⟩
-    · obtain ⟨row,hr,hl,hu⟩ := ih (by omega : c.2.1+1 ≤ J) ht
-      exact ⟨row,by simp [hr],hl,hu⟩
-
-/- Insert within A085265Moderate after profileChecks and before the closed
-   row certificates. This file is a Lean source fragment. -/
-
-private def largestProfileRank (D cap : ℕ) : ℕ :=
-  if D * 19^4 ≤ cap then 4 else
-  if D * 19^3 ≤ cap then 3 else
-  if D * 19^2 ≤ cap then 2 else
-  if D * 19 ≤ cap then 1 else 0
-
-private theorem admissible_le_largest {D cap t : ℕ} (ht : t < 5)
-    (h : D * 19^t ≤ cap) : t ≤ largestProfileRank D cap := by
-  interval_cases t <;> try simp only [pow_one] at h
-  all_goals
-    unfold largestProfileRank <;> split_ifs <;> omega
-
-private def endpointProfileChecks (lo hi : ℕ) (c : ℤ) : Prop :=
-  ∀ A ∈ smallPrimes.powerset, (∏ p ∈ A, p) ≤ 2*hi+2 →
-    let m := largestProfileRank (∏ p ∈ A, p) (2*hi+2)
-    (c : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
-      (lo : ℚ) * largeRho A * (18/19 : ℚ)^m
-
-private theorem initialError_nondecreasing {i j : ℕ} (h : i ≤ j) :
-    initialError i ≤ initialError j := by
-  have step (u : ℕ) : initialError u ≤ initialError (u+1) := by
-    cases u with
-    | zero => norm_num [initialError]
-    | succ u =>
-      have hpow : 0 ≤ (2 : ℚ)^u := by positivity
-      have hd : (2 : ℚ)^u ≤ 2^u * 2 := by linarith
-      simpa [initialError, pow_succ] using hd
-  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
-  clear h
-  induction d with
-  | zero => simp
-  | succ d ih => exact ih.trans (step (i+d))
-
-private theorem profile_decay {i j : ℕ} (h : i ≤ j) :
-    (18/19 : ℚ)^j ≤ (18/19 : ℚ)^i := by
-  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
-  clear h
-  induction d with
-  | zero => simp
-  | succ d ih =>
-    rw [Nat.add_succ, pow_succ]
-    calc
-      _ ≤ (18/19 : ℚ)^(i+d) * 1 :=
-        mul_le_mul_of_nonneg_left (by norm_num) (by positivity)
-      _ ≤ (18/19 : ℚ)^i := by simpa using ih
-
-private theorem profileChecks_of_endpoints {lo hi : ℕ} {c : ℤ}
-    (he : endpointProfileChecks lo hi c) : profileChecks lo hi c := by
-  intro A hA t hadm
-  let D := ∏ p ∈ A, p
-  let m := largestProfileRank D (2*hi+2)
-  have hprod : D ≤ 2*hi+2 := by
-    have hp : 1 ≤ (19 : ℕ)^t.val := by positivity
-    have hmul := Nat.mul_le_mul_left D hp
-    have hbase : D ≤ D * 19^t.val := by simpa only [Nat.mul_one] using hmul
-    exact hbase.trans hadm
-  have hle : t.val ≤ m := admissible_le_largest t.isLt hadm
-  have hlast := he A hA hprod
-  change (c : ℚ) - (refund hi A : ℚ) + initialError (A.card + m) <
-    (lo : ℚ) * largeRho A * (18/19 : ℚ)^m at hlast
-  have known : ∀ p ∈ smallPrimes, 2 < p := by decide
-  have hrho : 0 ≤ largeRho A := by
-    unfold largeRho
-    apply Finset.prod_nonneg
-    intro p hp
-    have hbig := known p (Finset.mem_powerset.mp hA hp)
-    have hone : (1 : ℚ) ≤ p := by exact_mod_cast (show 1 ≤ p by omega)
-    exact sub_nonneg.mpr ((div_le_one (by linarith : (0 : ℚ) < p)).mpr hone)
-  exact (add_le_add_left (initialError_nondecreasing (Nat.add_le_add_left hle A.card)) _).trans_lt
-    (hlast.trans_le (mul_le_mul_of_nonneg_left (profile_decay hle)
-      (mul_nonneg (by positivity) hrho)))
-
-private def wholeError (r : ℕ) : ℕ := if r = 0 then 0 else 2^(r-1)
-
-private lemma initialError_asNat (r : ℕ) :
-    initialError r = (wholeError r : ℚ) := by
-  by_cases h : r = 0 <;> simp [initialError, wholeError, h]
-
-private def integralEndpointChecks (lo hi : ℕ) (c : ℤ) : Prop :=
-  ∀ A ∈ smallPrimes.powerset, (∏ p ∈ A, p) ≤ 2*hi+2 →
-    let D := ∏ p ∈ A, p
-    let P := ∏ p ∈ A, (p-1)
-    let m := largestProfileRank D (2*hi+2)
-    (c - (refund hi A : ℤ) + (wholeError (A.card+m) : ℤ)) * (D : ℤ) * (19 : ℤ)^m <
-      (lo : ℤ) * (P : ℤ) * (18 : ℤ)^m
-
-private theorem endpoints_of_integer {lo hi : ℕ} {c : ℤ}
-    (he : integralEndpointChecks lo hi c) : endpointProfileChecks lo hi c := by
-  intro A hA hfit
-  let D := ∏ p ∈ A, p
-  let P := ∏ p ∈ A, (p-1)
-  let m := largestProfileRank D (2*hi+2)
-  have hint := he A hA hfit
-  change (c - (refund hi A : ℤ) + (wholeError (A.card+m) : ℤ)) * (D : ℤ) * (19 : ℤ)^m <
-    (lo : ℤ) * (P : ℤ) * (18 : ℤ)^m at hint
-  have hrat : ((c : ℚ) - (refund hi A : ℚ) + (wholeError (A.card+m) : ℚ)) *
-      (D : ℚ) * (19 : ℚ)^m < (lo : ℚ) * (P : ℚ) * (18 : ℚ)^m := by
-    exact_mod_cast hint
-  have known : ∀ p ∈ smallPrimes, 2 < p := by decide
-  have hs (p : ℕ) (hp : p ∈ A) : 2 < p := known p (Finset.mem_powerset.mp hA hp)
-  have hDnat : 0 < D := Finset.prod_pos (fun p hp => by have := hs p hp; omega)
-  have hD : (0 : ℚ) < D := by exact_mod_cast hDnat
-  have hρ : largeRho A * (D : ℚ) = (P : ℚ) := by
-    dsimp only [largeRho, D, P]
-    simp only [Nat.cast_prod]
-    rw [← Finset.prod_mul_distrib]
-    apply Finset.prod_congr rfl
-    intro p hp
-    have hpos := hs p hp
-    have hn : (p : ℚ) ≠ 0 := by exact_mod_cast (show p ≠ 0 by omega)
-    rw [Nat.cast_sub (show 1 ≤ p by omega), Nat.cast_one]
-    field_simp [hn] <;> ring
-  have hpower : (18/19 : ℚ)^m * (19 : ℚ)^m = (18 : ℚ)^m := by
-    rw [← mul_pow]
-    norm_num
-  change (c : ℚ) - (refund hi A : ℚ) + initialError (A.card+m) <
-    (lo : ℚ) * largeRho A * (18/19 : ℚ)^m
-  apply (mul_lt_mul_iff_of_pos_right (mul_pos hD (by positivity : (0 : ℚ) < 19^m))).mp
-  calc
-    _ = ((c : ℚ) - (refund hi A : ℚ) + (wholeError (A.card+m) : ℚ)) *
-        (D : ℚ) * (19 : ℚ)^m := by rw [initialError_asNat]; ring
-    _ < _ := hrat
-    _ = (lo : ℚ) * (largeRho A * (D : ℚ)) * ((18/19 : ℚ)^m * (19 : ℚ)^m) := by
-      rw [hρ, hpower]
-    _ = _ := by ring
-
-private def verifiedRow (c : ℕ × ℕ × ℤ) : Prop :=
-  300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
-    profileChecks c.1 c.2.1 c.2.2 ∧ costUpper c.2.1 ≤ c.2.2
-
-private def integerCertifiedRow (c : ℕ × ℕ × ℤ) : Prop :=
-  300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
-    integralEndpointChecks c.1 c.2.1 c.2.2 ∧ costUpper c.2.1 ≤ c.2.2
-
-private theorem verifiedRow_of_integer {c : ℕ × ℕ × ℤ} (h : integerCertifiedRow c) :
-    verifiedRow c :=
-  ⟨h.1, h.2.1, profileChecks_of_endpoints (endpoints_of_integer h.2.2.1), h.2.2.2⟩
-
-/- Check each interval separately so kernel reduction can release its arithmetic
-   intermediates before the next interval. -/
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow300 : verifiedRow (300, 307, 227) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow308 : verifiedRow (308, 314, 231) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow315 : verifiedRow (315, 323, 238) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow324 : verifiedRow (324, 332, 244) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow333 : verifiedRow (333, 341, 251) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow342 : verifiedRow (342, 355, 259) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow356 : verifiedRow (356, 368, 269) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow369 : verifiedRow (369, 385, 280) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow386 : verifiedRow (386, 409, 293) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow410 : verifiedRow (410, 430, 312) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow431 : verifiedRow (431, 454, 327) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow455 : verifiedRow (455, 484, 347) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow485 : verifiedRow (485, 517, 371) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow518 : verifiedRow (518, 550, 396) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow551 : verifiedRow (551, 592, 422) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow593 : verifiedRow (593, 643, 454) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow644 : verifiedRow (644, 710, 494) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow711 : verifiedRow (711, 782, 546) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow783 : verifiedRow (783, 865, 605) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow866 : verifiedRow (866, 964, 669) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow965 : verifiedRow (965, 1082, 747) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow1083 : verifiedRow (1083, 1228, 842) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow1229 : verifiedRow (1229, 1400, 957) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow1401 : verifiedRow (1401, 1624, 1093) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow1625 : verifiedRow (1625, 1885, 1268) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow1886 : verifiedRow (1886, 2213, 1477) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow2214 : verifiedRow (2214, 2501, 1658) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow2502 : verifiedRow (2502, 2810, 1852) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow2811 : verifiedRow (2811, 3175, 2085) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow3176 : verifiedRow (3176, 3613, 2359) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow3614 : verifiedRow (3614, 4153, 2693) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow4154 : verifiedRow (4154, 4805, 3100) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow4806 : verifiedRow (4806, 5602, 3595) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow5603 : verifiedRow (5603, 6574, 4198) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow6575 : verifiedRow (6575, 7745, 4933) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow7746 : verifiedRow (7746, 9163, 5819) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow9164 : verifiedRow (9164, 10868, 6888) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow10869 : verifiedRow (10869, 12905, 8173) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow12906 : verifiedRow (12906, 15340, 9709) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow15341 : verifiedRow (15341, 18230, 11541) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow18231 : verifiedRow (18231, 21628, 13710) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow21629 : verifiedRow (21629, 25645, 16264) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow25646 : verifiedRow (25646, 30356, 19280) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow30357 : verifiedRow (30357, 35902, 22818) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow35903 : verifiedRow (35903, 42385, 26976) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow42386 : verifiedRow (42386, 47546, 30284) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow47547 : verifiedRow (47547, 53065, 33821) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow53066 : verifiedRow (53066, 59170, 37742) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow59171 : verifiedRow (59171, 65906, 42074) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow65907 : verifiedRow (65907, 73363, 46859) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow73364 : verifiedRow (73364, 81562, 52146) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow81563 : verifiedRow (81563, 90625, 57967) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow90626 : verifiedRow (90626, 100606, 64397) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow100607 : verifiedRow (100607, 111608, 71479) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow111609 : verifiedRow (111609, 123731, 79287) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow123732 : verifiedRow (123732, 137092, 87888) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow137093 : verifiedRow (137093, 151816, 97368) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow151817 : verifiedRow (151817, 168016, 107812) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow168017 : verifiedRow (168017, 185867, 119305) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow185868 : verifiedRow (185868, 205514, 131967) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow205515 : verifiedRow (205515, 227137, 145904) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow227138 : verifiedRow (227138, 250933, 161241) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow250934 : verifiedRow (250934, 277159, 178125) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow277160 : verifiedRow (277160, 306017, 196728) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow306018 : verifiedRow (306018, 337817, 217203) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow337818 : verifiedRow (337818, 372854, 239765) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow372855 : verifiedRow (372855, 411418, 264618) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow411419 : verifiedRow (411419, 453940, 291986) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow453941 : verifiedRow (453941, 500809, 322156) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow500810 : verifiedRow (500810, 552482, 355415) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow552483 : verifiedRow (552483, 609460, 392084) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow609461 : verifiedRow (609461, 672335, 432525) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow672336 : verifiedRow (672336, 741674, 477145) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow741675 : verifiedRow (741675, 808306, 519980) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow808307 : verifiedRow (808307, 851143, 547552) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow851144 : verifiedRow (851144, 896314, 576584) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow896315 : verifiedRow (896315, 936791, 602620) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow936792 : verifiedRow (936792, 979100, 629835) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-private theorem moderateRow979101 : verifiedRow (979101, 1000000, 643264) := by
-  apply verifiedRow_of_integer
-  unfold integerCertifiedRow integralEndpointChecks
-  rw [costUpper_short, primeDeltas, deltaPrimeTable_ok]
-  decide +kernel
-
-private theorem checks : ∀ c ∈ rows, 300 ≤ c.1 ∧ c.2.1 ≤ 1000000 ∧
-    profileChecks c.1 c.2.1 c.2.2 ∧ costUpper c.2.1 ≤ c.2.2 := by
-  change ∀ c ∈ rows, verifiedRow c
-  unfold rows
-  refine List.forall_mem_cons.mpr ⟨moderateRow300, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow308, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow315, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow324, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow333, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow342, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow356, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow369, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow386, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow410, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow431, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow455, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow485, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow518, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow551, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow593, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow644, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow711, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow783, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow866, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow965, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow1083, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow1229, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow1401, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow1625, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow1886, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow2214, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow2502, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow2811, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow3176, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow3614, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow4154, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow4806, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow5603, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow6575, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow7746, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow9164, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow10869, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow12906, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow15341, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow18231, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow21629, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow25646, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow30357, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow35903, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow42386, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow47547, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow53066, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow59171, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow65907, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow73364, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow81563, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow90626, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow100607, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow111609, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow123732, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow137093, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow151817, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow168017, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow185868, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow205515, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow227138, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow250934, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow277160, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow306018, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow337818, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow372855, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow411419, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow453941, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow500810, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow552483, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow609461, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow672336, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow741675, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow808307, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow851144, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow896315, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow936792, ?_⟩
-  refine List.forall_mem_cons.mpr ⟨moderateRow979101, ?_⟩
-  simp
-
-private theorem rho_nonneg' {S : Finset ℕ} (h : ∀ p ∈ S, 2 < p) : 0 ≤ largeRho S := by
-  apply Finset.prod_nonneg
-  intro p hp
-  have h₁ : (1:ℚ) ≤ p := by exact_mod_cast (show 1 ≤ p by have := h p hp; omega)
-  exact sub_nonneg.mpr ((div_le_one (by linarith : (0:ℚ) < p)).mpr h₁)
-
-private theorem missing_mono {J H : ℕ} (hj : J ≤ H) {S A : Finset ℕ} (ha : A ⊆ S) :
-    (∑ p ∈ largePrimeSet (2*J+1) \ S, (2*J/(p^2)+1)) ≤
-      ∑ p ∈ largePrimeSet (2*H+1) \ A, (2*H/(p^2)+1) := by
-  have sub : largePrimeSet (2*J+1) \ S ⊆ largePrimeSet (2*H+1) \ A := by
-    intro p hp
-    obtain ⟨hP,hs⟩ := Finset.mem_sdiff.mp hp
-    obtain ⟨hR,hp⟩ := Finset.mem_filter.mp hP
-    have hx := Finset.mem_range.mp hR
-    exact Finset.mem_sdiff.mpr ⟨Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega),hp⟩,
-      fun hp => hs (ha hp)⟩
-  calc
-    _ ≤ ∑ p ∈ largePrimeSet (2*J+1) \ S, (2*H/(p^2)+1) := by
-      apply Finset.sum_le_sum
-      intro p hp
-      exact Nat.add_le_add_right (Nat.div_le_div_right (Nat.mul_le_mul_left 2 hj)) 1
-    _ ≤ _ := Finset.sum_le_sum_of_subset_of_nonneg sub (fun _ _ _ => Nat.zero_le _)
-
-set_option maxHeartbeats 2000000 in
-theorem moderate_sieve_budget {J : ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000)
-    {S : Finset ℕ} (hS : ∀ p ∈ S, 2 < p ∧ p.Prime) (hB : (∏ p ∈ S,p) ≤ 2*J+2) :
-    ((∑ p ∈ largePrimeSet (2*J+1) \ S, (2*J/(p^2)+1) : ℕ):ℚ) +
-        (if S.card=0 then 0 else (2:ℚ)^(S.card-1)) < (J:ℚ)*largeRho S := by
-  obtain ⟨c,hc,hl,hu⟩ := covers_mem hlo hhi (show covers 300 rows by decide)
-  obtain ⟨hl₀,hu₀,hcases,hcost⟩ := checks c hc
-  let A := S ∩ smallPrimes
-  let T := S \ A
-  have haS : A ⊆ S := Finset.inter_subset_left
-  have hat : Disjoint A T := Finset.disjoint_left.mpr
-    (fun _ ha ht => (Finset.mem_sdiff.mp ht).2 ha)
-  have hsplit : A ∪ T = S := Finset.union_sdiff_of_subset haS
-  have card : A.card+T.card = S.card := by rw [← Finset.card_union_of_disjoint hat,hsplit]
-  have large (p : ℕ) (hp : p ∈ T) : 19 ≤ p := by
-    obtain ⟨hs,ha⟩ := Finset.mem_sdiff.mp hp
-    have tab : ∀ t : Fin 19, 2 < t.val → Nat.Prime t.val → t.val ∈ smallPrimes := by decide
-    by_contra! h
-    have prop := hS p hs
-    exact ha (Finset.mem_inter.mpr ⟨hs,tab ⟨p,h⟩ prop.1 prop.2⟩)
-  have pT : 19^T.card ≤ ∏ p ∈ T,p := by
-    simpa only [Finset.prod_const] using (Finset.prod_le_prod' (fun p hp => large p hp))
-  have pA : (∏ p ∈ A,p)*19^T.card ≤ 2*J+2 := calc
-    _ ≤ _ := Nat.mul_le_mul_left (∏ p ∈ A,p) pT
-    _ = ∏ p ∈ S,p := by rw [← Finset.prod_union hat,hsplit]
-    _ ≤ _ := hB
-  have pApos : 0 < ∏ p ∈ A,p := Finset.prod_pos (fun p hp => by have := (hS p (haS hp)).1; omega)
-  have pTle : 19^T.card ≤ 2*J+2 := (Nat.le_mul_of_pos_left _ pApos).trans pA
-  have ht : T.card < 5 := by
-    by_contra! hk
-    have high := Nat.pow_le_pow_right (by decide : 0 < 19) hk
-    omega
-  have hcase := hcases A (Finset.mem_powerset.mpr Finset.inter_subset_right) ⟨T.card,ht⟩
-      (pA.trans (by omega))
-  have hTρ : (18/19:ℚ)^T.card ≤ largeRho T := by
-    have point (p : ℕ) (hp : p ∈ T) : (18/19:ℚ) ≤ 1-1/(p:ℚ) := by
-      have pq : (19:ℚ) ≤ p := by exact_mod_cast large p hp
-      have inf := one_div_le_one_div_of_le (by norm_num : (0:ℚ) < 19) pq
-      linarith
-    have bound (U : Finset ℕ) (hu : ∀ p ∈ U, (18/19:ℚ) ≤ 1-1/(p:ℚ)) :
-        (18/19:ℚ)^U.card ≤ largeRho U := by
-      induction U using Finset.induction_on with
-      | empty => simp [largeRho]
-      | @insert p U hp ih =>
-        have hp' := hu p (Finset.mem_insert_self p U)
-        have hi := ih (fun q hq => hu q (Finset.mem_insert_of_mem hq))
-        have h := mul_le_mul hp' hi (by positivity)
-          (by linarith only [hp'] : 0 ≤ 1-1/(p:ℚ))
-        simpa [largeRho, hp, pow_succ, mul_comm] using h
-    exact bound T point
-  have hρA := rho_nonneg' (S := A) (fun p hp => (hS p (haS hp)).1)
-  have hrho : largeRho A * largeRho T = largeRho S := by
-    unfold largeRho
-    rw [← Finset.prod_union hat,hsplit]
-  have hright : (c.1:ℚ)*largeRho A*(18/19:ℚ)^T.card ≤ (J:ℚ)*largeRho S := calc
-    _ = (c.1:ℚ)*(largeRho A*(18/19:ℚ)^T.card) := by ring
-    _ ≤ (c.1:ℚ)*(largeRho A*largeRho T) := by gcongr
-    _ = _ := by rw [hrho]
-    _ ≤ _ := mul_le_mul_of_nonneg_right (by exact_mod_cast hl) (rho_nonneg' (fun p hp => (hS p hp).1))
-  have hA : A ⊆ largePrimeSet (2*c.2.1+1) := by
-    intro p hp
-    have props := hS p (haS hp)
-    have tab : ∀ q ∈ smallPrimes, q ≤ 17 := by decide
-    have hle := tab p (Finset.mem_inter.mp hp).2
-    exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega),props⟩
-  have hrebate := Finset.sum_sdiff (f := fun p => 2*c.2.1/(p^2)+1) hA
-  have htotal := (cost_upper c.2.1 (hl₀.trans (hl.trans hu)) hu₀).trans hcost
-  have hmono := missing_mono hu haS
-  have hleft : ((∑ p ∈ largePrimeSet (2*J+1) \ S, (2*J/(p^2)+1) : ℕ):ℚ) ≤
-      (c.2.2:ℚ) - (refund c.2.1 A:ℚ) := by
-    apply le_sub_iff_add_le.mpr
-    have hsum := (Nat.add_le_add_right hmono (refund c.2.1 A)).trans_eq hrebate
-    have hsumZ : (((∑ p ∈ largePrimeSet (2*J+1) \ S, (2*J/(p^2)+1)) +
-        refund c.2.1 A : ℕ) : ℤ) ≤ c.2.2 := calc
-      _ ≤ ((∑ p ∈ largePrimeSet (2*c.2.1+1), (2*c.2.1/(p^2)+1) : ℕ) : ℤ) := by
-        exact_mod_cast hsum
-      _ ≤ _ := htotal
-    exact_mod_cast hsumZ
-  change _ + initialError S.card < _
-  rw [← card]
-  exact (add_le_add hleft le_rfl).trans_lt (hcase.trans_le hright)
-
-end A085265Moderate
-
 namespace A085265InclusionExclusion
 
-open A085265Sieve A085265Moderate
+open A085265Sieve
 
 private theorem error_le_pow (r : ℕ) : initialError r ≤ (2:ℚ)^r := by
   cases r with
@@ -2798,7 +1604,7 @@ private theorem large_hit_total {n J b T : ℕ} {S : Finset ℕ} (D : PrimeEnume
   change K*(∑ p ∈ P,w p) ≤ _ at main
   linarith
 
-theorem large_or_moderate_rep {n J b : ℕ} (S : Finset ℕ) (hJ : 300 ≤ J)
+theorem large_rep {n J b : ℕ} (S : Finset ℕ) (hJ : 1000000 ≤ J)
     (hb : b=1 ∨ b=2) (hS : ∀ p ∈ S, 2<p ∧ p.Prime)
     (hreg : ∀ p : ℕ, 2<p → p.Prime → (p∈S ↔ p^2∣n))
     (hB : (∏ p ∈ S,p) ≤ 2*J+2) (hfit : ∀ x<J, (2*x+b)^2<n)
@@ -2813,26 +1619,13 @@ theorem large_or_moderate_rep {n J b : ℕ} (S : Finset ℕ) (hJ : 300 ≤ J)
   have hc : (candidateSet D.ps J b).card ≤ ∑ p ∈ P, (hitSet n p D.ps J b).card :=
     (Finset.card_le_card cover).trans Finset.card_biUnion_le
   have initial := initial_candidates D b J hS hb
-  by_cases hm : J ≤ 1000000
-  · have budget := moderate_sieve_budget (S:=S) hJ hm hS hB
-    have hh : (candidateSet D.ps J b).card ≤ ∑ p ∈ P, (2*J/(p^2)+1) := by
-      refine hc.trans ?_
-      apply Finset.sum_le_sum
-      intro p hp
-      obtain ⟨hh,hno⟩ := Finset.mem_sdiff.mp hp
-      obtain ⟨h2,hpr⟩ := (Finset.mem_filter.mp hh).2
-      exact hit_card_raw D.ps hpr h2 (fun h => hno ((hreg p h2 hpr).mpr h)) hb2
-    have hcast : ((candidateSet D.ps J b).card:ℚ) ≤ ((∑ p ∈ P, (2*J/(p^2)+1) : ℕ):ℚ) := by
-      exact_mod_cast hh
-    change ((∑ p ∈ P, (2*J/(p^2)+1) : ℕ):ℚ) + initialError S.card < (J:ℚ)*largeRho S at budget
-    linarith
-  · obtain ⟨T,hT,hTJ,budget⟩ := large_sieve_budget (by omega : 1000000≤J) hS hB
-    have loss := large_hit_total (J:=J) D hT hS hreg hb2
-    have hcast : ((candidateSet D.ps J b).card:ℚ) ≤ ∑ p ∈ P, ((hitSet n p D.ps J b).card:ℚ) := by
-      exact_mod_cast hc
-    have combined := hcast.trans loss
-    have herr := error_le_pow S.card
-    by_cases h3 : 3∈S <;> simp only [h3,if_true,if_false] at combined budget <;> nlinarith
+  obtain ⟨T,hT,hTJ,budget⟩ := large_sieve_budget hJ hS hB
+  have loss := large_hit_total (J:=J) D hT hS hreg hb2
+  have hcast : ((candidateSet D.ps J b).card:ℚ) ≤ ∑ p ∈ P, ((hitSet n p D.ps J b).card:ℚ) := by
+    exact_mod_cast hc
+  have combined := hcast.trans loss
+  have herr := error_le_pow S.card
+  by_cases h3 : 3∈S <;> simp only [h3,if_true,if_false] at combined budget <;> nlinarith
 
 end A085265InclusionExclusion
 
@@ -2853,18 +1646,16 @@ private theorem square_product_dvd (n : ℕ) (S : Finset ℕ)
     rw [Finset.prod_insert hp,mul_pow]
     exact ((hc.pow_left 2).pow_right 2).mul_dvd_of_dvd_of_dvd hd (ih hT)
 
-theorem positive_square_general {n : ℕ} (hn : 0<n) (h₁ : n ≠ 1) (h₁₃ : n ≠ 13) :
+theorem positive_square_large {n : ℕ} (hlarge : 4000000000000 < n) :
     ∃ k : ℕ, 0 < k ∧ k^2 < n ∧ Squarefree (n-k^2) := by
-  by_cases hsmall : n ≤ 365000
-  · obtain ⟨k,hk,_,hlt,hs⟩ := squarefree_finite hn hsmall h₁ h₁₃
-    exact ⟨k,hk,hlt,hs⟩
+  have hn : 0 < n := by omega
   let u := (n-1).sqrt
   let e : ℕ := if 4 ∣ n then 1 else 0
   let b : ℕ := if 4 ∣ n then 1 else 2
   let J := (u+e)/2
   let S := (Finset.range (n+1)).filter (fun p => 2<p ∧ p.Prime ∧ p^2∣n)
-  have hu : 600 ≤ u := Nat.le_sqrt'.mpr (by norm_num; omega)
-  have hJ : 300 ≤ J := by dsimp only [J]; omega
+  have hu : 2000000 ≤ u := Nat.le_sqrt'.mpr (by norm_num; omega)
+  have hJ : 1000000 ≤ J := by dsimp only [J]; omega
   have hupper : (n-1).sqrt ≤ 2*J+1 := by change u ≤ 2*((u+e)/2)+1; omega
   have hb : b=1 ∨ b=2 := by unfold b; split <;> simp
   have hfit (x : ℕ) (hx : x<J) : (2*x+b)^2 < n := by
@@ -2908,33 +1699,2289 @@ theorem positive_square_general {n : ℕ} (hn : 0<n) (h₁ : n ≠ 1) (h₁₃ :
     · have hb' : b=2 := by simp [b,hc]
       have hs : 4 ∣ (2*x+b)^2 := ⟨(x+1)^2,by rw [hb']; ring⟩
       exact hc (by simpa only [Nat.sub_add_cancel hlt.le] using dvd_add hbad hs)
-  obtain ⟨x,hx,hs⟩ := A085265InclusionExclusion.large_or_moderate_rep S hJ hb hS hreg hB hfit hupper hpar
+  obtain ⟨x,hx,hs⟩ := A085265InclusionExclusion.large_rep S hJ hb hS hreg hB hfit hupper hpar
   exact ⟨2*x+b,by omega,hfit x hx,hs⟩
 
 end A085265Sieve
 
+theorem checked : OMA.R_oeis_a085265_R2_H2_R1.H2 := by
+  intro n hn
+  exact A085265Sieve.positive_square_large hn
+
+end LargeRange
+
+namespace MiddleObstruction
+
+/-!
+The middle range in OEIS A085265. Assuming that every positive root fails,
+we bound the candidate count above by the sum of its prime-square exclusions.
+Credit: @dwilfand-sys (proof prepared by Codex). Statement by @niclorusso.
+-/
+
+open scoped BigOperators
+
 namespace A085265Sieve
 
-theorem exclude_one_thirteen {n k : ℕ} (hk : 0 < k) (hkn : k^2 < n)
-    (hs : Squarefree (n-k^2)) : n ≠ 1 ∧ n ≠ 13 := by
-  have hk₁ : 0 < k^2 := pow_pos hk 2
-  refine ⟨by omega,?_⟩
-  rintro rfl
-  have hsmall : k < 4 := by
-    by_contra! h
-    have := Nat.pow_le_pow_left h 2
-    omega
-  have table : ∀ j : Fin 4, 0 < j.val → ¬ Squarefree (13-j.val^2) := by decide +kernel
-  exact table ⟨k,hsmall⟩ hk hs
+def largePrimeSet (N : ℕ) : Finset ℕ :=
+  (Finset.range (N+1)).filter (fun p => 2 < p ∧ Nat.Prime p)
+
+def largeRho (S : Finset ℕ) : ℚ := ∏ p ∈ S, (1-1/(p:ℚ))
 
 end A085265Sieve
 
-theorem OMA.solution : type_of% @OMA.S_oeis_a085265.main := by
-  intro n hn
+namespace A085265InclusionExclusion
+
+open A085265Sieve
+
+/-- Repeatedly subtract the contribution of multiples of the next divisor. -/
+def sift (ps : List ℕ) (F : ℕ → ℚ) (d : ℕ) : ℚ :=
+  match ps with
+  | [] => F d
+  | p :: rest => sift rest F d - sift rest F (d*p)
+
+def density (ps : List ℕ) : ℚ :=
+  (ps.map fun p => 1 - 1 / (p : ℚ)).prod
+
+theorem sift_main (ps : List ℕ) (X : ℚ) (d : ℕ) :
+    sift ps (fun t => X / (t : ℚ)) d = X / d * density ps := by
+  induction ps generalizing d with
+  | nil => simp [sift, density]
+  | cons p rest ih =>
+    change sift rest (fun t => X / (t : ℚ)) d -
+      sift rest (fun t => X / (t : ℚ)) (d*p) = _
+    rw [ih d, ih (d*p)]
+    change X / (d : ℚ) * density rest - X / ((d*p : ℕ) : ℚ) * density rest =
+      X / (d : ℚ) * ((1 - 1 / (p : ℚ)) * density rest)
+    simp only [Nat.cast_mul, div_eq_mul_inv, mul_inv_rev, one_mul]
+    ring
+
+theorem sift_shift (ps : List ℕ) (F : ℕ → ℚ) (c : ℚ) (d : ℕ) :
+    sift ps (fun t => F t + c) d = sift ps F d + (if ps = [] then c else 0) := by
+  induction ps generalizing d with
+  | nil => simp [sift]
+  | cons p rest ih => simp [sift, ih] <;> ring
+
+/-- A pointwise unit error for each squarefree divisor contributes at most one
+unit for each subset of the prime divisors. Only divisors of d times the
+listed product are needed. -/
+theorem sift_error (ps : List ℕ) (F H : ℕ → ℚ) (E : ℚ) (d : ℕ)
+    (h : ∀ t : ℕ, t ∣ d*ps.prod → |F t - H t| ≤ E) :
+    |sift ps F d - sift ps H d| ≤ (2:ℚ)^ps.length * E := by
+  induction ps generalizing d with
+  | nil => simpa [sift] using h d (by simp)
+  | cons p rest ih =>
+    have hd : d * rest.prod ∣ d * (p :: rest).prod := ⟨p, by simp only [List.prod_cons]; ring⟩
+    have hleft := ih d (fun t ht => h t (ht.trans hd))
+    have hright := ih (d*p) (fun t ht => h t (by simpa [Nat.mul_assoc] using ht))
+    obtain ⟨hl, hu⟩ := abs_le.mp hleft
+    obtain ⟨hl', hu'⟩ := abs_le.mp hright
+    simp only [sift, List.length_cons, pow_succ]
+    apply abs_le.mpr
+    constructor <;> linarith
+
+theorem sift_sum {α : Type*} (s : Finset α) (ps : List ℕ) (F : α → ℕ → ℚ) (d : ℕ) :
+    sift ps (fun t => ∑ x ∈ s, F x t) d = ∑ x ∈ s, sift ps (F x) d := by
+  induction ps generalizing d with
+  | nil => rfl
+  | cons p rest ih => simp only [sift, ih, Finset.sum_sub_distrib]
+
+/-- Sieving the indicator of divisibility gives the indicator of divisibility
+and coprimality to the sieving product. -/
+theorem sift_indicator (ps : List ℕ) (x d : ℕ) (hpair : ps.Pairwise Nat.Coprime)
+    (hp : ∀ p ∈ ps, Nat.Prime p) (hd : ∀ p ∈ ps, d.Coprime p) :
+    sift ps (fun t => if t ∣ x then 1 else 0) d =
+      if d ∣ x ∧ ps.prod.Coprime x then 1 else 0 := by
+  induction ps generalizing d with
+  | nil => simp [sift]
+  | cons p rest ih =>
+    obtain ⟨hpr, hr⟩ := List.pairwise_cons.mp hpair
+    have hprime := hp p (by simp)
+    have hdp := hd p (by simp)
+    have hprimes : ∀ q ∈ rest, Nat.Prime q := fun q hq => hp q (by simp [hq])
+    have hcop : ∀ q ∈ rest, d.Coprime q := fun q hq => hd q (by simp [hq])
+    have hcop' : ∀ q ∈ rest, (d*p).Coprime q := fun q hq =>
+      (hcop q hq).mul_left (hpr q hq)
+    have hmul : d*p ∣ x ↔ d ∣ x ∧ p ∣ x := by
+      constructor
+      · intro hh
+        exact ⟨(Nat.dvd_mul_right d p).trans hh, (Nat.dvd_mul_left p d).trans hh⟩
+      · rintro ⟨h1,h2⟩
+        exact hdp.mul_dvd_of_dvd_of_dvd h1 h2
+    simp only [sift, ih d hr hprimes hcop, ih (d*p) hr hprimes hcop',
+      List.prod_cons, Nat.coprime_mul_iff_left, hprime.coprime_iff_not_dvd, hmul]
+    by_cases h1 : d ∣ x <;> by_cases h2 : p ∣ x <;> by_cases h3 : rest.prod.Coprime x <;>
+      simp [h1,h2,h3]
+
+/-- In particular, if the number of multiples of each d in a candidate set
+is within E of X/d, imposing coprimality changes the main term to X times
+the proportion of units, with error at most 2^r times E. -/
+theorem coprime_values_error_centered {α : Type*} (s : Finset α) (v : α → ℕ)
+    (ps : List ℕ) (X c E : ℚ)
+    (hpair : ps.Pairwise Nat.Coprime) (hp : ∀ p ∈ ps, Nat.Prime p)
+    (h : ∀ d : ℕ, d ∣ ps.prod →
+      |(∑ x ∈ s, if d ∣ v x then (1:ℚ) else 0) - (X/d + c)| ≤ E) :
+    |(∑ x ∈ s, if ps.prod.Coprime (v x) then (1:ℚ) else 0)
+        - (X * density ps + if ps = [] then c else 0)|
+      ≤ (2:ℚ)^ps.length * E := by
+  have bound := sift_error ps (fun d => ∑ x ∈ s, if d ∣ v x then (1:ℚ) else 0)
+    (fun t => X / (t : ℚ) + c) E 1 (fun t ht => h t (by simpa using ht))
+  rw [sift_sum, sift_shift, sift_main] at bound
+  have hind (x : ℕ) : sift ps (fun t => if t ∣ x then 1 else 0) 1 =
+      if ps.prod.Coprime x then 1 else 0 := by
+    simpa using sift_indicator ps x 1 hpair hp (fun p _ => Nat.coprime_one_left p)
+  simpa only [hind, Nat.cast_one, div_one] using bound
+
+/-- Count the progression r, r+m, ... strictly below J. -/
+theorem residue_card (m J r : ℕ) (hm : 0 < m) (hr : r < m) :
+    ((Finset.range J).filter (fun x => x % m = r)).card =
+      J/m + if r < J%m then 1 else 0 := by
+  let c := J/m + if r < J%m then 1 else 0
+  let f (i : ℕ) := r+i*m
+  have hJ := Nat.div_add_mod' J m
+  have hrem := Nat.mod_lt J hm
+  have hlt (i : ℕ) : i < c ↔ f i < J := by
+    dsimp [c,f]
+    rcases lt_trichotomy i (J/m) with hi | he | hi
+    · have hg : (i+1)*m ≤ (J/m)*m := Nat.mul_le_mul_right m hi
+      rw [Nat.add_mul, one_mul] at hg
+      split_ifs <;> omega
+    · rw [he]
+      split_ifs <;> omega
+    · have hg : (J/m+1)*m ≤ i*m := Nat.mul_le_mul_right m hi
+      rw [Nat.add_mul, one_mul] at hg
+      split_ifs <;> omega
+  have hs : (Finset.range J).filter (fun x => x % m = r) = (Finset.range c).image f := by
+    ext x
+    constructor
+    · intro hx
+      obtain ⟨hx,he⟩ := Finset.mem_filter.mp hx
+      have hv : f (x/m) = x := by
+        have hv := Nat.mod_add_div' x m
+        simpa only [f,he] using hv
+      exact Finset.mem_image.mpr ⟨x/m, Finset.mem_range.mpr
+        ((hlt _).mpr (by rw [hv]; exact Finset.mem_range.mp hx)), hv⟩
+    · intro hx
+      obtain ⟨i,hi,rfl⟩ := Finset.mem_image.mp hx
+      exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ((hlt i).mp (Finset.mem_range.mp hi)),
+        by simp [f,Nat.add_mod,Nat.mod_eq_of_lt hr]⟩
+  have hf : Function.Injective f := by
+    intro i j hij
+    dsimp [f] at hij
+    have he : i*m = j*m := by omega
+    exact Nat.eq_of_mul_eq_mul_right hm he
+  rw [hs, Finset.card_image_of_injective _ hf, Finset.card_range]
+
+private theorem dvd_double_rem (d x b : ℕ) :
+    d ∣ 2*x+b ↔ d ∣ 2*(x%d)+b := by
+  have hx := Nat.div_add_mod' x d
+  have he : 2*x+b = (2*(x/d))*d + (2*(x%d)+b) := by nlinarith
+  rw [he]
+  exact Nat.dvd_add_right (Nat.dvd_mul_left d _)
+
+private theorem odd_divisor_even_roots {d : ℕ} (hd : Odd d) (x : ℕ) :
+    d ∣ 2*x+2 ↔ x%d=d-1 := by
+  obtain ⟨v,hv⟩ := hd
+  have hdpos : 0 < d := by omega
+  have hrem := Nat.mod_lt x hdpos
+  rw [dvd_double_rem]
   constructor
-  · rintro ⟨s,k,hs,hsf,hk,he⟩
-    have hdiff : n-k^2 = s := by omega
-    exact A085265Sieve.exclude_one_thirteen hk (by omega) (hdiff.symm ▸ hsf)
-  · rintro ⟨h₁,h₁₃⟩
-    obtain ⟨k,hk,hkn,hs⟩ := A085265Sieve.positive_square_general hn h₁ h₁₃
-    exact ⟨n-k^2,k,by omega,hs,hk,by omega⟩
+  · intro h
+    by_contra hne
+    have hh := Nat.eq_of_dvd_of_lt_two_mul (by omega : 2*(x%d)+2 ≠ 0) h (by omega)
+    omega
+  · intro he
+    refine ⟨2, ?_⟩
+    omega
+
+private theorem odd_divisor_odd_roots {d v : ℕ} (hv : d=2*v+1) (x : ℕ) :
+    d ∣ 2*x+1 ↔ x%d=v := by
+  have hdpos : 0 < d := by omega
+  have hrem := Nat.mod_lt x hdpos
+  rw [dvd_double_rem]
+  constructor
+  · intro h
+    have hh := Nat.eq_of_dvd_of_lt_two_mul (by omega : 2*(x%d)+1 ≠ 0) h (by omega)
+    omega
+  · intro he
+    rw [he, ← hv]
+
+/-- The initial progression of even roots has an error of at most one half
+after centering its main term by subtracting one half. -/
+theorem even_divisor_error {d : ℕ} (hd : Odd d) (J : ℕ) :
+    |(∑ x ∈ Finset.range J, if d ∣ 2*x+2 then (1:ℚ) else 0) -
+      ((J:ℚ)/d - 1/2)| ≤ 1/2 := by
+  obtain ⟨v,hv⟩ := hd
+  have hdpos : 0 < d := by omega
+  have hr := Nat.mod_lt J hdpos
+  have hn : ¬ d-1 < J%d := by omega
+  simp_rw [odd_divisor_even_roots (show Odd d from ⟨v,hv⟩)]
+  rw [Finset.sum_boole, residue_card d J (d-1) hdpos (by omega), if_neg hn, Nat.add_zero]
+  have hJ := Nat.div_add_mod' J d
+  have hlow : ((J/d:ℕ):ℚ)*(d:ℚ) ≤ J := by
+    exact_mod_cast (show (J/d)*d ≤ J by omega)
+  have hhigh : (J:ℚ) ≤ (((J/d:ℕ):ℚ)+1)*(d:ℚ) := by
+    exact_mod_cast (show J ≤ (J/d+1)*d by rw [Nat.add_mul,one_mul]; omega)
+  have hpos : (0:ℚ) < d := by exact_mod_cast hdpos
+  have h1 := (le_div_iff₀ hpos).mpr hlow
+  have h2 := (div_le_iff₀ hpos).mpr hhigh
+  exact abs_le.mpr ⟨by linarith, by linarith⟩
+
+/-- In the odd progression the admissible class is centered in every block. -/
+theorem odd_divisor_error {d : ℕ} (hd : Odd d) (J : ℕ) :
+    |(∑ x ∈ Finset.range J, if d ∣ 2*x+1 then (1:ℚ) else 0) -
+      (J:ℚ)/d| ≤ 1/2 := by
+  obtain ⟨v,hv⟩ := hd
+  have hdv : d=2*v+1 := by omega
+  have hdpos : 0 < d := by omega
+  have hr := Nat.mod_lt J hdpos
+  have hJ := Nat.div_add_mod' J d
+  simp_rw [odd_divisor_odd_roots hdv]
+  rw [Finset.sum_boole, residue_card d J v hdpos (by omega)]
+  let C := J/d + if v < J%d then 1 else 0
+  have hlow : 2*J ≤ (2*C+1)*d := by
+    dsimp [C]
+    split_ifs with ht
+    · nlinarith
+    · nlinarith
+  have hhigh : 2*C*d ≤ 2*J+d := by
+    dsimp [C]
+    split_ifs with ht
+    · nlinarith
+    · simp only [Nat.add_zero, Nat.mul_assoc]
+      omega
+  have hl : 2*(J:ℚ) ≤ (2*(C:ℚ)+1)*(d:ℚ) := by exact_mod_cast hlow
+  have hu : 2*(C:ℚ)*(d:ℚ) ≤ 2*(J:ℚ)+(d:ℚ) := by exact_mod_cast hhigh
+  have hpos : (0:ℚ) < d := by exact_mod_cast hdpos
+  have h1 : (J:ℚ)/d ≤ (C:ℚ)+1/2 := (div_le_iff₀ hpos).mpr (by nlinarith only [hl])
+  have h2 : (C:ℚ)-1/2 ≤ (J:ℚ)/d := (le_div_iff₀ hpos).mpr (by nlinarith only [hu])
+  change |(C:ℚ)-(J:ℚ)/d| ≤ 1/2
+  exact abs_le.mpr ⟨by linarith,by linarith⟩
+
+theorem initial_even_coprime (ps : List ℕ) (hne : ps ≠ [])
+    (hpair : ps.Pairwise Nat.Coprime) (hp : ∀ p ∈ ps, Nat.Prime p)
+    (hd : ∀ d : ℕ, d ∣ ps.prod → Odd d) (J : ℕ) :
+    |(∑ x ∈ Finset.range J, if ps.prod.Coprime (2*x+2) then (1:ℚ) else 0) -
+      (J:ℚ)*density ps| ≤ (2:ℚ)^ps.length / 2 := by
+  have h := coprime_values_error_centered (Finset.range J) (fun x => 2*x+2) ps J
+    (-(1/2)) (1/2) hpair hp (fun d hf => by
+      simpa only [sub_eq_add_neg] using even_divisor_error (hd d hf) J)
+  simpa [hne,div_eq_mul_inv] using h
+
+theorem initial_odd_coprime (ps : List ℕ) (hpair : ps.Pairwise Nat.Coprime)
+    (hp : ∀ p ∈ ps, Nat.Prime p) (hd : ∀ d : ℕ, d ∣ ps.prod → Odd d) (J : ℕ) :
+    |(∑ x ∈ Finset.range J, if ps.prod.Coprime (2*x+1) then (1:ℚ) else 0) -
+      (J:ℚ)*density ps| ≤ (2:ℚ)^ps.length / 2 := by
+  have h := coprime_values_error_centered (Finset.range J) (fun x => 2*x+1) ps J
+    0 (1/2) hpair hp (fun d hf => by simpa using odd_divisor_error (hd d hf) J)
+  simpa [div_eq_mul_inv] using h
+
+/-- Below the modulus the two roots are an opposite pair. The assumption
+that p² does not divide n suffices, including primes dividing n exactly once. -/
+private theorem root_or_opposite {n p a b : ℕ}
+    (hp : p.Prime) (hp2 : 2<p) (hn : ¬p^2 ∣ n) (hab : a≤b)
+    (ha : a^2 ≡ n [MOD p^2]) (hb : b^2 ≡ n [MOD p^2]) :
+    p^2 ∣ b-a ∨ p^2 ∣ a+b := by
+  let d := b-a
+  have hba : b=a+d := by dsimp [d]; omega
+  have hs : b^2=a^2+d*(a+b) := by rw [hba]; ring
+  have hdiv := (ha.trans hb.symm).dvd'
+  rw [hs,Nat.add_sub_cancel_left] at hdiv
+  by_cases hd : p ∣ d
+  · left
+    have hcop : p.Coprime (a+b) := by
+      apply hp.coprime_iff_not_dvd.mpr
+      intro hu
+      have h2a : p ∣ 2*a := by
+        have he : a+b-d=2*a := by omega
+        simpa only [he] using Nat.dvd_sub hu hd
+      have hpa : p ∣ a := (hp.dvd_mul.mp h2a).resolve_left
+        (fun h => (not_le.mpr hp2) (Nat.le_of_dvd (by decide) h))
+      obtain ⟨t,ht⟩ := hpa
+      have haa : p^2 ∣ a^2 := ⟨t^2,by rw [ht]; ring⟩
+      exact hn (Nat.modEq_zero_iff_dvd.mp (ha.symm.trans haa.modEq_zero_nat))
+    exact (hcop.pow_left 2).dvd_of_dvd_mul_right hdiv
+  · right
+    exact ((hp.coprime_iff_not_dvd.mpr hd).pow_left 2).dvd_of_dvd_mul_left hdiv
+
+/-- Candidates have the form 2x+b, where x starts at zero and b=1 or 2.
+The entire bin [t p²,(t+1)p²) contains at most one candidate root. -/
+theorem raw_prime_loss {n p b J : ℕ} (hp : p.Prime) (hp2 : 2<p) (hn : ¬p^2 ∣ n)
+    (hb : b ≤ 2) :
+    ((Finset.range J).filter (fun x => (2*x+b)^2 ≡ n [MOD p^2])).card ≤ 2*J/(p^2)+1 := by
+  let A := (Finset.range J).filter (fun x => (2*x+b)^2 ≡ n [MOD p^2])
+  let f (x : ℕ) := (2*x+b)/(p^2)
+  let bins := Finset.range (2*J/(p^2)+1)
+  have hm : 0<p^2 := pow_pos hp.pos 2
+  have hcop : (p^2).Coprime 2 := ((hp.odd_of_ne_two (by omega)).pow.coprime_two_left).symm
+  have inj {x y : ℕ} (hx : x∈A) (hy : y∈A) (hxy : x≤y) (hf : f x=f y) : x=y := by
+    have hs := root_or_opposite hp hp2 hn (show 2*x+b ≤ 2*y+b by omega)
+      (Finset.mem_filter.mp hx).2 (Finset.mem_filter.mp hy).2
+    change (2*x+b)/(p^2)=(2*y+b)/(p^2) at hf
+    by_contra hne
+    have bounds {L M : ℕ} (lo : L ≤ 2*x+b) (hi : 2*y+b < L+M) :
+        (0 < y-x ∧ y-x < M) ∧ (0 < x+y+b-L ∧ x+y+b-L < M) := by omega
+    have hi : 2*y+b < ((2*x+b)/(p^2))*(p^2) + p^2 := by
+      calc
+        2*y+b < (p^2)*((2*y+b)/(p^2)+1) := Nat.lt_mul_div_succ _ hm
+        _ = _ := by rw [← hf]; ring
+    obtain ⟨hdiff,hmid⟩ := bounds (Nat.div_mul_le_self (2*x+b) (p^2)) hi
+    rcases hs with hd | hsum
+    · have he : 2*y+b-(2*x+b)=2*(y-x) := by omega
+      rw [he] at hd
+      exact (Nat.not_le_of_lt hdiff.2) (Nat.le_of_dvd hdiff.1 (hcop.dvd_of_dvd_mul_left hd))
+    · have he : (2*x+b)+(2*y+b)=2*(x+y+b) := by omega
+      rw [he] at hsum
+      have hv := hcop.dvd_of_dvd_mul_left hsum
+      have hbase : p^2 ∣ ((2*x+b)/(p^2))*(p^2) := Nat.dvd_mul_left _ _
+      have hh := Nat.dvd_sub hv hbase
+      exact (Nat.not_le_of_lt hmid.2) (Nat.le_of_dvd hmid.1 hh)
+  have hc : A.card ≤ bins.card := by
+    apply Finset.card_le_card_of_injOn f
+    · intro x hx
+      have hxlt := Finset.mem_range.mp (Finset.mem_filter.mp hx).1
+      exact Finset.mem_range.mpr (Nat.lt_succ_of_le
+        (Nat.div_le_div_right (show 2*x+b ≤ 2*J by omega)))
+    · intro x hx y hy he
+      rcases le_total x y with h | h
+      · exact inj hx hy h he
+      · exact (inj hy hx h he.symm).symm
+  simpa only [A,bins,Finset.card_range] using hc
+
+def candidateSet (ps : List ℕ) (J b : ℕ) :=
+  (Finset.range J).filter (fun x => ps.prod.Coprime (2*x+b))
+
+def hitSet (n p : ℕ) (ps : List ℕ) (J b : ℕ) :=
+  (candidateSet ps J b).filter (fun x => (2*x+b)^2 ≡ n [MOD p^2])
+
+theorem hit_card_raw {n p b J : ℕ} (ps : List ℕ) (hp : p.Prime) (hp2 : 2<p)
+    (hn : ¬p^2 ∣ n) (hb : b≤2) : (hitSet n p ps J b).card ≤ 2*J/(p^2)+1 := by
+  apply le_trans (Finset.card_le_card ?_) (raw_prime_loss hp hp2 hn hb)
+  intro x hx
+  obtain ⟨hx,hcon⟩ := Finset.mem_filter.mp hx
+  exact Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hx).1,hcon⟩
+
+structure PrimeEnumeration (S : Finset ℕ) where
+  ps : List ℕ
+  pair : ps.Pairwise Nat.Coprime
+  mem : ∀ p, p ∈ ps ↔ p ∈ S
+  len : ps.length = S.card
+  product : ps.prod = ∏ p ∈ S, p
+  rho : density ps = largeRho S
+
+theorem prime_enumeration (S : Finset ℕ) (hS : ∀ p ∈ S, 2<p ∧ p.Prime) :
+    Nonempty (PrimeEnumeration S) := by
+  classical
+  induction S using Finset.induction_on with
+  | empty => exact ⟨⟨[],by simp,by simp,by simp,by simp,by simp [density,largeRho]⟩⟩
+  | @insert a S ha ih =>
+    obtain ⟨D⟩ := ih (fun p hp => hS p (Finset.mem_insert_of_mem hp))
+    have hpa := (hS a (Finset.mem_insert_self a S)).2
+    refine ⟨⟨a::D.ps, List.pairwise_cons.mpr ⟨?_,D.pair⟩, ?_, ?_, ?_, ?_⟩⟩
+    · intro q hq
+      have hqm := (D.mem q).mp hq
+      exact (Nat.coprime_primes hpa (hS q (Finset.mem_insert_of_mem hqm)).2).mpr (by
+        rintro rfl; exact ha hqm)
+    · intro p
+      simp [D.mem]
+    · simp [ha,D.len]
+    · simp [ha,D.product]
+    · change (1 - 1 / (a : ℚ)) * density D.ps = largeRho (insert a S)
+      rw [D.rho]
+      simp only [largeRho, Finset.prod_insert ha]
+
+private theorem odd_product_list (ps : List ℕ) (h : ∀ p ∈ ps, Odd p) : Odd ps.prod := by
+  induction ps with
+  | nil => simp
+  | cons p rest ih =>
+    exact (h p (by simp)).mul (ih (fun q hq => h q (by simp [hq])))
+
+theorem prime_divisor_odd {S : Finset ℕ} (D : PrimeEnumeration S)
+    (hS : ∀ p ∈ S, 2<p ∧ p.Prime) {d : ℕ} (hd : d ∣ D.ps.prod) : Odd d := by
+  have ho := odd_product_list D.ps (fun p hp => by
+    obtain ⟨h2,hpr⟩ := hS p ((D.mem p).mp hp)
+    exact hpr.odd_of_ne_two (by omega))
+  apply Nat.odd_iff.mpr
+  by_contra he
+  have h2 : 2 ∣ d := Nat.dvd_of_mod_eq_zero (by omega)
+  exact ho.not_two_dvd_nat (h2.trans hd)
+
+def initialError (r : ℕ) : ℚ := if r=0 then 0 else (2:ℚ)^(r-1)
+
+theorem initial_candidates {S : Finset ℕ} (D : PrimeEnumeration S) (b J : ℕ)
+    (hS : ∀ p ∈ S, 2<p ∧ p.Prime) (hb : b=1 ∨ b=2) :
+    (J:ℚ)*largeRho S - initialError S.card ≤ ((candidateSet D.ps J b).card:ℚ) := by
+  classical
+  have hp : ∀ p ∈ D.ps, p.Prime := fun p hm => (hS p ((D.mem p).mp hm)).2
+  have hd : ∀ d : ℕ, d ∣ D.ps.prod → Odd d := fun _ he => prime_divisor_odd D hS he
+  by_cases he : D.ps=[]
+  · have hsc : S.card=0 := by simpa only [←D.len,he,List.length_nil]
+    have hr : largeRho S=1 := by rw [←D.rho,he]; simp [density]
+    simp [candidateSet,he,hsc,hr,initialError]
+  · have hlen : 0<D.ps.length := by
+      cases h : D.ps with
+      | nil => exact False.elim (he h)
+      | cons p ps => simp
+    have hspos : 0<S.card := by rw [← D.len]; exact hlen
+    have hhalf : (2:ℚ)^D.ps.length/2 = initialError S.card := by
+      rw [D.len,initialError,if_neg (by omega)]
+      conv_lhs => rw [show S.card=S.card-1+1 by omega,pow_succ]
+      ring
+    have hh : |((candidateSet D.ps J b).card:ℚ) - (J:ℚ)*largeRho S|
+        ≤ initialError S.card := by
+      rcases hb with rfl | rfl
+      · have hh := initial_odd_coprime D.ps D.pair hp hd J
+        simpa only [Finset.sum_boole,D.rho,hhalf,candidateSet] using hh
+      · have hh := initial_even_coprime D.ps he D.pair hp hd J
+        simpa only [Finset.sum_boole,D.rho,hhalf,candidateSet] using hh
+    have := (abs_le.mp hh).1
+    linarith
+
+theorem cover_candidates {S : Finset ℕ} (D : PrimeEnumeration S) {n b J : ℕ}
+    (hreg : ∀ p : ℕ, 2<p → p.Prime → (p∈S ↔ p^2 ∣ n))
+    (hb : b=1 ∨ b=2) (hfit : ∀ x<J, (2*x+b)^2<n)
+    (hupper : (n-1).sqrt ≤ 2*J+1) (hpar : ∀ x<J, ¬4 ∣ n-(2*x+b)^2)
+    (hnone : ¬ ∃ x<J, Squarefree (n-(2*x+b)^2)) :
+    candidateSet D.ps J b ⊆ ((largePrimeSet (2*J+1)) \ S).biUnion
+      (fun p => hitSet n p D.ps J b) := by
+  classical
+  intro x hx
+  obtain ⟨hr,hc⟩ := Finset.mem_filter.mp hx
+  have hlt := Finset.mem_range.mp hr
+  have hsq := hfit x hlt
+  have hbad : ¬Squarefree (n-(2*x+b)^2) := fun hh => hnone ⟨x,hlt,hh⟩
+  rw [Nat.squarefree_iff_prime_squarefree] at hbad
+  push_neg at hbad
+  obtain ⟨p,hp,hpd⟩ := hbad
+  have hd : p^2 ∣ n-(2*x+b)^2 := by simpa only [pow_two] using hpd
+  have h2 : 2<p := by
+    have := hp.two_le
+    by_contra! hh
+    have he : p=2 := by omega
+    exact hpar x hlt (by simpa [he] using hpd)
+  have hnmem : p∉S := by
+    intro hpS
+    have hpn := (hreg p h2 hp).mp hpS
+    have hdiff := Nat.dvd_sub hpn hd
+    have hback : n-(n-(2*x+b)^2)=(2*x+b)^2 := by omega
+    rw [hback] at hdiff
+    have hpk : p ∣ 2*x+b := by
+      have hh : p ∣ (2*x+b)*(2*x+b) :=
+        (Nat.dvd_mul_right p p).trans (by simpa only [pow_two] using hdiff)
+      exact (hp.dvd_mul.mp hh).elim id id
+    have hbprod : p ∣ D.ps.prod := by rw [D.product]; exact Finset.dvd_prod_of_mem id hpS
+    exact Nat.not_coprime_of_dvd_of_dvd hp.one_lt hbprod hpk hc
+  have ple := Nat.le_of_dvd (show 0<n-(2*x+b)^2 by omega) hd
+  have hroot : p ≤ (n-1).sqrt := Nat.le_sqrt'.mpr (by
+    have hk : 0<2*x+b := by rcases hb with rfl | rfl <;> omega
+    have := pow_pos hk 2
+    omega)
+  have hpmem : p∈largePrimeSet (2*J+1) := Finset.mem_filter.mpr
+    ⟨Finset.mem_range.mpr (by omega),h2,hp⟩
+  exact Finset.mem_biUnion.mpr ⟨p,Finset.mem_sdiff.mpr ⟨hpmem,hnmem⟩,
+    Finset.mem_filter.mpr ⟨hx,Nat.modEq_of_dvd' hsq.le hd⟩⟩
+
+end A085265InclusionExclusion
+
+open A085265Sieve A085265InclusionExclusion
+
+private theorem square_product_dvd (n : ℕ) (S : Finset ℕ)
+    (h : ∀ p ∈ S, p.Prime ∧ p^2 ∣ n) : (∏ p ∈ S,p)^2 ∣ n := by
+  induction S using Finset.induction_on with
+  | empty => simp
+  | @insert p T hp ih =>
+    obtain ⟨pp,hd⟩ := h p (by simp)
+    have hT : ∀ q ∈ T, q.Prime ∧ q^2 ∣ n := fun q hq => h q (by simp [hq])
+    have hc : p.Coprime (∏ q ∈ T,q) := by
+      apply Nat.coprime_prod_right_iff.mpr
+      intro q hq
+      apply pp.coprime_iff_not_dvd.mpr
+      exact fun hd => hp (((Nat.prime_dvd_prime_iff_eq pp (hT q hq).1).mp hd).symm ▸ hq)
+    rw [Finset.prod_insert hp,mul_pow]
+    exact ((hc.pow_left 2).pow_right 2).mul_dvd_of_dvd_of_dvd hd (ih hT)
+
+theorem checked : OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H2 := by
+  classical
+  intro n hlo hhi failure
+  have hn : 0 < n := by omega
+  let u := (n-1).sqrt
+  let e : ℕ := if 4 ∣ n then 1 else 0
+  let b : ℕ := if 4 ∣ n then 1 else 2
+  let J := (u+e)/2
+  let S := (Finset.range (n+1)).filter (fun p => 2<p ∧ p.Prime ∧ p^2∣n)
+  have hu : 600 ≤ u := Nat.le_sqrt'.mpr (by norm_num; omega)
+  have hJ : 300 ≤ J := by dsimp only [J]; omega
+  have hutop : u < 2000000 := by
+    by_contra! h
+    have hs : 4000000000000 ≤ n-1 := Nat.le_sqrt'.mp (show 2000000 ≤ (n-1).sqrt from h)
+    omega
+  have hJtop : J ≤ 1000000 := by
+    have he : e ≤ 1 := by dsimp [e]; split <;> omega
+    dsimp only [J]
+    omega
+  have hupper : (n-1).sqrt ≤ 2*J+1 := by change u ≤ 2*((u+e)/2)+1; omega
+  have hb : b=1 ∨ b=2 := by unfold b; split <;> simp
+  have hfit (x : ℕ) (hx : x<J) : (2*x+b)^2 < n := by
+    have hku : 2*x+b ≤ u := by
+      by_cases hc : 4∣n <;> simp only [J,b,e,hc,if_true,if_false] at hx ⊢ <;> omega
+    have hs := Nat.le_sqrt'.mp hku
+    omega
+  have hS : ∀ p ∈ S, 2<p ∧ p.Prime := by
+    intro p hp
+    obtain ⟨_,hl,pp,_⟩ := Finset.mem_filter.mp hp
+    exact ⟨hl,pp⟩
+  have hreg (p : ℕ) (hl : 2<p) (pp : p.Prime) : p∈S ↔ p^2∣n := by
+    constructor
+    · exact fun hp => (Finset.mem_filter.mp hp).2.2.2
+    · intro hp
+      have hpn : p ∣ n := (show p ∣ p^2 by simp [pow_two]).trans hp
+      have := Nat.le_of_dvd hn hpn
+      exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega),hl,pp,hp⟩
+  have hd := square_product_dvd n S (fun p hp => ⟨(hS p hp).2,(Finset.mem_filter.mp hp).2.2.2⟩)
+  have hB : (∏ p ∈ S,p) ≤ 2*J+2 := by
+    have hsq := Nat.le_of_dvd hn hd
+    have hn' : n ≤ (u+1)^2 := by
+      have := Nat.lt_succ_sqrt' (n-1)
+      change n-1 < (u+1)^2 at this
+      omega
+    have hbu : (∏ p ∈ S,p) ≤ u+1 := by
+      by_contra! hh
+      have hbig := Nat.pow_le_pow_left (show u+2 ≤ ∏ p ∈ S,p by omega) 2
+      nlinarith
+    change u ≤ 2*J+1 at hupper
+    omega
+  have hpar (x : ℕ) (hx : x<J) : ¬4∣n-(2*x+b)^2 := by
+    intro hbad
+    have hlt := hfit x hx
+    by_cases hc : 4∣n
+    · have hs := Nat.dvd_sub hc hbad
+      rw [show n-(n-(2*x+b)^2)=(2*x+b)^2 by omega] at hs
+      have hb' : b=1 := by simp [b,hc]
+      rw [hb',show (2*x+1)^2=4*(x*(x+1))+1 by ring] at hs
+      omega
+    · have hb' : b=2 := by simp [b,hc]
+      have hs : 4 ∣ (2*x+b)^2 := ⟨(x+1)^2,by rw [hb']; ring⟩
+      exact hc (by simpa only [Nat.sub_add_cancel hlt.le] using dvd_add hbad hs)
+  refine ⟨J, S, hJ, hJtop, hS, hB, ?_⟩
+  have hnone : ¬ ∃ x<J, Squarefree (n-(2*x+b)^2) := by
+    rintro ⟨x,hx,hs⟩
+    exact failure (2*x+b) (by rcases hb with h | h <;> omega) (hfit x hx) hs
+  obtain ⟨D⟩ := prime_enumeration S hS
+  let P := (largePrimeSet (2*J+1)) \ S
+  have cover := cover_candidates D hreg hb hfit hupper hpar hnone
+  have hc : (candidateSet D.ps J b).card ≤ ∑ p ∈ P, (hitSet n p D.ps J b).card :=
+    (Finset.card_le_card cover).trans Finset.card_biUnion_le
+  have hb2 : b ≤ 2 := by rcases hb with h | h <;> omega
+  have hh : (candidateSet D.ps J b).card ≤ ∑ p ∈ P, (2*J/(p^2)+1) := by
+    refine hc.trans ?_
+    apply Finset.sum_le_sum
+    intro p hp
+    obtain ⟨hh,hno⟩ := Finset.mem_sdiff.mp hp
+    obtain ⟨h2,hpr⟩ := (Finset.mem_filter.mp hh).2
+    exact hit_card_raw D.ps hpr h2 (fun h => hno ((hreg p h2 hpr).mpr h)) hb2
+  have hcast : ((candidateSet D.ps J b).card : ℚ) ≤
+      ((∑ p ∈ P, (2*J/(p^2)+1) : ℕ) : ℚ) := by exact_mod_cast hh
+  change (J:ℚ) * largeRho S ≤ ((∑ p ∈ P, (2*J/(p^2)+1) : ℕ) : ℚ) + initialError S.card
+  exact sub_le_iff_le_add.mp ((initial_candidates D b J hS hb).trans hcast)
+
+end MiddleObstruction
+
+namespace MiddleBudget
+
+namespace A085265.DyadicPrimeCount
+
+open Finset
+
+def oddPrimesUpTo (x : ℕ) : Finset ℕ :=
+  (range (x + 1)).filter (fun p => 2 < p ∧ p.Prime)
+
+def oddPrimeCount (x : ℕ) : ℕ := (oddPrimesUpTo x).card
+
+private lemma mem_oddPrimesUpTo {p x : ℕ} :
+    p ∈ oddPrimesUpTo x ↔ p ≤ x ∧ 2 < p ∧ p.Prime := by
+  simp [oddPrimesUpTo, Nat.lt_succ_iff]
+
+/-- The primes newly counted between m and x divide the single binomial (x choose m). -/
+theorem interval (m x e : ℕ) (hmx : m ≤ x) (hxm : x ≤ 2 * m)
+    (he : 0 < e) (hpow : 2^e ≤ m + 1) :
+    oddPrimeCount x ≤ oddPrimeCount m + x / e := by
+  let T := oddPrimesUpTo x \ oddPrimesUpTo m
+  have sub : oddPrimesUpTo m ⊆ oddPrimesUpTo x := by
+    intro p hp
+    obtain ⟨hpm, ho, hpr⟩ := mem_oddPrimesUpTo.mp hp
+    exact mem_oddPrimesUpTo.mpr ⟨hpm.trans hmx, ho, hpr⟩
+  have props {p : ℕ} (hp : p ∈ T) : m < p ∧ p ≤ x ∧ p.Prime := by
+    obtain ⟨hx, hm⟩ := mem_sdiff.mp hp
+    obtain ⟨hpx, ho, hpr⟩ := mem_oddPrimesUpTo.mp hx
+    have hmp : m < p := by
+      by_contra! h
+      exact hm (mem_oddPrimesUpTo.mpr ⟨h, ho, hpr⟩)
+    exact ⟨hmp, hpx, hpr⟩
+  have hprod : (∏ p ∈ T, p) ∣ x.choose m := by
+    apply Finset.prod_primes_dvd
+    · exact fun p hp => (props hp).2.2.prime
+    · intro p hp
+      obtain ⟨hmp, hpx, hpr⟩ := props hp
+      exact hpr.dvd_choose hmp (by omega) hpx
+  have bound : (2 : ℕ) ^ (e * T.card) ≤ 2 ^ x := calc
+    2 ^ (e * T.card) = ∏ _p ∈ T, 2 ^ e := by rw [pow_mul, prod_const]
+    _ ≤ ∏ p ∈ T, p := Finset.prod_le_prod' fun _p hp => hpow.trans (props hp).1
+    _ ≤ x.choose m := Nat.le_of_dvd (Nat.choose_pos hmx) hprod
+    _ ≤ 2 ^ x := Nat.choose_le_two_pow x m
+  have hd : T.card ≤ x / e := by
+    apply (Nat.le_div_iff_mul_le he).mpr
+    simpa only [Nat.mul_comm] using (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp bound
+  have hcard : T.card + oddPrimeCount m = oddPrimeCount x :=
+    card_sdiff_add_card_eq_card sub
+  omega
+
+theorem double (m e : ℕ) (he : 0 < e) (hpow : 2 ^ e ≤ m + 1) :
+    oddPrimeCount (2*m) ≤ oddPrimeCount m + 2*m/e :=
+  interval m (2*m) e (by omega) le_rfl he hpow
+
+end A085265.DyadicPrimeCount
+
+namespace A085265.DyadicPrimeCount
+
+open Finset
+
+private def smallPrimeMark (v : ℕ) : ℕ := if 2 < v ∧ v.Prime then 1 else 0
+
+private def smallPrimeSegment (a : ℕ) : ℕ → ℕ
+  | 0 => 0
+  | h+1 => smallPrimeSegment a h + smallPrimeMark (a+1+h)
+
+private theorem smallPrimeCount_sum (a : ℕ) :
+    oddPrimeCount a = ∑ i ∈ range (a+1), smallPrimeMark i := by
+  simpa only [oddPrimeCount, oddPrimesUpTo, smallPrimeMark, Nat.cast_id] using
+    (Finset.sum_boole (R := ℕ) (fun p : ℕ => 2 < p ∧ p.Prime) (range (a+1))).symm
+
+private theorem smallPrimeSegment_sum (a h : ℕ) :
+    (∑ i ∈ range h, smallPrimeMark (a+1+i)) = smallPrimeSegment a h := by
+  induction h with
+  | zero => simp [smallPrimeSegment]
+  | succ h ih => rw [Finset.sum_range_succ, ih, smallPrimeSegment]
+
+private theorem smallPrimeAdvance (a h c d : ℕ)
+    (ha : oddPrimeCount a = c) (hd : smallPrimeSegment a h = d) :
+    oddPrimeCount (a+h) = c+d := by
+  have split : oddPrimeCount (a+h) = oddPrimeCount a + smallPrimeSegment a h := by
+    rw [smallPrimeCount_sum (a+h), smallPrimeCount_sum a,
+      show a+h+1 = a+1+h by omega, Finset.sum_range_add, smallPrimeSegment_sum]
+  rw [split, ha, hd]
+
+private theorem smallCountTo0 : oddPrimeCount 0 = 0 := by decide +kernel
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo64 : oddPrimeCount 64 = 17 :=
+  smallPrimeAdvance 0 64 0 17 smallCountTo0 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo128 : oddPrimeCount 128 = 30 :=
+  smallPrimeAdvance 64 64 17 13 smallCountTo64 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo192 : oddPrimeCount 192 = 42 :=
+  smallPrimeAdvance 128 64 30 12 smallCountTo128 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo256 : oddPrimeCount 256 = 53 :=
+  smallPrimeAdvance 192 64 42 11 smallCountTo192 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo320 : oddPrimeCount 320 = 65 :=
+  smallPrimeAdvance 256 64 53 12 smallCountTo256 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo384 : oddPrimeCount 384 = 75 :=
+  smallPrimeAdvance 320 64 65 10 smallCountTo320 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo448 : oddPrimeCount 448 = 85 :=
+  smallPrimeAdvance 384 64 75 10 smallCountTo384 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo512 : oddPrimeCount 512 = 96 :=
+  smallPrimeAdvance 448 64 85 11 smallCountTo448 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo576 : oddPrimeCount 576 = 104 :=
+  smallPrimeAdvance 512 64 96 8 smallCountTo512 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo605 : oddPrimeCount 605 = 109 :=
+  smallPrimeAdvance 576 29 104 5 smallCountTo576 (by decide +kernel)
+
+theorem base_605 : oddPrimeCount 605 ≤ 109 :=
+  (smallCountTo605).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo611 : oddPrimeCount 611 = 110 :=
+  smallPrimeAdvance 605 6 109 1 smallCountTo605 (by decide +kernel)
+
+theorem base_611 : oddPrimeCount 611 ≤ 110 :=
+  (smallCountTo611).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo615 : oddPrimeCount 615 = 111 :=
+  smallPrimeAdvance 611 4 110 1 smallCountTo611 (by decide +kernel)
+
+theorem base_615 : oddPrimeCount 615 ≤ 111 :=
+  (smallCountTo615).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo617 : oddPrimeCount 617 = 112 :=
+  smallPrimeAdvance 615 2 111 1 smallCountTo615 (by decide +kernel)
+
+theorem base_617 : oddPrimeCount 617 ≤ 112 :=
+  (smallCountTo617).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo629 : oddPrimeCount 629 = 113 :=
+  smallPrimeAdvance 617 12 112 1 smallCountTo617 (by decide +kernel)
+
+theorem base_629 : oddPrimeCount 629 ≤ 113 :=
+  (smallCountTo629).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo641 : oddPrimeCount 641 = 115 :=
+  smallPrimeAdvance 629 12 113 2 smallCountTo629 (by decide +kernel)
+
+theorem base_641 : oddPrimeCount 641 ≤ 115 :=
+  (smallCountTo641).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo651 : oddPrimeCount 651 = 117 :=
+  smallPrimeAdvance 641 10 115 2 smallCountTo641 (by decide +kernel)
+
+theorem base_651 : oddPrimeCount 651 ≤ 117 :=
+  (smallCountTo651).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo659 : oddPrimeCount 659 = 119 :=
+  smallPrimeAdvance 651 8 117 2 smallCountTo651 (by decide +kernel)
+
+theorem base_659 : oddPrimeCount 659 ≤ 119 :=
+  (smallCountTo659).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo671 : oddPrimeCount 671 = 120 :=
+  smallPrimeAdvance 659 12 119 1 smallCountTo659 (by decide +kernel)
+
+theorem base_671 : oddPrimeCount 671 ≤ 120 :=
+  (smallCountTo671).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo681 : oddPrimeCount 681 = 122 :=
+  smallPrimeAdvance 671 10 120 2 smallCountTo671 (by decide +kernel)
+
+theorem base_681 : oddPrimeCount 681 ≤ 122 :=
+  (smallCountTo681).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo699 : oddPrimeCount 699 = 124 :=
+  smallPrimeAdvance 681 18 122 2 smallCountTo681 (by decide +kernel)
+
+theorem base_699 : oddPrimeCount 699 ≤ 124 :=
+  (smallCountTo699).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo731 : oddPrimeCount 731 = 128 :=
+  smallPrimeAdvance 699 32 124 4 smallCountTo699 (by decide +kernel)
+
+theorem base_731 : oddPrimeCount 731 ≤ 128 :=
+  (smallCountTo731).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo759 : oddPrimeCount 759 = 133 :=
+  smallPrimeAdvance 731 28 128 5 smallCountTo731 (by decide +kernel)
+
+theorem base_759 : oddPrimeCount 759 ≤ 133 :=
+  (smallCountTo759).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo809 : oddPrimeCount 809 = 139 :=
+  smallPrimeAdvance 759 50 133 6 smallCountTo759 (by decide +kernel)
+
+theorem base_809 : oddPrimeCount 809 ≤ 139 :=
+  (smallCountTo809).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo841 : oddPrimeCount 841 = 145 :=
+  smallPrimeAdvance 809 32 139 6 smallCountTo809 (by decide +kernel)
+
+theorem base_841 : oddPrimeCount 841 ≤ 145 :=
+  (smallCountTo841).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo881 : oddPrimeCount 881 = 151 :=
+  smallPrimeAdvance 841 40 145 6 smallCountTo841 (by decide +kernel)
+
+theorem base_881 : oddPrimeCount 881 ≤ 151 :=
+  (smallCountTo881).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo939 : oddPrimeCount 939 = 158 :=
+  smallPrimeAdvance 881 58 151 7 smallCountTo881 (by decide +kernel)
+
+theorem base_939 : oddPrimeCount 939 ≤ 158 :=
+  (smallCountTo939).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1003 : oddPrimeCount 1003 = 167 :=
+  smallPrimeAdvance 939 64 158 9 smallCountTo939 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1017 : oddPrimeCount 1017 = 169 :=
+  smallPrimeAdvance 1003 14 167 2 smallCountTo1003 (by decide +kernel)
+
+theorem base_1017 : oddPrimeCount 1017 ≤ 169 :=
+  (smallCountTo1017).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1081 : oddPrimeCount 1081 = 179 :=
+  smallPrimeAdvance 1017 64 169 10 smallCountTo1017 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1101 : oddPrimeCount 1101 = 183 :=
+  smallPrimeAdvance 1081 20 179 4 smallCountTo1081 (by decide +kernel)
+
+theorem base_1101 : oddPrimeCount 1101 ≤ 183 :=
+  (smallCountTo1101).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1165 : oddPrimeCount 1165 = 191 :=
+  smallPrimeAdvance 1101 64 183 8 smallCountTo1101 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1199 : oddPrimeCount 1199 = 195 :=
+  smallPrimeAdvance 1165 34 191 4 smallCountTo1165 (by decide +kernel)
+
+theorem base_1199 : oddPrimeCount 1199 ≤ 195 :=
+  (smallCountTo1199).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1263 : oddPrimeCount 1263 = 204 :=
+  smallPrimeAdvance 1199 64 195 9 smallCountTo1199 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1327 : oddPrimeCount 1327 = 216 :=
+  smallPrimeAdvance 1263 64 204 12 smallCountTo1263 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1359 : oddPrimeCount 1359 = 216 :=
+  smallPrimeAdvance 1327 32 216 0 smallCountTo1327 (by decide +kernel)
+
+theorem base_1359 : oddPrimeCount 1359 ≤ 216 :=
+  (smallCountTo1359).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1423 : oddPrimeCount 1423 = 223 :=
+  smallPrimeAdvance 1359 64 216 7 smallCountTo1359 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1487 : oddPrimeCount 1487 = 235 :=
+  smallPrimeAdvance 1423 64 223 12 smallCountTo1423 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1551 : oddPrimeCount 1551 = 243 :=
+  smallPrimeAdvance 1487 64 235 8 smallCountTo1487 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1557 : oddPrimeCount 1557 = 244 :=
+  smallPrimeAdvance 1551 6 243 1 smallCountTo1551 (by decide +kernel)
+
+theorem base_1557 : oddPrimeCount 1557 ≤ 244 :=
+  (smallCountTo1557).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1621 : oddPrimeCount 1621 = 256 :=
+  smallPrimeAdvance 1557 64 244 12 smallCountTo1557 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1685 : oddPrimeCount 1685 = 262 :=
+  smallPrimeAdvance 1621 64 256 6 smallCountTo1621 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1749 : oddPrimeCount 1749 = 271 :=
+  smallPrimeAdvance 1685 64 262 9 smallCountTo1685 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1813 : oddPrimeCount 1813 = 279 :=
+  smallPrimeAdvance 1749 64 271 8 smallCountTo1749 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1829 : oddPrimeCount 1829 = 280 :=
+  smallPrimeAdvance 1813 16 279 1 smallCountTo1813 (by decide +kernel)
+
+theorem base_1829 : oddPrimeCount 1829 ≤ 280 :=
+  (smallCountTo1829).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1893 : oddPrimeCount 1893 = 289 :=
+  smallPrimeAdvance 1829 64 280 9 smallCountTo1829 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo1957 : oddPrimeCount 1957 = 296 :=
+  smallPrimeAdvance 1893 64 289 7 smallCountTo1893 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2021 : oddPrimeCount 2021 = 305 :=
+  smallPrimeAdvance 1957 64 296 9 smallCountTo1957 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2047 : oddPrimeCount 2047 = 308 :=
+  smallPrimeAdvance 2021 26 305 3 smallCountTo2021 (by decide +kernel)
+
+theorem base_2047 : oddPrimeCount 2047 ≤ 308 :=
+  (smallCountTo2047).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2111 : oddPrimeCount 2111 = 317 :=
+  smallPrimeAdvance 2047 64 308 9 smallCountTo2047 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2175 : oddPrimeCount 2175 = 325 :=
+  smallPrimeAdvance 2111 64 317 8 smallCountTo2111 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2239 : oddPrimeCount 2239 = 332 :=
+  smallPrimeAdvance 2175 64 325 7 smallCountTo2175 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2303 : oddPrimeCount 2303 = 341 :=
+  smallPrimeAdvance 2239 64 332 9 smallCountTo2239 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2367 : oddPrimeCount 2367 = 349 :=
+  smallPrimeAdvance 2303 64 341 8 smallCountTo2303 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2421 : oddPrimeCount 2421 = 358 :=
+  smallPrimeAdvance 2367 54 349 9 smallCountTo2367 (by decide +kernel)
+
+theorem base_2421 : oddPrimeCount 2421 ≤ 358 :=
+  (smallCountTo2421).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2485 : oddPrimeCount 2485 = 366 :=
+  smallPrimeAdvance 2421 64 358 8 smallCountTo2421 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2549 : oddPrimeCount 2549 = 372 :=
+  smallPrimeAdvance 2485 64 366 6 smallCountTo2485 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2613 : oddPrimeCount 2613 = 378 :=
+  smallPrimeAdvance 2549 64 372 6 smallCountTo2549 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2677 : oddPrimeCount 2677 = 387 :=
+  smallPrimeAdvance 2613 64 378 9 smallCountTo2613 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2741 : oddPrimeCount 2741 = 399 :=
+  smallPrimeAdvance 2677 64 387 12 smallCountTo2677 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2805 : oddPrimeCount 2805 = 408 :=
+  smallPrimeAdvance 2741 64 399 9 smallCountTo2741 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2869 : oddPrimeCount 2869 = 415 :=
+  smallPrimeAdvance 2805 64 408 7 smallCountTo2805 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2933 : oddPrimeCount 2933 = 422 :=
+  smallPrimeAdvance 2869 64 415 7 smallCountTo2869 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo2951 : oddPrimeCount 2951 = 423 :=
+  smallPrimeAdvance 2933 18 422 1 smallCountTo2933 (by decide +kernel)
+
+theorem base_2951 : oddPrimeCount 2951 ≤ 423 :=
+  (smallCountTo2951).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3015 : oddPrimeCount 3015 = 431 :=
+  smallPrimeAdvance 2951 64 423 8 smallCountTo2951 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3079 : oddPrimeCount 3079 = 439 :=
+  smallPrimeAdvance 3015 64 431 8 smallCountTo3015 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3143 : oddPrimeCount 3143 = 445 :=
+  smallPrimeAdvance 3079 64 439 6 smallCountTo3079 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3207 : oddPrimeCount 3207 = 452 :=
+  smallPrimeAdvance 3143 64 445 7 smallCountTo3143 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3271 : oddPrimeCount 3271 = 461 :=
+  smallPrimeAdvance 3207 64 452 9 smallCountTo3207 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3335 : oddPrimeCount 3335 = 469 :=
+  smallPrimeAdvance 3271 64 461 8 smallCountTo3271 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3399 : oddPrimeCount 3399 = 477 :=
+  smallPrimeAdvance 3335 64 469 8 smallCountTo3335 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3463 : oddPrimeCount 3463 = 484 :=
+  smallPrimeAdvance 3399 64 477 7 smallCountTo3399 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3527 : oddPrimeCount 3527 = 491 :=
+  smallPrimeAdvance 3463 64 484 7 smallCountTo3463 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3591 : oddPrimeCount 3591 = 501 :=
+  smallPrimeAdvance 3527 64 491 10 smallCountTo3527 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3655 : oddPrimeCount 3655 = 509 :=
+  smallPrimeAdvance 3591 64 501 8 smallCountTo3591 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3707 : oddPrimeCount 3707 = 516 :=
+  smallPrimeAdvance 3655 52 509 7 smallCountTo3655 (by decide +kernel)
+
+theorem base_3707 : oddPrimeCount 3707 ≤ 516 :=
+  (smallCountTo3707).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3771 : oddPrimeCount 3771 = 524 :=
+  smallPrimeAdvance 3707 64 516 8 smallCountTo3707 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3835 : oddPrimeCount 3835 = 531 :=
+  smallPrimeAdvance 3771 64 524 7 smallCountTo3771 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3899 : oddPrimeCount 3899 = 538 :=
+  smallPrimeAdvance 3835 64 531 7 smallCountTo3835 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo3963 : oddPrimeCount 3963 = 547 :=
+  smallPrimeAdvance 3899 64 538 9 smallCountTo3899 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4027 : oddPrimeCount 4027 = 556 :=
+  smallPrimeAdvance 3963 64 547 9 smallCountTo3963 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4091 : oddPrimeCount 4091 = 562 :=
+  smallPrimeAdvance 4027 64 556 6 smallCountTo4027 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4095 : oddPrimeCount 4095 = 563 :=
+  smallPrimeAdvance 4091 4 562 1 smallCountTo4091 (by decide +kernel)
+
+theorem base_4095 : oddPrimeCount 4095 ≤ 563 :=
+  (smallCountTo4095).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4159 : oddPrimeCount 4159 = 572 :=
+  smallPrimeAdvance 4095 64 563 9 smallCountTo4095 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4223 : oddPrimeCount 4223 = 577 :=
+  smallPrimeAdvance 4159 64 572 5 smallCountTo4159 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4287 : oddPrimeCount 4287 = 587 :=
+  smallPrimeAdvance 4223 64 577 10 smallCountTo4223 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4351 : oddPrimeCount 4351 = 593 :=
+  smallPrimeAdvance 4287 64 587 6 smallCountTo4287 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4407 : oddPrimeCount 4407 = 598 :=
+  smallPrimeAdvance 4351 56 593 5 smallCountTo4351 (by decide +kernel)
+
+theorem base_4407 : oddPrimeCount 4407 ≤ 598 :=
+  (smallCountTo4407).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4471 : oddPrimeCount 4471 = 606 :=
+  smallPrimeAdvance 4407 64 598 8 smallCountTo4407 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4535 : oddPrimeCount 4535 = 614 :=
+  smallPrimeAdvance 4471 64 606 8 smallCountTo4471 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4599 : oddPrimeCount 4599 = 621 :=
+  smallPrimeAdvance 4535 64 614 7 smallCountTo4535 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4663 : oddPrimeCount 4663 = 630 :=
+  smallPrimeAdvance 4599 64 621 9 smallCountTo4599 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4727 : oddPrimeCount 4727 = 636 :=
+  smallPrimeAdvance 4663 64 630 6 smallCountTo4663 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4791 : oddPrimeCount 4791 = 643 :=
+  smallPrimeAdvance 4727 64 636 7 smallCountTo4727 (by decide +kernel)
+
+theorem base_4791 : oddPrimeCount 4791 ≤ 643 :=
+  (smallCountTo4791).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4855 : oddPrimeCount 4855 = 649 :=
+  smallPrimeAdvance 4791 64 643 6 smallCountTo4791 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4919 : oddPrimeCount 4919 = 656 :=
+  smallPrimeAdvance 4855 64 649 7 smallCountTo4855 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo4983 : oddPrimeCount 4983 = 665 :=
+  smallPrimeAdvance 4919 64 656 9 smallCountTo4919 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5047 : oddPrimeCount 5047 = 674 :=
+  smallPrimeAdvance 4983 64 665 9 smallCountTo4983 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5111 : oddPrimeCount 5111 = 682 :=
+  smallPrimeAdvance 5047 64 674 8 smallCountTo5047 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5175 : oddPrimeCount 5175 = 688 :=
+  smallPrimeAdvance 5111 64 682 6 smallCountTo5111 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5239 : oddPrimeCount 5239 = 696 :=
+  smallPrimeAdvance 5175 64 688 8 smallCountTo5175 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5279 : oddPrimeCount 5279 = 699 :=
+  smallPrimeAdvance 5239 40 696 3 smallCountTo5239 (by decide +kernel)
+
+theorem base_5279 : oddPrimeCount 5279 ≤ 699 :=
+  (smallCountTo5279).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5343 : oddPrimeCount 5343 = 705 :=
+  smallPrimeAdvance 5279 64 699 6 smallCountTo5279 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5407 : oddPrimeCount 5407 = 712 :=
+  smallPrimeAdvance 5343 64 705 7 smallCountTo5343 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5471 : oddPrimeCount 5471 = 721 :=
+  smallPrimeAdvance 5407 64 712 9 smallCountTo5407 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5535 : oddPrimeCount 5535 = 731 :=
+  smallPrimeAdvance 5471 64 721 10 smallCountTo5471 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5599 : oddPrimeCount 5599 = 737 :=
+  smallPrimeAdvance 5535 64 731 6 smallCountTo5535 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5663 : oddPrimeCount 5663 = 745 :=
+  smallPrimeAdvance 5599 64 737 8 smallCountTo5599 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5727 : oddPrimeCount 5727 = 752 :=
+  smallPrimeAdvance 5663 64 745 7 smallCountTo5663 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5791 : oddPrimeCount 5791 = 759 :=
+  smallPrimeAdvance 5727 64 752 7 smallCountTo5727 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5855 : oddPrimeCount 5855 = 768 :=
+  smallPrimeAdvance 5791 64 759 9 smallCountTo5791 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5865 : oddPrimeCount 5865 = 770 :=
+  smallPrimeAdvance 5855 10 768 2 smallCountTo5855 (by decide +kernel)
+
+theorem base_5865 : oddPrimeCount 5865 ≤ 770 :=
+  (smallCountTo5865).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5929 : oddPrimeCount 5929 = 778 :=
+  smallPrimeAdvance 5865 64 770 8 smallCountTo5865 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo5993 : oddPrimeCount 5993 = 782 :=
+  smallPrimeAdvance 5929 64 778 4 smallCountTo5929 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6057 : oddPrimeCount 6057 = 789 :=
+  smallPrimeAdvance 5993 64 782 7 smallCountTo5993 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6121 : oddPrimeCount 6121 = 797 :=
+  smallPrimeAdvance 6057 64 789 8 smallCountTo6057 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6185 : oddPrimeCount 6185 = 803 :=
+  smallPrimeAdvance 6121 64 797 6 smallCountTo6121 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6249 : oddPrimeCount 6249 = 811 :=
+  smallPrimeAdvance 6185 64 803 8 smallCountTo6185 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6313 : oddPrimeCount 6313 = 820 :=
+  smallPrimeAdvance 6249 64 811 9 smallCountTo6249 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6377 : oddPrimeCount 6377 = 830 :=
+  smallPrimeAdvance 6313 64 820 10 smallCountTo6313 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6441 : oddPrimeCount 6441 = 835 :=
+  smallPrimeAdvance 6377 64 830 5 smallCountTo6377 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6505 : oddPrimeCount 6505 = 841 :=
+  smallPrimeAdvance 6441 64 835 6 smallCountTo6441 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6569 : oddPrimeCount 6569 = 848 :=
+  smallPrimeAdvance 6505 64 841 7 smallCountTo6505 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6633 : oddPrimeCount 6633 = 854 :=
+  smallPrimeAdvance 6569 64 848 6 smallCountTo6569 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6657 : oddPrimeCount 6657 = 856 :=
+  smallPrimeAdvance 6633 24 854 2 smallCountTo6633 (by decide +kernel)
+
+theorem base_6657 : oddPrimeCount 6657 ≤ 856 :=
+  (smallCountTo6657).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6721 : oddPrimeCount 6721 = 866 :=
+  smallPrimeAdvance 6657 64 856 10 smallCountTo6657 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6785 : oddPrimeCount 6785 = 872 :=
+  smallPrimeAdvance 6721 64 866 6 smallCountTo6721 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6849 : oddPrimeCount 6849 = 880 :=
+  smallPrimeAdvance 6785 64 872 8 smallCountTo6785 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6913 : oddPrimeCount 6913 = 888 :=
+  smallPrimeAdvance 6849 64 880 8 smallCountTo6849 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo6977 : oddPrimeCount 6977 = 896 :=
+  smallPrimeAdvance 6913 64 888 8 smallCountTo6913 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7041 : oddPrimeCount 7041 = 904 :=
+  smallPrimeAdvance 6977 64 896 8 smallCountTo6977 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7105 : oddPrimeCount 7105 = 909 :=
+  smallPrimeAdvance 7041 64 904 5 smallCountTo7041 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7169 : oddPrimeCount 7169 = 915 :=
+  smallPrimeAdvance 7105 64 909 6 smallCountTo7105 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7233 : oddPrimeCount 7233 = 923 :=
+  smallPrimeAdvance 7169 64 915 8 smallCountTo7169 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7297 : oddPrimeCount 7297 = 929 :=
+  smallPrimeAdvance 7233 64 923 6 smallCountTo7233 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7361 : oddPrimeCount 7361 = 936 :=
+  smallPrimeAdvance 7297 64 929 7 smallCountTo7297 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7425 : oddPrimeCount 7425 = 940 :=
+  smallPrimeAdvance 7361 64 936 4 smallCountTo7361 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7489 : oddPrimeCount 7489 = 948 :=
+  smallPrimeAdvance 7425 64 940 8 smallCountTo7425 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7553 : oddPrimeCount 7553 = 957 :=
+  smallPrimeAdvance 7489 64 948 9 smallCountTo7489 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7617 : oddPrimeCount 7617 = 966 :=
+  smallPrimeAdvance 7553 64 957 9 smallCountTo7553 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7679 : oddPrimeCount 7679 = 972 :=
+  smallPrimeAdvance 7617 62 966 6 smallCountTo7617 (by decide +kernel)
+
+theorem base_7679 : oddPrimeCount 7679 ≤ 972 :=
+  (smallCountTo7679).le
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7743 : oddPrimeCount 7743 = 981 :=
+  smallPrimeAdvance 7679 64 972 9 smallCountTo7679 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7807 : oddPrimeCount 7807 = 986 :=
+  smallPrimeAdvance 7743 64 981 5 smallCountTo7743 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7871 : oddPrimeCount 7871 = 992 :=
+  smallPrimeAdvance 7807 64 986 6 smallCountTo7807 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7935 : oddPrimeCount 7935 = 1001 :=
+  smallPrimeAdvance 7871 64 992 9 smallCountTo7871 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo7999 : oddPrimeCount 7999 = 1006 :=
+  smallPrimeAdvance 7935 64 1001 5 smallCountTo7935 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo8063 : oddPrimeCount 8063 = 1012 :=
+  smallPrimeAdvance 7999 64 1006 6 smallCountTo7999 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo8127 : oddPrimeCount 8127 = 1021 :=
+  smallPrimeAdvance 8063 64 1012 9 smallCountTo8063 (by decide +kernel)
+
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem smallCountTo8191 : oddPrimeCount 8191 = 1027 :=
+  smallPrimeAdvance 8127 64 1021 6 smallCountTo8127 (by decide +kernel)
+
+theorem base_8191 : oddPrimeCount 8191 ≤ 1027 :=
+  (smallCountTo8191).le
+
+end A085265.DyadicPrimeCount
+
+/- Uniform prime-count bands for the positive-square and squarefree sieve.
+The first five bands use 35 small exact counts. The other eight use one
+dyadic prime-count estimate and the previous band's density. -/
+
+namespace A085267.SameJ
+
+open Finset A085265.DyadicPrimeCount
+
+def bands : List (ℕ × ℕ × ℚ × ℚ) := [
+  (300,420,(183/500:ℚ),(96911/500000:ℚ)),
+  (421,599,(9/25:ℚ),(49013/250000:ℚ)),
+  (600,1023,(9/25:ℚ),(98959/500000:ℚ)),
+  (1024,2047,(7/20:ℚ),(199283/1000000:ℚ)),
+  (2048,4095,(73/250:ℚ),(200323/1000000:ℚ)),
+  (4096,8191,(3127/10000:ℚ),(41/200:ℚ)),
+  (8192,16383,(3103/10000:ℚ),(41/200:ℚ)),
+  (16384,32767,(2981/10000:ℚ),(41/200:ℚ)),
+  (32768,65535,(353/1250:ℚ),(41/200:ℚ)),
+  (65536,131071,(2663/10000:ℚ),(41/200:ℚ)),
+  (131072,262143,(627/2500:ℚ),(41/200:ℚ)),
+  (262144,524287,(1183/5000:ℚ),(41/200:ℚ)),
+  (524288,1000000,(559/2500:ℚ),(41/200:ℚ))]
+
+private theorem count_mono {u v : ℕ} (h : u ≤ v) : oddPrimeCount u ≤ oddPrimeCount v := by
+  apply Finset.card_le_card
+  intro p hp
+  obtain ⟨hr, hprime⟩ := Finset.mem_filter.mp hp
+  exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ((Finset.mem_range.mp hr).trans_le
+    (Nat.succ_le_succ h)), hprime⟩
+
+private theorem from_seed {J lo x cnt num den : ℕ} (hj : lo ≤ J) (hx : 2*J+1 ≤ x)
+    (hcount : oddPrimeCount x ≤ cnt) (hgrid : cnt*den ≤ num*lo) (hd : 0 < den) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ ((num:ℚ)/den)*(J:ℚ) := by
+  have h := (Nat.mul_le_mul_right den ((count_mono hx).trans hcount)).trans
+    (hgrid.trans (Nat.mul_le_mul_left num hj))
+  rw [div_mul_eq_mul_div, le_div_iff₀ (show (0:ℚ)<den by exact_mod_cast hd)]
+  exact_mod_cast h
+
+private theorem odd_half (J : ℕ) :
+    oddPrimeCount (J+1) ≤ oddPrimeCount (2*(J/2)+1) := by
+  apply Finset.card_le_card
+  intro p hp
+  obtain ⟨hr,h2,hpr⟩ := Finset.mem_filter.mp hp
+  have hle := Finset.mem_range.mp hr
+  obtain ⟨k,hk⟩ := hpr.odd_of_ne_two (by omega)
+  exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega),h2,hpr⟩
+
+private theorem dyadic_step (J e : ℕ) (he : 0 < e) (hp : 2^e ≤ J+2) :
+    oddPrimeCount (2*J+1) ≤ oddPrimeCount (2*(J/2)+1) + (2*J+1)/e := by
+  have est := A085265.DyadicPrimeCount.interval (J+1) (2*J+1) e (by omega) (by omega) he hp
+  exact est.trans (Nat.add_le_add_right (odd_half J) _)
+
+private theorem band_300 (J : ℕ) (hlo : 300 ≤ J) (hhi : J ≤ 420) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (183/500:ℚ)*(J:ℚ) := by
+  by_cases he_302 : J ≤ 302
+  · exact from_seed (lo:=300) (x:=605) (cnt:=109) (num:=183) (den:=500) (by omega) (by omega) base_605 (by decide) (by decide)
+  by_cases he_305 : J ≤ 305
+  · exact from_seed (lo:=303) (x:=611) (cnt:=110) (num:=183) (den:=500) (by omega) (by omega) base_611 (by decide) (by decide)
+  by_cases he_307 : J ≤ 307
+  · exact from_seed (lo:=306) (x:=615) (cnt:=111) (num:=183) (den:=500) (by omega) (by omega) base_615 (by decide) (by decide)
+  by_cases he_308 : J ≤ 308
+  · exact from_seed (lo:=308) (x:=617) (cnt:=112) (num:=183) (den:=500) (by omega) (by omega) base_617 (by decide) (by decide)
+  by_cases he_314 : J ≤ 314
+  · exact from_seed (lo:=309) (x:=629) (cnt:=113) (num:=183) (den:=500) (by omega) (by omega) base_629 (by decide) (by decide)
+  by_cases he_320 : J ≤ 320
+  · exact from_seed (lo:=315) (x:=641) (cnt:=115) (num:=183) (den:=500) (by omega) (by omega) base_641 (by decide) (by decide)
+  by_cases he_325 : J ≤ 325
+  · exact from_seed (lo:=321) (x:=651) (cnt:=117) (num:=183) (den:=500) (by omega) (by omega) base_651 (by decide) (by decide)
+  by_cases he_329 : J ≤ 329
+  · exact from_seed (lo:=326) (x:=659) (cnt:=119) (num:=183) (den:=500) (by omega) (by omega) base_659 (by decide) (by decide)
+  by_cases he_335 : J ≤ 335
+  · exact from_seed (lo:=330) (x:=671) (cnt:=120) (num:=183) (den:=500) (by omega) (by omega) base_671 (by decide) (by decide)
+  by_cases he_340 : J ≤ 340
+  · exact from_seed (lo:=336) (x:=681) (cnt:=122) (num:=183) (den:=500) (by omega) (by omega) base_681 (by decide) (by decide)
+  by_cases he_349 : J ≤ 349
+  · exact from_seed (lo:=341) (x:=699) (cnt:=124) (num:=183) (den:=500) (by omega) (by omega) base_699 (by decide) (by decide)
+  by_cases he_365 : J ≤ 365
+  · exact from_seed (lo:=350) (x:=731) (cnt:=128) (num:=183) (den:=500) (by omega) (by omega) base_731 (by decide) (by decide)
+  by_cases he_379 : J ≤ 379
+  · exact from_seed (lo:=366) (x:=759) (cnt:=133) (num:=183) (den:=500) (by omega) (by omega) base_759 (by decide) (by decide)
+  by_cases he_404 : J ≤ 404
+  · exact from_seed (lo:=380) (x:=809) (cnt:=139) (num:=183) (den:=500) (by omega) (by omega) base_809 (by decide) (by decide)
+  exact from_seed (lo:=405) (x:=841) (cnt:=145) (num:=183) (den:=500) (by omega) (by omega) base_841 (by decide) (by decide)
+
+private theorem band_421 (J : ℕ) (hlo : 421 ≤ J) (hhi : J ≤ 599) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (9/25:ℚ)*(J:ℚ) := by
+  by_cases he_440 : J ≤ 440
+  · exact from_seed (lo:=421) (x:=881) (cnt:=151) (num:=9) (den:=25) (by omega) (by omega) base_881 (by decide) (by decide)
+  by_cases he_469 : J ≤ 469
+  · exact from_seed (lo:=441) (x:=939) (cnt:=158) (num:=9) (den:=25) (by omega) (by omega) base_939 (by decide) (by decide)
+  by_cases he_508 : J ≤ 508
+  · exact from_seed (lo:=470) (x:=1017) (cnt:=169) (num:=9) (den:=25) (by omega) (by omega) base_1017 (by decide) (by decide)
+  by_cases he_550 : J ≤ 550
+  · exact from_seed (lo:=509) (x:=1101) (cnt:=183) (num:=9) (den:=25) (by omega) (by omega) base_1101 (by decide) (by decide)
+  exact from_seed (lo:=551) (x:=1199) (cnt:=195) (num:=9) (den:=25) (by omega) (by omega) base_1199 (by decide) (by decide)
+
+private theorem band_600 (J : ℕ) (hlo : 600 ≤ J) (hhi : J ≤ 1023) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (9/25:ℚ)*(J:ℚ) := by
+  by_cases he_679 : J ≤ 679
+  · exact from_seed (lo:=600) (x:=1359) (cnt:=216) (num:=9) (den:=25) (by omega) (by omega) base_1359 (by decide) (by decide)
+  by_cases he_778 : J ≤ 778
+  · exact from_seed (lo:=680) (x:=1557) (cnt:=244) (num:=9) (den:=25) (by omega) (by omega) base_1557 (by decide) (by decide)
+  by_cases he_914 : J ≤ 914
+  · exact from_seed (lo:=779) (x:=1829) (cnt:=280) (num:=9) (den:=25) (by omega) (by omega) base_1829 (by decide) (by decide)
+  exact from_seed (lo:=915) (x:=2047) (cnt:=308) (num:=9) (den:=25) (by omega) (by omega) base_2047 (by decide) (by decide)
+
+private theorem band_1024 (J : ℕ) (hlo : 1024 ≤ J) (hhi : J ≤ 2047) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (7/20:ℚ)*(J:ℚ) := by
+  by_cases he_1210 : J ≤ 1210
+  · exact from_seed (lo:=1024) (x:=2421) (cnt:=358) (num:=7) (den:=20) (by omega) (by omega) base_2421 (by decide) (by decide)
+  by_cases he_1475 : J ≤ 1475
+  · exact from_seed (lo:=1211) (x:=2951) (cnt:=423) (num:=7) (den:=20) (by omega) (by omega) base_2951 (by decide) (by decide)
+  by_cases he_1853 : J ≤ 1853
+  · exact from_seed (lo:=1476) (x:=3707) (cnt:=516) (num:=7) (den:=20) (by omega) (by omega) base_3707 (by decide) (by decide)
+  exact from_seed (lo:=1854) (x:=4095) (cnt:=563) (num:=7) (den:=20) (by omega) (by omega) base_4095 (by decide) (by decide)
+
+private theorem band_2048 (J : ℕ) (hlo : 2048 ≤ J) (hhi : J ≤ 4095) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (73/250:ℚ)*(J:ℚ) := by
+  by_cases he_2203 : J ≤ 2203
+  · exact from_seed (lo:=2048) (x:=4407) (cnt:=598) (num:=73) (den:=250) (by omega) (by omega) base_4407 (by decide) (by decide)
+  by_cases he_2395 : J ≤ 2395
+  · exact from_seed (lo:=2204) (x:=4791) (cnt:=643) (num:=73) (den:=250) (by omega) (by omega) base_4791 (by decide) (by decide)
+  by_cases he_2639 : J ≤ 2639
+  · exact from_seed (lo:=2396) (x:=5279) (cnt:=699) (num:=73) (den:=250) (by omega) (by omega) base_5279 (by decide) (by decide)
+  by_cases he_2932 : J ≤ 2932
+  · exact from_seed (lo:=2640) (x:=5865) (cnt:=770) (num:=73) (den:=250) (by omega) (by omega) base_5865 (by decide) (by decide)
+  by_cases he_3328 : J ≤ 3328
+  · exact from_seed (lo:=2933) (x:=6657) (cnt:=856) (num:=73) (den:=250) (by omega) (by omega) base_6657 (by decide) (by decide)
+  by_cases he_3839 : J ≤ 3839
+  · exact from_seed (lo:=3329) (x:=7679) (cnt:=972) (num:=73) (den:=250) (by omega) (by omega) base_7679 (by decide) (by decide)
+  exact from_seed (lo:=3840) (x:=8191) (cnt:=1027) (num:=73) (den:=250) (by omega) (by omega) base_8191 (by decide) (by decide)
+
+private theorem band_4096 (J : ℕ) (hlo : 4096 ≤ J) (hhi : J ≤ 8191) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (3127/10000:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 12 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/12 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_2048 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/12 : ℕ) : ℚ)*12 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 12
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (4096 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_8192 (J : ℕ) (hlo : 8192 ≤ J) (hhi : J ≤ 16383) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (3103/10000:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 13 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/13 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_4096 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/13 : ℕ) : ℚ)*13 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 13
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (8192 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_16384 (J : ℕ) (hlo : 16384 ≤ J) (hhi : J ≤ 32767) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (2981/10000:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 14 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/14 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_8192 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/14 : ℕ) : ℚ)*14 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 14
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (16384 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_32768 (J : ℕ) (hlo : 32768 ≤ J) (hhi : J ≤ 65535) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (353/1250:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 15 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/15 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_16384 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/15 : ℕ) : ℚ)*15 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 15
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (32768 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_65536 (J : ℕ) (hlo : 65536 ≤ J) (hhi : J ≤ 131071) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (2663/10000:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 16 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/16 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_32768 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/16 : ℕ) : ℚ)*16 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 16
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (65536 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_131072 (J : ℕ) (hlo : 131072 ≤ J) (hhi : J ≤ 262143) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (627/2500:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 17 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/17 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_65536 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/17 : ℕ) : ℚ)*17 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 17
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (131072 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_262144 (J : ℕ) (hlo : 262144 ≤ J) (hhi : J ≤ 524287) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (1183/5000:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 18 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/18 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_131072 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/18 : ℕ) : ℚ)*18 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 18
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (262144 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem band_524288 (J : ℕ) (hlo : 524288 ≤ J) (hhi : J ≤ 1000000) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ (559/2500:ℚ)*(J:ℚ) := by
+  have step := dyadic_step J 19 (by decide) (by omega)
+  have stepQ : (oddPrimeCount (2*J+1) : ℚ) ≤
+      (oddPrimeCount (2*(J/2)+1) : ℚ) + (((2*J+1)/19 : ℕ) : ℚ) := by exact_mod_cast step
+  have previous := band_262144 (J/2) (by omega) (by omega)
+  have divQ : (((2*J+1)/19 : ℕ) : ℚ)*19 ≤ 2*(J:ℚ)+1 := by
+    exact_mod_cast Nat.div_mul_le_self (2*J+1) 19
+  have halfQ : 2*((J/2 : ℕ) : ℚ) ≤ J := by
+    exact_mod_cast (show 2*(J/2) ≤ J by omega)
+  have lowQ : (524288 : ℚ) ≤ J := by exact_mod_cast hlo
+  linarith only [stepQ, previous, divQ, halfQ, lowQ]
+
+private theorem all_bands : ∀ b ∈ bands, ∀ J : ℕ, b.1 ≤ J → J ≤ b.2.1 →
+    (oddPrimeCount (2*J+1) : ℚ) ≤ b.2.2.1*(J:ℚ) := by
+  unfold bands
+  refine List.forall_mem_cons.mpr ⟨band_300, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_421, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_600, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_1024, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_2048, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_4096, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_8192, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_16384, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_32768, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_65536, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_131072, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_262144, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨band_524288, ?_⟩
+  simp
+
+theorem prime_count_le {lo hi J : ℕ} {alpha recip : ℚ}
+    (hband : (lo,hi,alpha,recip) ∈ bands) (hlo : lo ≤ J) (hhi : J ≤ hi) :
+    (oddPrimeCount (2*J+1) : ℚ) ≤ alpha*(J:ℚ) := all_bands _ hband J hlo hhi
+
+theorem band_exists {J : ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000) :
+    ∃ (lo hi : ℕ) (alpha recip : ℚ), (lo,hi,alpha,recip) ∈ bands ∧ lo ≤ J ∧ J ≤ hi := by
+  by_cases until_420 : J ≤ 420
+  · exact ⟨300,420,(183/500:ℚ),(96911/500000:ℚ),by decide,by omega,by omega⟩
+  by_cases until_599 : J ≤ 599
+  · exact ⟨421,599,(9/25:ℚ),(49013/250000:ℚ),by decide,by omega,by omega⟩
+  by_cases until_1023 : J ≤ 1023
+  · exact ⟨600,1023,(9/25:ℚ),(98959/500000:ℚ),by decide,by omega,by omega⟩
+  by_cases until_2047 : J ≤ 2047
+  · exact ⟨1024,2047,(7/20:ℚ),(199283/1000000:ℚ),by decide,by omega,by omega⟩
+  by_cases until_4095 : J ≤ 4095
+  · exact ⟨2048,4095,(73/250:ℚ),(200323/1000000:ℚ),by decide,by omega,by omega⟩
+  by_cases until_8191 : J ≤ 8191
+  · exact ⟨4096,8191,(3127/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  by_cases until_16383 : J ≤ 16383
+  · exact ⟨8192,16383,(3103/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  by_cases until_32767 : J ≤ 32767
+  · exact ⟨16384,32767,(2981/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  by_cases until_65535 : J ≤ 65535
+  · exact ⟨32768,65535,(353/1250:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  by_cases until_131071 : J ≤ 131071
+  · exact ⟨65536,131071,(2663/10000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  by_cases until_262143 : J ≤ 262143
+  · exact ⟨131072,262143,(627/2500:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  by_cases until_524287 : J ≤ 524287
+  · exact ⟨262144,524287,(1183/5000:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+  exact ⟨524288,1000000,(559/2500:ℚ),(41/200:ℚ),by decide,by omega,by omega⟩
+
+end A085267.SameJ
+
+/-! Same-parameter prime-square costs in the intermediate A085265 and A085267 sieve. -/
+
+namespace A085265.SameJ
+
+open Finset
+
+def oddPrimes (x : ℕ) : Finset ℕ := (range (x+1)).filter (fun p => 2 < p ∧ p.Prime)
+def active (J : ℕ) : Finset ℕ := (oddPrimes (2*J+1)).filter (fun p => p^2 ≤ 2*J)
+def recip (A : Finset ℕ) : ℚ := ∑ p ∈ A, 1/(p:ℚ)^2
+
+private lemma recip_mono {A B : Finset ℕ} (h : A ⊆ B) : recip A ≤ recip B :=
+  sum_le_sum_of_subset_of_nonneg h (by intros; positivity)
+
+theorem mask_active {J : ℕ} {A : Finset ℕ} (hJ : 300 ≤ J)
+    (hA : A ⊆ {3,5,7,11,13,17}) : A ⊆ active J := by
+  intro p hp
+  have tab : ∀ q ∈ ({3,5,7,11,13,17} : Finset ℕ), 2 < q ∧ q.Prime ∧ q ≤ 17 := by decide
+  obtain ⟨h2,hprime,hle⟩ := tab p (hA hp)
+  have sq := Nat.pow_le_pow_left hle 2
+  exact mem_filter.mpr ⟨mem_filter.mpr ⟨mem_range.mpr (by omega), h2, hprime⟩, by omega⟩
+
+theorem cost {J : ℕ} {S A : Finset ℕ} {α R : ℚ} (haS : A ⊆ S)
+    (ha : A ⊆ active J) (hc : ((oddPrimes (2*J+1)).card : ℚ) ≤ α*(J:ℚ))
+    (hr : recip (active J) ≤ R) :
+    ((∑ p ∈ oddPrimes (2*J+1) \ S, 2*J/(p^2)+1 : ℕ) : ℚ) ≤
+      (J:ℚ)*(α+2*(R-recip A))-(A.card:ℚ) := by
+  let P := oddPrimes (2*J+1)
+  let E := P \ S
+  let B := E.filter (fun p => p^2 ≤ 2*J)
+  have out {p : ℕ} (hp : p ∈ E) : p ∉ A :=
+    fun h => (mem_sdiff.mp hp).2 (haS h)
+  have disj : Disjoint E A := disjoint_left.mpr fun _ hp => out hp
+  have bdisj : Disjoint B A := disjoint_left.mpr fun _ hp => out (mem_filter.mp hp).1
+  have esub : E ∪ A ⊆ P := union_subset sdiff_subset (fun _ h => (mem_filter.mp (ha h)).1)
+  have bsub : B ∪ A ⊆ active J := by
+    apply union_subset _ ha
+    intro p hp
+    obtain ⟨he, hs⟩ := mem_filter.mp hp
+    exact mem_filter.mpr ⟨(mem_sdiff.mp he).1, hs⟩
+  have rsum : recip B + recip A ≤ R := by
+    calc
+      _ = recip (B ∪ A) := (sum_union bdisj).symm
+      _ ≤ _ := (recip_mono bsub).trans hr
+  have csum : (E.card:ℚ) + (A.card:ℚ) ≤ α*(J:ℚ) := by
+    have cn : E.card + A.card ≤ P.card := by
+      rw [← card_union_of_disjoint disj]
+      exact card_le_card esub
+    exact (show (E.card:ℚ) + (A.card:ℚ) ≤ (P.card:ℚ) by exact_mod_cast cn).trans hc
+  have remove : (∑ p ∈ B, 2*J/(p^2)) = ∑ p ∈ E, 2*J/(p^2) := by
+    apply sum_subset (filter_subset _ _)
+    intro p hp hn
+    exact Nat.div_eq_of_lt (lt_of_not_ge (fun hs => hn (mem_filter.mpr ⟨hp,hs⟩)))
+  have hf : ((∑ p ∈ E, 2*J/(p^2) : ℕ) : ℚ) ≤ 2*(J:ℚ)*(R-recip A) := by
+    rw [← remove, Nat.cast_sum]
+    calc
+      _ ≤ ∑ p ∈ B, 2*(J:ℚ)*(1/(p:ℚ)^2) := by
+        apply sum_le_sum
+        intro p hp
+        have hp0 : 0 < p := by
+          have hodd := (mem_filter.mp (mem_sdiff.mp (mem_filter.mp hp).1).1).2.1
+          omega
+        rw [mul_one_div]
+        apply (le_div_iff₀ (show 0 < (p:ℚ)^2 by positivity)).mpr
+        exact_mod_cast Nat.div_mul_le_self (2*J) (p^2)
+      _ = 2*(J:ℚ)*recip B := (Finset.mul_sum ..).symm
+      _ ≤ _ := mul_le_mul_of_nonneg_left (by linarith only [rsum]) (by positivity)
+  change ((∑ p ∈ E, 2*J/(p^2)+1 : ℕ) : ℚ) ≤ _
+  rw [sum_add_distrib]
+  simp only [sum_const, nsmul_eq_mul, mul_one, Nat.cast_add]
+  calc
+    _ ≤ 2*(J:ℚ)*(R-recip A) + (α*(J:ℚ)-(A.card:ℚ)) :=
+      add_le_add hf (by linarith only [csum])
+    _ = _ := by ring
+
+private theorem active_recip_of_hi {J H T : ℕ} (hJ : J ≤ H) (hT : 2*H < (T+1)^2) :
+    recip (active J) ≤ recip (oddPrimes T) := by
+  apply recip_mono
+  intro p hp
+  obtain ⟨hmem,hs⟩ := mem_filter.mp hp
+  have hle : p ≤ T := by
+    by_contra! hh
+    have bound := Nat.pow_le_pow_left (show T+1 ≤ p by omega) 2
+    omega
+  exact mem_filter.mpr ⟨mem_range.mpr (by omega), (mem_filter.mp hmem).2⟩
+
+theorem active_recip_420 {J : ℕ} (h : J ≤ 420) : recip (active J) ≤ 96911/500000 :=
+  (active_recip_of_hi (T := 28) h (by decide)).trans (by decide +kernel)
+
+theorem active_recip_599 {J : ℕ} (h : J ≤ 599) : recip (active J) ≤ 49013/250000 :=
+  (active_recip_of_hi (T := 34) h (by decide)).trans (by decide +kernel)
+
+theorem active_recip_1023 {J : ℕ} (h : J ≤ 1023) : recip (active J) ≤ 98959/500000 :=
+  (active_recip_of_hi (T := 45) h (by decide)).trans (by decide +kernel)
+
+theorem active_recip_2047 {J : ℕ} (h : J ≤ 2047) : recip (active J) ≤ 199283/1000000 :=
+  (active_recip_of_hi (T := 63) h (by decide)).trans (by decide +kernel)
+
+theorem active_recip_4095 {J : ℕ} (h : J ≤ 4095) : recip (active J) ≤ 200323/1000000 :=
+  (active_recip_of_hi (T := 90) h (by decide)).trans (by decide +kernel)
+
+private theorem odd_reciprocal_step {p T : ℕ} (hT : 1 ≤ T) (hTp : T < p) :
+    1/(p : ℚ)^2 + 1/(2*((p : ℚ)+1)) ≤ 1/(2*(T : ℚ)) := by
+  have hpos : (0 : ℚ) < T := by exact_mod_cast (show 0 < T by omega)
+  have hle : (T : ℚ)+1 ≤ p := by exact_mod_cast (show T+1 ≤ p by omega)
+  have hm : 0 < (p : ℚ)-1 := by linarith
+  have hp : 0 < (p : ℚ)+1 := by positivity
+  have htel : 1/(2*((p : ℚ)-1)) - 1/(2*((p : ℚ)+1)) =
+      1/(((p : ℚ)-1)*((p : ℚ)+1)) := by
+    field_simp [hm.ne', hp.ne'] <;> ring
+  have hrec : 1/(p : ℚ)^2 ≤ 1/(((p : ℚ)-1)*((p : ℚ)+1)) :=
+    one_div_le_one_div_of_le (mul_pos hm hp) (by nlinarith)
+  have hstart : 1/(2*((p : ℚ)-1)) ≤ 1/(2*(T : ℚ)) :=
+    one_div_le_one_div_of_le (by positivity) (by linarith)
+  linarith
+
+private theorem odd_reciprocal_tail_aux (count : ℕ) (P : Finset ℕ)
+    (hcard : P.card = count) (T : ℕ) (hT : 1 ≤ T)
+    (hP : ∀ p ∈ P, 2 < p ∧ p.Prime) (hcut : ∀ p ∈ P, T < p) :
+    (∑ p ∈ P, 1/(p : ℚ)^2) ≤ 1/(2*(T : ℚ)) := by
+  induction count generalizing P T with
+  | zero =>
+    have he := Finset.card_eq_zero.mp hcard
+    subst P
+    simp only [Finset.sum_empty]
+    positivity
+  | succ count ih =>
+    have hne : P.Nonempty := Finset.card_pos.mp (by omega)
+    let p := P.min' hne
+    have hp : p ∈ P := P.min'_mem hne
+    have hcard' : (P.erase p).card = count := by
+      rw [Finset.card_erase_of_mem hp, hcard] <;> omega
+    have hsub {q : ℕ} (hq : q ∈ P.erase p) : q ∈ P := (Finset.mem_erase.mp hq).2
+    have hnext (q : ℕ) (hq : q ∈ P.erase p) : p+1 < q := by
+      have hdiff := (Finset.mem_erase.mp hq).1
+      have hmin : p ≤ q := P.min'_le q (hsub hq)
+      obtain ⟨hp2,hpp⟩ := hP p hp
+      obtain ⟨hq2,hqp⟩ := hP q (hsub hq)
+      obtain ⟨i,hi⟩ := hpp.odd_of_ne_two (by omega)
+      obtain ⟨j,hj⟩ := hqp.odd_of_ne_two (by omega)
+      omega
+    have htail := ih (P.erase p) hcard' (p+1) (by omega)
+      (fun q hq => hP q (hsub hq)) hnext
+    rw [← Finset.add_sum_erase P (fun q => 1/(q : ℚ)^2) hp]
+    calc
+      _ ≤ 1/(p : ℚ)^2 + 1/(2*(((p+1 : ℕ) : ℚ))) := add_le_add_left htail _
+      _ ≤ _ := by simpa only [Nat.cast_add, Nat.cast_one] using
+        odd_reciprocal_step hT (hcut p hp)
+
+/-- A finite subset of the odd primes past `T` has reciprocal-square sum at
+most `1/(2T)`, by telescoping along successive odd integers. -/
+theorem oddPrimeReciprocalTail {P : Finset ℕ} {T : ℕ} (hT : 1 ≤ T)
+    (hP : ∀ p ∈ P, 2 < p ∧ p.Prime) (hcut : ∀ p ∈ P, T < p) :
+    (∑ p ∈ P, 1/(p : ℚ)^2) ≤ 1/(2*(T : ℚ)) :=
+  odd_reciprocal_tail_aux P.card P rfl T hT hP hcut
+
+theorem active_recip_global (J : ℕ) : recip (active J) ≤ 41/200 := by
+  let Q := active J
+  let low := Q.filter (fun p => p ≤ 128)
+  let high := Q.filter (fun p => ¬p ≤ 128)
+  have prop (p : ℕ) (hp : p ∈ Q) : 2 < p ∧ p.Prime :=
+    (mem_filter.mp (mem_filter.mp hp).1).2
+  have sub : low ⊆ oddPrimes 128 := by
+    intro p hp
+    obtain ⟨hq,hle⟩ := mem_filter.mp hp
+    exact mem_filter.mpr ⟨mem_range.mpr (by omega), prop p hq⟩
+  have tail : recip high ≤ 1/(2*(128:ℚ)) :=
+    oddPrimeReciprocalTail (by decide) (fun p hp => prop p (mem_filter.mp hp).1)
+      (fun _ hp => lt_of_not_ge (mem_filter.mp hp).2)
+  have partition : recip low + recip high = recip Q :=
+    sum_filter_add_sum_filter_not Q (fun p => p ≤ 128) (fun p => 1/(p:ℚ)^2)
+  have finite : recip (oddPrimes 128) + 1/(2*(128:ℚ)) ≤ 41/200 := by decide +kernel
+  exact partition ▸ (add_le_add (recip_mono sub) tail).trans finite
+
+end A085265.SameJ
+
+namespace A085267.SameJ
+
+private theorem reciprocal_bands :
+    ∀ b ∈ bands, ∀ J : ℕ, J ≤ b.2.1 →
+      A085265.SameJ.recip (A085265.SameJ.active J) ≤ b.2.2.2 := by
+  unfold bands
+  refine List.forall_mem_cons.mpr ⟨fun _ h => A085265.SameJ.active_recip_420 h, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun _ h => A085265.SameJ.active_recip_599 h, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun _ h => A085265.SameJ.active_recip_1023 h, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun _ h => A085265.SameJ.active_recip_2047 h, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun _ h => A085265.SameJ.active_recip_4095 h, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨fun J _ => A085265.SameJ.active_recip_global J, ?_⟩
+  simp
+
+theorem active_recip_le {lo hi J : ℕ} {α R : ℚ} (hb : (lo,hi,α,R) ∈ bands)
+    (_hl : lo ≤ J) (hh : J ≤ hi) : A085265.SameJ.recip (A085265.SameJ.active J) ≤ R :=
+  reciprocal_bands _ hb J hh
+
+end A085267.SameJ
+
+/- Fixed-J strict profile inequalities for the 13 bands. Each certificate checks
+the first admissible J in its band and the nonnegative slope for all larger J. -/
+
+namespace A085267.SameJ
+
+open scoped BigOperators
+
+private def profilePrimes : Finset ℕ := {3,5,7,11,13,17}
+
+private def firstProfileJ (lo : ℕ) (A : Finset ℕ) (t : ℕ) : ℕ :=
+  max lo (((∏ p ∈ A, p) * 19^t - 1) / 2)
+
+private def profileError (k : ℕ) : ℚ := if k = 0 then 0 else (2:ℚ)^(k-1)
+
+private def profileSlope (α R : ℚ) (A : Finset ℕ) (t : ℕ) : ℚ :=
+  (∏ p ∈ A, (1-1/(p:ℚ))) * (18/19:ℚ)^t - (α + 2*(R-A085265.SameJ.recip A))
+
+private def anchorProfile (row : ℕ × ℕ × ℚ × ℚ) : Prop :=
+  ∀ A ∈ profilePrimes.powerset, ∀ t : Fin 5,
+    firstProfileJ row.1 A t.val ≤ row.2.1 →
+      0 ≤ profileSlope row.2.2.1 row.2.2.2 A t.val ∧
+        1 + profileError (A.card+t.val) - (A.card:ℚ) <
+          (firstProfileJ row.1 A t.val:ℚ) * profileSlope row.2.2.1 row.2.2.2 A t.val
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_300 :
+    anchorProfile (300,420,(183/500:ℚ),(96911/500000:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_421 :
+    anchorProfile (421,599,(9/25:ℚ),(49013/250000:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_600 :
+    anchorProfile (600,1023,(9/25:ℚ),(98959/500000:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_1024 :
+    anchorProfile (1024,2047,(7/20:ℚ),(199283/1000000:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_2048 :
+    anchorProfile (2048,4095,(73/250:ℚ),(200323/1000000:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_4096 :
+    anchorProfile (4096,8191,(3127/10000:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_8192 :
+    anchorProfile (8192,16383,(3103/10000:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_16384 :
+    anchorProfile (16384,32767,(2981/10000:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_32768 :
+    anchorProfile (32768,65535,(353/1250:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_65536 :
+    anchorProfile (65536,131071,(2663/10000:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_131072 :
+    anchorProfile (131072,262143,(627/2500:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_262144 :
+    anchorProfile (262144,524287,(1183/5000:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+private theorem profileAnchor_524288 :
+    anchorProfile (524288,1000000,(559/2500:ℚ),(41/200:ℚ)) := by
+  unfold anchorProfile
+  decide +kernel
+
+private theorem allProfileAnchors : ∀ b ∈ bands, anchorProfile b := by
+  unfold bands
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_300, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_421, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_600, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_1024, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_2048, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_4096, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_8192, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_16384, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_32768, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_65536, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_131072, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_262144, ?_⟩
+  refine List.forall_mem_cons.mpr ⟨profileAnchor_524288, ?_⟩
+  simp
+
+theorem profile_all {lo hi J : ℕ} {α R : ℚ}
+    (hband : (lo,hi,α,R) ∈ bands) (hlo : lo ≤ J) (hhi : J ≤ hi)
+    (A : Finset ℕ) (hA : A ⊆ ({3,5,7,11,13,17} : Finset ℕ))
+    (t : ℕ) (ht : t < 5) (hprod : (∏ p ∈ A, p) * 19^t ≤ 2*J+2) :
+    (J:ℚ)*(α + 2*(R-A085265.SameJ.recip A)) - (A.card:ℚ) +
+      (1+(if A.card+t = 0 then 0 else (2:ℚ)^(A.card+t-1))) <
+      (J:ℚ)*(∏ p ∈ A, (1-1/(p:ℚ)))*(18/19:ℚ)^t := by
+  have hmin : firstProfileJ lo A t ≤ J := by
+    unfold firstProfileJ
+    exact max_le hlo (by omega)
+  have hmem : A ∈ profilePrimes.powerset := Finset.mem_powerset.mpr hA
+  obtain ⟨hslope, hanchor⟩ :=
+    allProfileAnchors _ hband A hmem ⟨t,ht⟩ (hmin.trans hhi)
+  change 0 ≤ profileSlope α R A t at hslope
+  change 1 + profileError (A.card+t) - (A.card:ℚ) <
+    (firstProfileJ lo A t:ℚ) * profileSlope α R A t at hanchor
+  have hq : (firstProfileJ lo A t:ℚ) ≤ (J:ℚ) := by exact_mod_cast hmin
+  have gap := hanchor.trans_le (mul_le_mul_of_nonneg_right hq hslope)
+  change (J:ℚ)*(α + 2*(R-A085265.SameJ.recip A)) - (A.card:ℚ) +
+    (1+profileError (A.card+t)) < _
+  calc
+    _ = (J:ℚ)*(α + 2*(R-A085265.SameJ.recip A)) +
+        (1+profileError (A.card+t)-(A.card:ℚ)) := by ring
+    _ < (J:ℚ)*(α + 2*(R-A085265.SameJ.recip A)) +
+        (J:ℚ)*profileSlope α R A t := by linarith only [gap]
+    _ = _ := by unfold profileSlope; ring
+
+end A085267.SameJ
+
+open scoped BigOperators
+
+namespace A085267.SameJ.Assembly
+
+private def smallPrimes : Finset ℕ := {3, 5, 7, 11, 13, 17}
+
+private def largeRho (A : Finset ℕ) : ℚ := ∏ p ∈ A, (1-1/(p:ℚ))
+
+private def err (k : ℕ) : ℚ := if k = 0 then 0 else (2:ℚ)^(k-1)
+
+private theorem rho_nonneg' {S : Finset ℕ} (h : ∀ p ∈ S, 2 < p) : 0 ≤ largeRho S := by
+  apply Finset.prod_nonneg
+  intro p hp
+  have h₁ : (1:ℚ) ≤ p := by exact_mod_cast (show 1 ≤ p by have := h p hp; omega)
+  exact sub_nonneg.mpr ((div_le_one (by linarith : (0:ℚ) < p)).mpr h₁)
+
+theorem combine {J : ℕ} {S : Finset ℕ} {α R : ℚ}
+    (hlo : 300 ≤ J) (hhi : J ≤ 1000000) (hS : ∀ p ∈ S, 2 < p ∧ p.Prime)
+    (hB : (∏ p ∈ S, p) ≤ 2*J+2)
+    (hcount : ((A085265.SameJ.oddPrimes (2*J+1)).card : ℚ) ≤ α*(J:ℚ))
+    (hrecip : A085265.SameJ.recip (A085265.SameJ.active J) ≤ R)
+    (hprofile : ∀ A : Finset ℕ, A ⊆ smallPrimes → ∀ t : ℕ, t < 5 →
+      (∏ p ∈ A, p) * 19^t ≤ 2*J+2 →
+      (J:ℚ)*(α + 2*(R-A085265.SameJ.recip A)) - (A.card:ℚ) + (1+err (A.card+t)) <
+        (J:ℚ)*largeRho A*(18/19:ℚ)^t) :
+    ((∑ p ∈ A085265.SameJ.oddPrimes (2*J+1) \ S, (2*J/(p^2)+1) : ℕ):ℚ) +
+      (1+err S.card) < (J:ℚ)*largeRho S := by
+  let A := S ∩ smallPrimes
+  let T := S \ A
+  have haS : A ⊆ S := Finset.inter_subset_left
+  have hat : Disjoint A T := Finset.disjoint_left.mpr
+    (fun _ ha ht => (Finset.mem_sdiff.mp ht).2 ha)
+  have hsplit : A ∪ T = S := Finset.union_sdiff_of_subset haS
+  have card : A.card+T.card = S.card := by rw [← Finset.card_union_of_disjoint hat,hsplit]
+  have large (p : ℕ) (hp : p ∈ T) : 19 ≤ p := by
+    obtain ⟨hs,ha⟩ := Finset.mem_sdiff.mp hp
+    have tab : ∀ t : Fin 19, 2 < t.val → Nat.Prime t.val → t.val ∈ smallPrimes := by decide
+    by_contra! h
+    have prop := hS p hs
+    exact ha (Finset.mem_inter.mpr ⟨hs,tab ⟨p,h⟩ prop.1 prop.2⟩)
+  have pT : 19^T.card ≤ ∏ p ∈ T,p := by
+    simpa only [Finset.prod_const] using (Finset.prod_le_prod' (fun p hp => large p hp))
+  have pA : (∏ p ∈ A,p)*19^T.card ≤ 2*J+2 := calc
+    _ ≤ _ := Nat.mul_le_mul_left (∏ p ∈ A,p) pT
+    _ = ∏ p ∈ S,p := by rw [← Finset.prod_union hat,hsplit]
+    _ ≤ _ := hB
+  have pApos : 0 < ∏ p ∈ A,p := Finset.prod_pos (fun p hp => by have := (hS p (haS hp)).1; omega)
+  have pTle : 19^T.card ≤ 2*J+2 := (Nat.le_mul_of_pos_left _ pApos).trans pA
+  have ht : T.card < 5 := by
+    by_contra! hk
+    have high := Nat.pow_le_pow_right (by decide : 0 < 19) hk
+    omega
+  have hTρ : (18/19:ℚ)^T.card ≤ largeRho T := by
+    have point (p : ℕ) (hp : p ∈ T) : (18/19:ℚ) ≤ 1-1/(p:ℚ) := by
+      have pq : (19:ℚ) ≤ p := by exact_mod_cast large p hp
+      have inf := one_div_le_one_div_of_le (by norm_num : (0:ℚ) < 19) pq
+      linarith
+    have bound (U : Finset ℕ) (hu : ∀ p ∈ U, (18/19:ℚ) ≤ 1-1/(p:ℚ)) :
+        (18/19:ℚ)^U.card ≤ largeRho U := by
+      induction U using Finset.induction_on with
+      | empty => simp [largeRho]
+      | @insert p U hp ih =>
+        have hp' := hu p (Finset.mem_insert_self p U)
+        have hi := ih (fun q hq => hu q (Finset.mem_insert_of_mem hq))
+        have h := mul_le_mul hp' hi (by positivity)
+          (by linarith only [hp'] : 0 ≤ 1-1/(p:ℚ))
+        simpa [largeRho, hp, pow_succ, mul_comm] using h
+    exact bound T point
+  have hρA := rho_nonneg' (S := A) (fun p hp => (hS p (haS hp)).1)
+  have hrho : largeRho A * largeRho T = largeRho S := by
+    unfold largeRho
+    rw [← Finset.prod_union hat,hsplit]
+  have hright : (J:ℚ)*largeRho A*(18/19:ℚ)^T.card ≤ (J:ℚ)*largeRho S := calc
+    _ = (J:ℚ)*(largeRho A*(18/19:ℚ)^T.card) := by ring
+    _ ≤ (J:ℚ)*(largeRho A*largeRho T) := by gcongr
+    _ = _ := by rw [hrho]
+  have hsmall : A ⊆ smallPrimes := Finset.inter_subset_right
+  have hactive : A ⊆ A085265.SameJ.active J := A085265.SameJ.mask_active hlo hsmall
+  have lower := hprofile A hsmall T.card ht pA
+  have upper := A085265.SameJ.cost haS hactive hcount hrecip
+  rw [← card]
+  exact ((add_le_add upper (le_refl (1+err (A.card+T.card)))).trans_lt lower).trans_le hright
+
+end A085267.SameJ.Assembly
+
+open scoped BigOperators
+
+namespace A085267.SameJ.Assembly
+
+theorem budget {J : ℕ} {S : Finset ℕ} (hlo : 300 ≤ J) (hhi : J ≤ 1000000)
+    (hS : ∀ p ∈ S, 2 < p ∧ p.Prime) (hB : (∏ p ∈ S, p) ≤ 2*J+2) :
+    ((∑ p ∈ A085265.SameJ.oddPrimes (2*J+1) \ S, (2*J/(p^2)+1) : ℕ):ℚ) +
+      (1+(if S.card=0 then 0 else (2:ℚ)^(S.card-1))) <
+        (J:ℚ)*(∏ p ∈ S, (1-1/(p:ℚ))) := by
+  obtain ⟨lo, hi, α, R, hband, hlow, hhigh⟩ := A085267.SameJ.band_exists hlo hhi
+  apply combine (α := α) (R := R) hlo hhi hS hB
+  · exact A085267.SameJ.prime_count_le hband hlow hhigh
+  · exact A085267.SameJ.active_recip_le hband hlow hhigh
+  · intro A ha t ht hprod
+    exact A085267.SameJ.profile_all hband hlow hhigh A ha t ht hprod
+
+end A085267.SameJ.Assembly
+
+theorem checked : OMA.R_oeis_a085265_R2_H2_R1_H1_R1.H1 := by
+  intro J S hlo hhi hS hB
+  have h := A085267.SameJ.Assembly.budget (J := J) (S := S) hlo hhi hS hB
+  unfold A085265.SameJ.oddPrimes at h
+  linarith only [h]
+
+end MiddleBudget
+
+theorem OMA.solution : type_of% @OMA.S_oeis_a085265.main :=
+  OMA.R_oeis_a085265_R2.main FiniteRange.checked
+    (OMA.R_oeis_a085265_R2_H2_R1.main
+      (OMA.R_oeis_a085265_R2_H2_R1_H1_R1.main MiddleBudget.checked MiddleObstruction.checked)
+      LargeRange.checked)
