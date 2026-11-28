@@ -147,7 +147,10 @@ set_option maxHeartbeats 4000000 in
 private lemma weight_stage_bound (k : ℕ) (hk : 12 ≤ k) :
     8 * (2 * sieveWeight (steps k))^3 ≤ 125 * (k:ℚ) := by
   induction k, hk using Nat.le_induction with
-  | base => decide
+  | base =>
+    have hsteps : steps 12 = [49, 43, 37, 33, 31, 25, 21, 15, 13, 9, 7, 3] := by decide
+    rw [hsteps]
+    norm_num [sieveWeight]
   | succ k hk ih =>
     let t : ℚ := 1 + 1 / ((rankValue (steps k) (k+2) - 1 : ℕ) : ℚ)
     have ht : 0 ≤ t := by dsimp [t]; positivity
